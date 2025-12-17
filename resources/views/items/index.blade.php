@@ -101,11 +101,8 @@
                                             ];
                                         @endphp
 
-                                        <td class="px-4 py-4">
-                                            <span class="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-bold border shadow-sm
-                                                {{ $statusStyles[$item->status] }}">
-                                                {{ ucfirst($item->status) }}
-                                            </span>
+                                        <td class="px-4 py-4 ">
+                                            <x-status-badge :status="$item->status" />
                                         </td>
 
                                         {{-- CATEGORIES --}}
