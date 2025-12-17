@@ -24,6 +24,24 @@
                     value="{{ old('asset_number', $item->asset_number) }}">
             </div>
 
+            {{-- Serial Number --}}
+<div>
+    <label class="block mb-1 font-semibold text-gray-700">
+        Serial Number
+    </label>
+
+    <input type="text"
+           name="serial_number"
+           class="w-full rounded-xl border-gray-300 focus:ring-blue-500 focus:border-blue-500 px-3 py-2"
+           value="{{ old('serial_number', $item->serial_number) }}"
+           required>
+
+    <p class="text-xs text-gray-500 mt-1">
+        Serial number akan digunakan sebagai isi QR Code
+    </p>
+</div>
+
+
             {{-- Room --}}
             <div>
                 <label class="block mb-1 font-semibold text-gray-700">Room</label>

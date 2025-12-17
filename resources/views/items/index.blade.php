@@ -49,7 +49,8 @@
                             {{-- TABLE HEADER --}}
                             <thead class="bg-gradient-to-r from-gray-50 to-gray-100 text-gray-700 border-b-2 border-gray-200">
                                 <tr>
-                                    @foreach (['ID','Nama','No Asset','Ruangan','Qty','Status','Kategori','Aksi'] as $head)
+                                    @foreach (['ID','Nama','No Asset','Serial','QR','Ruangan','Qty','Status','Kategori','Aksi'] as $head)
+
                                         <th class="px-4 py-4 text-left font-bold text-xs tracking-wider uppercase 
                                                    whitespace-normal break-words">
                                             {{ $head }}
@@ -76,6 +77,22 @@
                                         <td class="px-4 py-4 whitespace-normal break-words">
                                             <span class="text-gray-600 font-mono text-xs">{{ $item->asset_number ?? '-' }}</span>
                                         </td>
+                                        <td class="px-4 py-4 whitespace-normal break-words">
+    <span class="text-gray-800 font-mono text-xs">
+        {{ $item->serial_number ?? '-' }}
+    </span>
+</td>
+<td class="px-4 py-4">
+    @if ($item->qr_code)
+        <img src="{{ asset('storage/'.$item->qr_code) }}"
+             alt="QR {{ $item->serial_number }}"
+             class="w-14 h-14 rounded border">
+    @else
+        <span class="text-xs text-gray-400">Belum ada</span>
+    @endif
+</td>
+
+
 
                                         <td class="px-4 py-4 whitespace-normal break-words">
                                             <span class="inline-flex items-center gap-1.5 text-gray-700">
@@ -120,6 +137,26 @@
                                         {{-- ACTIONS --}}
                                         <td class="px-4 py-4 whitespace-normal break-words">
                                             <div class="flex gap-2">
+
+                                                    {{-- DETAIL BUTTON --}}
+        <a href="{{ route('items.show', $item->id) }}"
+           class="group inline-flex items-center gap-1.5 px-4 py-2 rounded-lg
+                  bg-gradient-to-r from-sky-500 to-blue-600 text-white
+                  hover:from-sky-600 hover:to-blue-700
+                  shadow-md hover:shadow-lg
+                  text-xs font-semibold transition-all duration-300">
+            <svg class="w-3.5 h-3.5 group-hover:scale-110 transition-transform"
+                 fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M2.458 12C3.732 7.943 7.523 5 12 5
+                         c4.478 0 8.268 2.943 9.542 7
+                         -1.274 4.057-5.064 7-9.542 7
+                         -4.477 0-8.268-2.943-9.542-7z"/>
+            </svg>
+            Detail
+        </a>
 
                                                 {{-- EDIT BUTTON --}}
                                                 <a href="{{ route('items.edit', $item->id) }}"
