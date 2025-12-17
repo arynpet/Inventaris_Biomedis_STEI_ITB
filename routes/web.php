@@ -65,6 +65,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::resource('printers', PrinterController::class);
     Route::get('/prints/{id}/file', [PrintController::class, 'downloadFile'])->name('prints.file');
 
+    Route::get('/items/{item}/qr-pdf', [ItemController::class, 'qrPdf'])
+    ->name('items.qr.pdf');
+
     Route::get('/borrowings/history', [BorrowingController::class, 'history'])
         ->name('borrowings.history');
     Route::post('/borrowings/{id}/return', [BorrowingController::class, 'return'])
