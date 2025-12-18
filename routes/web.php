@@ -91,6 +91,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/borrowings/history/pdf', [BorrowingController::class, 'historyPdf'])
     ->name('borrowings.historyPdf');
 
+    Route::post('/borrowings/scan-qr', [BorrowingController::class, 'findItemByQr'])
+     ->name('borrowings.scan');
+
+     Route::get('/api/items/by-qr/{qr}', [ItemController::class, 'findByQr']);
+
+
+
 });
 
 require __DIR__ . '/auth.php';
