@@ -66,8 +66,8 @@ Untuk menjalankan proyek ini di lingkungan lokal Anda, ikuti langkah-langkah ber
     cp .env.example .env
     ```
 
+    *Buka file `.env` dan sesuaikan `DB_DATABASE`, `DB_USERNAME`, dan `DB_PASSWORD`.*
 
-*Buka file `.env` dan sesuaikan `DB_DATABASE`, `DB_USERNAME`, dan `DB_PASSWORD`.*
 4. **Setup Aplikasi**
 Generate kunci aplikasi, buat symbolic link untuk storage, dan jalankan migrasi database:
     ```
