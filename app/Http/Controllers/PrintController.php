@@ -76,9 +76,10 @@ class PrintController extends Controller
         // CEK WAKTU BENTROK
         // =============================
         $overlap = Print3D::where('date', $request->date)
-            ->where(function($q) use ($request) {
-                $q->whereBetween('start_time', [$request->start_time, $request->end_time])
-                  ->orWhereBetween('end_time', [$request->start_time, $request->end_time]);
+            ->where('printer_id', $request->printer_id)
+            ->where(function($q) use ($request){
+                $q->where('start_time', '<', $request->end_time)
+                    ->where('end_time', '>', $request->start_time);
             })
             ->exists();
 
@@ -107,24 +108,23 @@ class PrintController extends Controller
         // =============================
         // SAVE DATABASE
         // =============================
-Print3D::create([
-    'user_id'          => $request->user_id,
-    'printer_id'       => $request->printer_id,   // ⬅ WAJIB
-    'date'             => $request->date,
-    'start_time'       => $request->start_time,
-    'end_time'         => $request->end_time,
-    'duration'         => $duration,
+        Print3D::create([
+            'user_id'          => $request->user_id,
+            'printer_id'       => $request->printer_id,   // ⬅ WAJIB
+            'date'             => $request->date,
+            'start_time'       => $request->start_time,
+            'end_time'         => $request->end_time,
 
-    'material_type_id' => $request->material_type_id,
-    'material_amount'  => $request->material_amount,
-    'material_unit'    => $request->material_unit,
-    'material_source'  => $request->material_source,
+            'material_type_id' => $request->material_type_id,
+            'material_amount'  => $request->material_amount,
+            'material_unit'    => $request->material_unit,
+            'material_source'  => $request->material_source,
 
-    'notes'            => $request->notes,
-    'file_name'        => $fileName,
-    'file_path'        => $filePath,
-    'status'           => 'pending',
-]);
+            'notes'            => $request->notes,
+            'file_name'        => $fileName,
+            'file_path'        => $filePath,
+            'status'           => 'pending',
+        ]);
 
 
         return redirect()->route('prints.index')

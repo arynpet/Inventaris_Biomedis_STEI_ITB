@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Carbon\Carbon;
 
 class Print3D extends Model
 {
@@ -14,7 +15,6 @@ class Print3D extends Model
         'date',
         'start_time',
         'end_time',
-        'duration',
         'status',
         'file_name',
         'file_path',
@@ -36,8 +36,20 @@ class Print3D extends Model
     }
 
     public function printer()
-{
-    return $this->belongsTo(Printer::class, 'printer_id');
-}
+    {
+        return $this->belongsTo(Printer::class, 'printer_id');
+    }
 
+    public function getDurationAttribute()
+    {
+        // Pastikan start_time dan end_time ada datanya
+        if (!$this->start_time || !$this->end_time) {
+            return 0;
+        }
+
+        $start = Carbon::parse($this->start_time);
+        $end   = Carbon::parse($this->end_time);
+
+        return $start->diffInMinutes($end);
+    }
 }
