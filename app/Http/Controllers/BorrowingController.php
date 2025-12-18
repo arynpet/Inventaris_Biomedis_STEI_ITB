@@ -29,42 +29,40 @@ class BorrowingController extends Controller
         return view('borrowings.create', compact('items', 'users'));
     }
 
-public function store(Request $request)
-{
-    $validated = $request->validate([
-        'user_id'       => 'required|exists:peminjam_users,id',
-        'item_id'       => 'required|exists:items,id',
-        'borrow_date'   => 'required|datetime',
-        'return_date'   => 'nullable|datetime',
-        'notes'         => 'nullable|string',
-    ]);
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'user_id'       => 'required|exists:peminjam_users,id',
+            'item_id'       => 'required|exists:items,id',
+            'borrow_date'   => 'required|date',
+            'return_date'   => 'nullable|date|after_or_equal:borrow_date',
+            'notes'         => 'nullable|string',
+        ]);
 
+        Borrowing::create([
+            'item_id'   => $validated['item_id'],
+            'user_id'   => $validated['user_id'],
+            'borrow_date' => $validated['borrow_date'],
+            'return_date' => $validated['return_date'],
+            'notes'     => $validated['notes'],
+            'status'    => 'borrowed',
+        ]);
+
+        
         $item = Item::findOrFail($validated['item_id']);
-
-    // 🔴 DOUBLE CHECK
-    if ($item->status === 'borrowed') {
+  
+        if ($item->status === 'borrowed') {
         return back()->withErrors([
             'item_id' => 'Item sedang dipinjam'
-        ]);
+            ]);
+        }
+  
+        Item::where('id', $validated['item_id'])
+            ->update(['status' => 'borrowed']);
+  
+        return redirect()->route('borrowings.index')
+                        ->with('success', 'Borrowing created successfully!');
     }
-
-    Borrowing::create([
-        'item_id'   => $validated['item_id'],
-        'user_id'   => $validated['user_id'],
-        'borrow_date' => $validated['borrow_date'],
-        'return_date' => $validated['return_date'],
-        'notes'     => $validated['notes'],
-        'status'    => 'borrowed',
-    ]);
-
-    // Update status item
-    Item::where('id', $validated['item_id'])
-        ->update(['status' => 'borrowed']);
-
-    return redirect()
-        ->route('borrowings.index')
-        ->with('success', 'Peminjaman berhasil dibuat.');
-}
 
 
     public function edit(Borrowing $borrowing)
@@ -103,81 +101,83 @@ public function store(Request $request)
     }
 
     public function show(Borrowing $borrowing)
-{
-    // Load relasi item dan user
-    $borrowing->load(['item.room', 'borrower']);
+    {
+        // Load relasi item dan user
+        $borrowing->load(['item.room', 'borrower']);
 
-    return view('borrowings.show', [
-        'borrow' => $borrowing
-    ]);
-}
-
-public function return($id)
-{
-    $borrow = Borrowing::findOrFail($id);
-
-    $borrow->update([
-        'status' => 'returned',
-        'return_date' => now(),
-    ]);
-
-    return redirect()->back()->with('success', 'Barang berhasil dikembalikan!');
-}
-
-public function history(Request $request)
-{
-    $from = $request->query('from');
-    $to   = $request->query('to');
-
-    $query = Borrowing::with(['item', 'borrower'])
-        ->where('status', 'returned')
-        ->orderBy('return_date', 'desc');
-
-    // Filtering
-    if ($from) {
-        $query->whereDate('borrow_date', '>=', $from);
-    }
-    if ($to) {
-        $query->whereDate('return_date', '<=', $to);
+        return view('borrowings.show', [
+            'borrow' => $borrowing
+        ]);
     }
 
-    $history = $query->get();
+    public function return($id)
+    {
+        $borrow = Borrowing::findOrFail($id);
 
-    return view('borrowings.history', compact('history', 'from', 'to'));
-}
+        $borrow->update([
+            'status' => 'returned',
+            'return_date' => now(),
+        ]);
 
+            Item::where('id', $borrow->item_id)
+            ->update(['status' => 'available']);
 
-public function historyPdf(Request $request)
-{
-    $from = $request->query('from');
-    $to   = $request->query('to');
-
-    $query = Borrowing::with(['item', 'borrower'])
-        ->where('status', 'returned')
-        ->orderBy('return_date', 'desc');
-
-    if ($from) {
-        $query->whereDate('borrow_date', '>=', $from);
-    }
-    if ($to) {
-        $query->whereDate('return_date', '<=', $to);
+        return redirect()->back()->with('success', 'Barang berhasil dikembalikan!');
     }
 
-    $history = $query->get();
+    public function history(Request $request)
+    {
+        $from = $request->query('from');
+        $to   = $request->query('to');
 
-    $data = [
-        'history'      => $history,
-        'generated_at' => Carbon::now()->setTimezone('Asia/Jakarta'),
-        'from'         => $from,
-        'to'           => $to,
-    ];
+        $query = Borrowing::with(['item', 'borrower'])
+            ->where('status', 'returned')
+            ->orderBy('return_date', 'desc');
 
-    $pdf = Pdf::loadView('borrowings.history_pdf', $data)
-              ->setPaper('a4', 'portrait');
+        // Filtering
+        if ($from) {
+            $query->whereDate('borrow_date', '>=', $from);
+        }
+        if ($to) {
+            $query->whereDate('return_date', '<=', $to);
+        }
 
-    return $pdf->stream('history.pdf');
-}
+        $history = $query->get();
 
+        return view('borrowings.history', compact('history', 'from', 'to'));
+    }
+
+
+    public function historyPdf(Request $request)
+    {
+        $from = $request->query('from');
+        $to   = $request->query('to');
+
+        $query = Borrowing::with(['item', 'borrower'])
+            ->where('status', 'returned')
+            ->orderBy('return_date', 'desc');
+
+        if ($from) {
+            $query->whereDate('borrow_date', '>=', $from);
+        }
+        if ($to) {
+            $query->whereDate('return_date', '<=', $to);
+        }
+
+        $history = $query->get();
+
+        $data = [
+            'history'      => $history,
+            'generated_at' => Carbon::now()->setTimezone('Asia/Jakarta'),
+            'from'         => $from,
+            'to'           => $to,
+        ];
+
+        $pdf = Pdf::loadView('borrowings.history_pdf', $data)
+                ->setPaper('a4', 'portrait');
+
+        return $pdf->stream('history.pdf');
+    }
 public function findItemByQr(Request $request)
 {
     $request->validate([
