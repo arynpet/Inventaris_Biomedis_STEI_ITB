@@ -41,17 +41,23 @@
 
             {{-- Borrow Date --}}
             <div>
-                <label class="block mb-1 font-semibold text-gray-700">Borrow Date</label>
-                <input type="date" name="borrow_date"
-                       class="w-full rounded-xl border-gray-300 px-3 py-2 focus:ring-blue-500 focus:border-blue-500"
-                       value="{{ old('borrow_date') }}" required>
-                @error('borrow_date') <p class="text-sm text-red-600 mt-1">{{ $message }}</p> @enderror
+                <label class="block mb-1 font-semibold text-gray-700">Borrow Date & Time</label>
+                
+                <input type="datetime-local" 
+                    name="borrow_date"
+                    class="w-full rounded-xl border-gray-300 px-3 py-2 focus:ring-blue-500 focus:border-blue-500"
+                    value="{{ old('borrow_date', now()->format('Y-m-d\TH:i')) }}" 
+                    required>
+                    
+                @error('borrow_date') 
+                    <p class="text-sm text-red-600 mt-1">{{ $message }}</p> 
+                @enderror
             </div>
 
             {{-- Return Date --}}
             <div>
                 <label class="block mb-1 font-semibold text-gray-700">Return Date (optional)</label>
-                <input type="date" name="return_date"
+                <input type="datetime-local" name="return_date"
                        class="w-full rounded-xl border-gray-300 px-3 py-2 focus:ring-blue-500 focus:border-blue-500"
                        value="{{ old('return_date') }}">
                 @error('return_date') <p class="text-sm text-red-600 mt-1">{{ $message }}</p> @enderror

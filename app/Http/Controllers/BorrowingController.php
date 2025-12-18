@@ -15,8 +15,9 @@ class BorrowingController extends Controller
 {
     public function index()
     {
-        $borrowings = Borrowing::with(['item', 'borrower'])
-            ->orderBy('created_at', 'desc')
+        $borrowings = Borrowing::with(['item', 'borrower']) 
+            ->where('status', 'borrowed') 
+            ->latest()
             ->paginate(10);
 
         return view('borrowings.index', compact('borrowings'));
@@ -35,15 +36,15 @@ public function store(Request $request)
     $validated = $request->validate([
         'user_id'       => 'required|exists:peminjam_users,id',
         'item_id'       => 'required|exists:items,id',
-        'borrow_date'   => 'required|date',
-        'return_date'   => 'nullable|date',
+        'borrow_date'   => 'required|datetime',
+        'return_date'   => 'nullable|datetime',
         'notes'         => 'nullable|string',
     ]);
 
     Borrowing::create([
         'item_id'   => $validated['item_id'],
         'user_id'   => $validated['user_id'],
-        'borrow_date' => $validated['borrow_date'] = now(),
+        'borrow_date' => $validated['borrow_date'],
         'return_date' => $validated['return_date'],
         'notes'     => $validated['notes'],
         'status'    => 'borrowed',
