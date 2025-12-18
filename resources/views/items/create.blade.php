@@ -23,6 +23,16 @@
                        value="{{ old('asset_number') }}">
             </div>
 
+            {{-- SERIAL NUMBER --}}
+<div>
+    <label class="block text-sm font-semibold mb-1">Serial Number</label>
+    <input type="text" name="serial_number"
+           class="w-full rounded-lg border-gray-300"
+           placeholder="SN-XXXX"
+           required>
+</div>
+
+
             {{-- Room --}}
             <div>
                 <label class="block mb-1 font-semibold text-gray-700">Room</label>

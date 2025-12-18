@@ -11,18 +11,16 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('datetime', function (Blueprint $table) {
-            //
+        Schema::table('prints', function (Blueprint $table) {
+            $table->dropColumn('duration');
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
-        Schema::table('datetime', function (Blueprint $table) {
-            //
+        Schema::table('prints', function (Blueprint $table) {
+            // Jika rollback, buat ulang kolomnya
+            $table->integer('duration')->nullable()->after('end_time');
         });
     }
 };

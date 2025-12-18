@@ -9,14 +9,13 @@ use Illuminate\Http\Request;
 use Carbon\Carbon;
 use Barryvdh\DomPDF\Facade\Pdf;
 
-
-
 class BorrowingController extends Controller
 {
     public function index()
     {
-        $borrowings = Borrowing::with(['item', 'borrower'])
-            ->orderBy('created_at', 'desc')
+        $borrowings = Borrowing::with(['item', 'borrower']) 
+            ->where('status', 'borrowed') 
+            ->latest()
             ->paginate(10);
 
         return view('borrowings.index', compact('borrowings'));
@@ -43,15 +42,28 @@ class BorrowingController extends Controller
         Borrowing::create([
             'item_id'   => $validated['item_id'],
             'user_id'   => $validated['user_id'],
-            'borrow_date' => $validated['borrow_date'] = now(),
+            'borrow_date' => $validated['borrow_date'],
             'return_date' => $validated['return_date'],
             'notes'     => $validated['notes'],
             'status'    => 'borrowed',
         ]);
 
+        
+        $item = Item::findOrFail($validated['item_id']);
+  
+        if ($item->status === 'borrowed') {
+        return back()->withErrors([
+            'item_id' => 'Item sedang dipinjam'
+            ]);
+        }
+  
+        Item::where('id', $validated['item_id'])
+            ->update(['status' => 'borrowed']);
+  
         return redirect()->route('borrowings.index')
                         ->with('success', 'Borrowing created successfully!');
     }
+
 
     public function edit(Borrowing $borrowing)
     {
@@ -166,4 +178,71 @@ class BorrowingController extends Controller
 
         return $pdf->stream('history.pdf');
     }
+public function findItemByQr(Request $request)
+{
+    $request->validate([
+        'qr' => 'required|string'
+    ]);
+
+    // QR berisi serial_number
+    $item = Item::where('serial_number', $request->qr)->first();
+
+    if (!$item) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Item tidak ditemukan'
+        ], 404);
+    }
+
+    // Optional: cek status item
+    if ($item->status !== 'available') {
+        return response()->json([
+            'success' => false,
+            'message' => 'Item sedang tidak tersedia'
+        ], 400);
+    }
+
+    return response()->json([
+        'success' => true,
+        'item' => [
+            'id' => $item->id,
+            'name' => $item->name,
+            'serial_number' => $item->serial_number,
+        ]
+    ]);
+}
+
+public function scan(Request $request)
+{
+    $request->validate([
+        'qr' => 'required|string'
+    ]);
+
+    $item = Item::where('serial_number', $request->qr)
+        ->orWhere('qr_code', $request->qr)
+        ->first();
+
+    if (!$item) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Item tidak ditemukan'
+        ]);
+    }
+
+    // 🔴 CEK STATUS ITEM
+    if ($item->status === 'borrowed') {
+        return response()->json([
+            'success' => false,
+            'message' => 'Item sedang dipinjam'
+        ]);
+    }
+
+    return response()->json([
+        'success' => true,
+        'item' => [
+            'id'   => $item->id,
+            'name' => $item->name
+        ]
+    ]);
+}
 }

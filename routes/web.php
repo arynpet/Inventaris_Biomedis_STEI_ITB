@@ -60,46 +60,41 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::resource('items', ItemController::class);
     Route::resource('categories', CategoryController::class);
     Route::resource('peminjam-users', PeminjamUserController::class);
-        Route::resource('materials', MaterialTypeController::class);
-        Route::resource('prints', PrintController::class);
-        Route::resource('printers', PrinterController::class);
+    Route::resource('materials', MaterialTypeController::class);
+    Route::resource('prints', PrintController::class);
+    Route::resource('printers', PrinterController::class);
+    Route::get('/prints/{id}/file', [PrintController::class, 'downloadFile'])->name('prints.file');
 
-        Route::get('/prints/{id}/file', [PrintController::class, 'downloadFile'])->name('prints.file');
+    Route::get('/items/{item}/qr-pdf', [ItemController::class, 'qrPdf'])
+    ->name('items.qr.pdf');
 
-
-Route::get('/borrowings/history', [BorrowingController::class, 'history'])
-    ->name('borrowings.history');
-
-Route::post('/borrowings/{id}/return', [BorrowingController::class, 'return'])
-    ->name('borrowings.return');
-
-Route::resource('borrowings', BorrowingController::class);
-
+    Route::get('/borrowings/history', [BorrowingController::class, 'history'])
+        ->name('borrowings.history');
+    Route::post('/borrowings/{id}/return', [BorrowingController::class, 'return'])
+        ->name('borrowings.return');
+    Route::resource('borrowings', BorrowingController::class);
 
     Route::resource('room_borrowings', RoomBorrowingController::class);
 
-
     // Route khusus pemindahan barang
-Route::post('/rooms/move-item', [RoomController::class, 'moveItem'])
-    ->name('rooms.moveItem');
+    Route::post('/rooms/move-item', [RoomController::class, 'moveItem'])
+        ->name('rooms.moveItem');
 
     // Export whole history (optionally accept ?from=YYYY-MM-DD&to=YYYY-MM-DD)
-Route::get('/borrowings/history/pdf', [BorrowingController::class, 'historyPdf'])
-    ->name('borrowings.history.pdf');
+    Route::get('/borrowings/history/pdf', [BorrowingController::class, 'historyPdf'])
+        ->name('borrowings.history.pdf');
 
-// Export single borrowing detail
-Route::get('/borrowings/{id}/pdf', [BorrowingController::class, 'pdf'])
-    ->name('borrowings.pdf');
+    // Export single borrowing detail
+    Route::get('/borrowings/{id}/pdf', [BorrowingController::class, 'pdf'])
+        ->name('borrowings.pdf');
 
     Route::get('/borrowings/history/pdf', [BorrowingController::class, 'historyPdf'])
     ->name('borrowings.historyPdf');
 
+    Route::post('/borrowings/scan-qr', [BorrowingController::class, 'findItemByQr'])
+     ->name('borrowings.scan');
 
-
-
-
-
-
+     Route::get('/api/items/by-qr/{qr}', [ItemController::class, 'findByQr']);
 
 
 
