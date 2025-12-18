@@ -20,12 +20,20 @@ class MaterialTypeController extends Controller
 
     public function store(Request $request)
     {
-        $request->validate([
-            'category' => 'required|in:filament,resin',
-            'name'     => 'required|string|max:255',
-        ]);
+$request->validate([
+    'category'       => 'required|in:filament,resin',
+    'name'           => 'required|string|max:255',
+    'stock_balance'  => 'required|numeric|min:0',
+    'unit'           => 'required|in:gr,ml',
+]);
 
-        MaterialType::create($request->only('category', 'name'));
+
+MaterialType::create([
+    'category'      => $request->category,
+    'name'          => $request->name,
+    'stock_balance' => $request->stock_balance,
+    'unit'          => $request->unit,
+]);
 
         return redirect()->route('materials.index')
             ->with('success', 'Material type berhasil ditambahkan!');
@@ -59,4 +67,17 @@ class MaterialTypeController extends Controller
         return redirect()->route('materials.index')
             ->with('success', 'Material type berhasil dihapus!');
     }
+
+    public function addStock(Request $request, $id)
+{
+    $request->validate([
+        'amount' => 'required|numeric|min:0.01',
+    ]);
+
+    $material = MaterialType::findOrFail($id);
+    $material->increment('stock_balance', $request->amount);
+
+    return back()->with('success', 'Stock berhasil ditambahkan.');
+}
+
 }

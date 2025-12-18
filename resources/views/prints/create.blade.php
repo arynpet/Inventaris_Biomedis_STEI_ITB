@@ -88,37 +88,46 @@
                         </div>
                     </div>
 
-                    {{-- MATERIAL --}}
-                    <div>
-                        <label class="block font-medium text-sm text-gray-700">Jenis Material</label>
-                        <select name="material_type_id" class="w-full border-gray-300 rounded mt-1">
-                            <option value="">-- Pilih Material --</option>
-                            @foreach($materials as $m)
-                                <option value="{{ $m->id }}" {{ old('material_type_id') == $m->id ? 'selected' : '' }}>
-                                    {{ $m->category }} - {{ $m->name }}
-                                </option>
-                            @endforeach
-                        </select>
-                        @error('material_type_id') <p class="text-red-600 text-sm mt-1">{{ $message }}</p> @enderror
-                    </div>
+{{-- MATERIAL --}}
+<div>
+    <label class="block font-medium text-sm text-gray-700">Jenis Material</label>
+    <select name="material_type_id" class="w-full border-gray-300 rounded mt-1">
+        <option value="">-- Pilih Material --</option>
+        @foreach($materials as $m)
+            <option value="{{ $m->id }}"
+                {{ old('material_type_id') == $m->id ? 'selected' : '' }}>
+                {{ $m->category }} - {{ $m->name }}
+                (Stock: {{ $m->stock_balance }} {{ $m->unit }})
+            </option>
+        @endforeach
+    </select>
+</div>
 
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <label class="block font-medium text-sm text-gray-700">Jumlah Material</label>
-                            <input type="number" step="0.1" name="material_amount"
-                                   class="w-full border-gray-300 rounded mt-1 p-2"
-                                   value="{{ old('material_amount') }}">
-                        </div>
+<div class="grid grid-cols-2 gap-4">
+    <div>
+        <label class="block font-medium text-sm text-gray-700">
+            Jumlah Material Digunakan
+        </label>
+        <input type="number" step="0.1" name="material_amount"
+               class="w-full border-gray-300 rounded mt-1 p-2"
+               placeholder="Contoh: 20"
+               value="{{ old('material_amount') }}">
+    </div>
 
-                        <div>
-                            <label class="block font-medium text-sm text-gray-700">Unit</label>
-                            <select name="material_unit" class="w-full border-gray-300 rounded mt-1">
-                                <option value="" {{ old('material_unit') == '' ? 'selected' : '' }}>-</option>
-                                <option value="gram" {{ old('material_unit') == 'gram' ? 'selected' : '' }}>Gram</option>
-                                <option value="ml" {{ old('material_unit') == 'ml' ? 'selected' : '' }}>ml</option>
-                            </select>
-                        </div>
-                    </div>
+    <div>
+        <label class="block font-medium text-sm text-gray-700">Unit</label>
+        <select name="material_unit" class="w-full border-gray-300 rounded mt-1">
+            <option value="">-</option>
+            <option value="gram">Gram</option>
+            <option value="ml">ml</option>
+        </select>
+    </div>
+</div>
+
+<p class="text-xs text-gray-500">
+    ⚠ Material akan langsung dipotong dari stock saat disimpan
+</p>
+
 
                     {{-- SOURCE --}}
                     <div>

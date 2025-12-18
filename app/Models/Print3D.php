@@ -23,6 +23,11 @@ class Print3D extends Model
         'material_amount',
         'material_unit',
         'material_source',
+                'material_deducted', // ⬅ WAJIB
+    ];
+
+        protected $casts = [
+        'material_deducted' => 'boolean',
     ];
 
     public function user()

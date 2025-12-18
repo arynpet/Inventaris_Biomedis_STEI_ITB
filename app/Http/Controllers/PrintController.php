@@ -9,6 +9,7 @@ use App\Models\MaterialType;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 
 class PrintController extends Controller
 {
@@ -156,11 +157,64 @@ public function update(Request $request, Print3D $print)
         'status' => 'required|in:pending,printing,done,canceled',
     ]);
 
-    $print->status = $request->status;
-    $print->save();
+    DB::transaction(function () use ($request, $print) {
 
-    return redirect()->route('prints.index')->with('success', 'Status berhasil diperbarui.');
+        // 🔒 LOCK ROW (ANTI DOBEL REQUEST)
+        $print = Print3D::where('id', $print->id)
+            ->lockForUpdate()
+            ->first();
+
+        $oldStatus = $print->status;
+        $newStatus = $request->status;
+
+        // =============================
+        // POTONG MATERIAL (PENDING → PRINTING)
+        // =============================
+        if (
+            $oldStatus === 'pending' &&
+            $newStatus === 'printing' &&
+            !$print->material_deducted &&
+            $print->material_type_id
+        ) {
+            $material = MaterialType::findOrFail($print->material_type_id);
+
+            if ($material->stock_balance < $print->material_amount) {
+                throw new \Exception('Stock material tidak mencukupi.');
+            }
+
+            $material->decrement('stock_balance', $print->material_amount);
+            $print->material_deducted = true;
+        }
+
+        // =============================
+        // REFUND MATERIAL (CANCELED)
+        // =============================
+        if (
+            in_array($oldStatus, ['pending', 'printing']) &&
+            $newStatus === 'canceled' &&
+            $print->material_deducted &&
+            $print->material_type_id
+        ) {
+            $material = MaterialType::find($print->material_type_id);
+
+            if ($material) {
+                $material->increment('stock_balance', $print->material_amount);
+            }
+
+            $print->material_deducted = false;
+        }
+
+        // =============================
+        // UPDATE STATUS
+        // =============================
+        $print->status = $newStatus;
+        $print->save();
+    });
+
+    return redirect()->route('prints.index')
+        ->with('success', 'Status print berhasil diperbarui.');
 }
+
 
 
 

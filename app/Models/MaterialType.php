@@ -11,5 +11,7 @@ class MaterialType extends Model
     protected $fillable = [
         'category',
         'name',
+        'stock_balance',
+        'unit',
     ];
 }

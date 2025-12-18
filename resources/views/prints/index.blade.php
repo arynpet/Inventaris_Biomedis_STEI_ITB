@@ -13,10 +13,11 @@
     <div class="bg-white shadow rounded p-4">
         <table class="w-full border-collapse">
             <thead>
-                <tr class="border-b">
+                <tr class="border-b bg-gray-100">
                     <th class="p-2 text-left">User</th>
-                    <th class="p-2 text-left">Nama Mesin</th>   {{-- ⬅ Tambahan --}}
+                    <th class="p-2 text-left">Mesin</th>
                     <th class="p-2 text-left">Material</th>
+                    <th class="p-2 text-right">Jumlah</th>
                     <th class="p-2 text-left">Status</th>
                     <th class="p-2 text-left">Tanggal</th>
                     <th class="p-2 text-center">Aksi</th>
@@ -24,65 +25,96 @@
             </thead>
 
             <tbody>
-                @foreach ($prints as $print)
+                @forelse ($prints as $print)
                     <tr class="border-b">
+                        <td class="p-2">{{ $print->user->name ?? '-' }}</td>
+
                         <td class="p-2">
-                            {{ $print->user->name ?? '-' }}
+                            {{ $print->printer->name ?? '-' }}
                         </td>
 
-                        {{-- ⬅ Nama Mesin Printer --}}
-                        <td class="p-2">
-                            @if ($print->printer)
-                                <span class="font-semibold">
-                                    {{ $print->printer->name }}
-                                </span>
-                                <span class="text-gray-500 text-sm">
-                                    ({{ $print->printer->category }})
-                                </span>
-                            @else
-                                <span class="text-gray-400 italic">Tidak ada mesin</span>
-                            @endif
-                        </td>
-
-                        {{-- Material --}}
                         <td class="p-2">
                             {{ $print->materialType->name ?? '-' }}
                         </td>
 
-                        {{-- Status --}}
+                        <td class="p-2 text-right">
+                            {{ $print->material_amount ?? '-' }}
+                            {{ $print->material_unit }}
+                        </td>
+
                         <td class="p-2 capitalize">
-                            {{ $print->status }}
+                            <span class="px-2 py-1 rounded text-sm
+                                {{ $print->status === 'done' ? 'bg-green-100 text-green-700' : '' }}
+                                {{ $print->status === 'canceled' ? 'bg-red-100 text-red-700' : '' }}
+                                {{ $print->status === 'pending' ? 'bg-yellow-100 text-yellow-700' : '' }}
+                                {{ $print->status === 'printing' ? 'bg-blue-100 text-blue-700' : '' }}">
+                                {{ $print->status }}
+                            </span>
                         </td>
 
-                        <td class="p-2">
-                            {{ $print->date }}
-                        </td>
+                        <td class="p-2">{{ $print->date }}</td>
 
-                        <td class="p-2 flex gap-2 justify-center">
+                        <td class="p-2 flex flex-wrap gap-2 justify-center">
+
                             <a href="{{ route('prints.show', $print->id) }}"
                                class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300">
                                 Detail
                             </a>
 
-                            <a href="{{ route('prints.edit', $print->id) }}"
-                               class="px-3 py-1 bg-yellow-400 rounded hover:bg-yellow-500">
-                                Edit
-                            </a>
+                            @if ($print->status === 'pending' || $print->status === 'printing')
+                                {{-- SELESAI --}}
+                                <form action="{{ route('prints.update', $print->id) }}" method="POST">
+                                    @csrf
+                                    @method('PUT')
+                                    <input type="hidden" name="status" value="done">
+                                    <button class="px-3 py-1 bg-green-600 text-white rounded">
+                                        Selesai
+                                    </button>
+                                </form>
+
+                                @if ($print->status === 'pending')
+<form action="{{ route('prints.update', $print->id) }}" method="POST">
+    @csrf
+    @method('PUT')
+    <input type="hidden" name="status" value="printing">
+    <button class="px-3 py-1 bg-blue-600 text-white rounded">
+        Mulai Print
+    </button>
+</form>
+@endif
+
+
+                                {{-- BATAL --}}
+                                <form action="{{ route('prints.update', $print->id) }}" method="POST">
+                                    @csrf
+                                    @method('PUT')
+                                    <input type="hidden" name="status" value="canceled">
+                                    <button class="px-3 py-1 bg-red-500 text-white rounded">
+                                        Batalkan
+                                    </button>
+                                </form>
+                            @endif
 
                             <form action="{{ route('prints.destroy', $print->id) }}"
                                   method="POST"
-                                  onsubmit="return confirm('Hapus data peminjaman ini?')">
+                                  onsubmit="return confirm('Hapus data ini?')">
                                 @csrf
                                 @method('DELETE')
-                                <button class="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700">
+                                <button class="px-3 py-1 bg-red-700 text-white rounded">
                                     Hapus
                                 </button>
                             </form>
+
                         </td>
                     </tr>
-                @endforeach
+                @empty
+                    <tr>
+                        <td colspan="7" class="text-center py-4 text-gray-500">
+                            Belum ada data
+                        </td>
+                    </tr>
+                @endforelse
             </tbody>
-
         </table>
     </div>
 

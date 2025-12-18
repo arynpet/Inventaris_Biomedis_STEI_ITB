@@ -15,19 +15,16 @@
                     @csrf
                     @method('PUT')
 
-                    <div class="mb-4">
-                        <label class="block font-medium text-sm text-gray-700">
-                            Category
-                        </label>
-                        <select name="category" class="w-full border-gray-300 rounded mt-1">
-                            <option value="filament" {{ $material->category == 'filament' ? 'selected' : '' }}>
-                                Filament
-                            </option>
-                            <option value="resin" {{ $material->category == 'resin' ? 'selected' : '' }}>
-                                Resin
-                            </option>
-                        </select>
-                    </div>
+<div class="mb-4">
+    <label class="block font-medium text-sm text-gray-700">
+        Stock Saat Ini
+    </label>
+    <input type="text"
+           value="{{ number_format($material->stock_balance, 2) }} {{ $material->unit }}"
+           class="w-full bg-gray-100 border-gray-300 rounded mt-1"
+           disabled>
+</div>
+
 
                     <div class="mb-4">
                         <label class="block font-medium text-sm text-gray-700">

@@ -23,7 +23,11 @@
                         <tr>
                             <th class="px-4 py-2 text-left">Category</th>
                             <th class="px-4 py-2 text-left">Name</th>
+
+                            <th class="px-4 py-2 text-right">Stock</th>
+<th class="px-4 py-2 text-center">Unit</th>
                             <th class="px-4 py-2 text-center">Aksi</th>
+
                         </tr>
                     </thead>
 
@@ -32,6 +36,13 @@
                             <tr class="border-t">
                                 <td class="px-4 py-2 capitalize">{{ $type->category }}</td>
                                 <td class="px-4 py-2">{{ $type->name }}</td>
+                                <td class="px-4 py-2 text-right">
+    {{ number_format($type->stock_balance, 2) }}
+</td>
+<td class="px-4 py-2 text-center uppercase">
+    {{ $type->unit }}
+</td>
+
 
                                 <td class="px-4 py-2 text-center">
                                     <div class="flex justify-center gap-2">

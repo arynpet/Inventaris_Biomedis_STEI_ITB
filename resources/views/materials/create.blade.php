@@ -32,6 +32,27 @@
                                required>
                     </div>
 
+                    <div class="mb-4">
+    <label class="block font-medium text-sm text-gray-700">
+        Stock Awal
+    </label>
+    <input type="number" step="0.01" name="stock_balance"
+           class="w-full border-gray-300 rounded mt-1"
+           placeholder="Contoh: 1000"
+           required>
+</div>
+
+<div class="mb-4">
+    <label class="block font-medium text-sm text-gray-700">
+        Unit
+    </label>
+    <select name="unit" class="w-full border-gray-300 rounded mt-1">
+        <option value="gr">Gram (gr)</option>
+        <option value="ml">Milliliter (ml)</option>
+    </select>
+</div>
+
+
                     <div class="flex justify-end">
                         <button class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
                             Simpan
