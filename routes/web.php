@@ -96,6 +96,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
      Route::get('/api/items/by-qr/{qr}', [ItemController::class, 'findByQr']);
 
+     Route::put('/borrowings/{id}/return', [BorrowingController::class, 'returnItem'])->name('borrowings.return');
 
 
 });

@@ -22,9 +22,6 @@
                         <div class="relative">
                             <input type="date" name="from" value="{{ $from }}"
                                    class="border border-gray-300 px-4 py-2.5 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all" />
-                            <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                            </svg>
                         </div>
 
                         <span class="text-gray-400">—</span>
@@ -74,9 +71,10 @@
                                     <th class="px-4 py-4 text-left font-bold text-xs tracking-wider uppercase">#</th>
                                     <th class="px-4 py-4 text-left font-bold text-xs tracking-wider uppercase">Barang</th>
                                     <th class="px-4 py-4 text-left font-bold text-xs tracking-wider uppercase">Peminjam</th>
-                                    <th class="px-4 py-4 text-left font-bold text-xs tracking-wider uppercase">Tanggal Pinjam</th>
-                                    <th class="px-4 py-4 text-left font-bold text-xs tracking-wider uppercase">Tanggal Dikembalikan</th>
+                                    <th class="px-4 py-4 text-left font-bold text-xs tracking-wider uppercase">Tgl Pinjam</th>
+                                    <th class="px-4 py-4 text-left font-bold text-xs tracking-wider uppercase">Tgl Kembali</th>
                                     <th class="px-4 py-4 text-left font-bold text-xs tracking-wider uppercase">Durasi</th>
+                                    <th class="px-4 py-4 text-left font-bold text-xs tracking-wider uppercase">Kondisi</th> {{-- Kolom Baru --}}
                                     <th class="px-4 py-4 text-left font-bold text-xs tracking-wider uppercase">Status</th>
                                 </tr>
                             </thead>
@@ -95,16 +93,22 @@
                                     @endphp
 
                                     <tr class="hover:bg-blue-50/50 transition-colors duration-200">
+                                        {{-- NO --}}
                                         <td class="px-4 py-4">
                                             <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-gradient-to-br from-blue-100 to-blue-200 text-blue-700 font-bold text-xs">
                                                 {{ $loop->iteration }}
                                             </span>
                                         </td>
                                         
+                                        {{-- BARANG --}}
                                         <td class="px-4 py-4">
-                                            <span class="font-semibold text-gray-900">{{ $borrow->item->name }}</span>
+                                            <div class="flex flex-col">
+                                                <span class="font-semibold text-gray-900">{{ $borrow->item->name }}</span>
+                                                <span class="text-xs text-gray-500">{{ $borrow->item->serial_number ?? '-' }}</span>
+                                            </div>
                                         </td>
                                         
+                                        {{-- PEMINJAM --}}
                                         <td class="px-4 py-4">
                                             <div class="flex items-center gap-2">
                                                 <div class="w-8 h-8 rounded-full bg-gradient-to-br from-purple-100 to-purple-200 flex items-center justify-center">
@@ -116,6 +120,7 @@
                                             </div>
                                         </td>
 
+                                        {{-- TGL PINJAM --}}
                                         <td class="px-4 py-4">
                                             <div class="flex flex-col">
                                                 <span class="text-gray-900 font-medium">{{ $borrowDate->translatedFormat('d M Y') }}</span>
@@ -123,6 +128,7 @@
                                             </div>
                                         </td>
 
+                                        {{-- TGL KEMBALI --}}
                                         <td class="px-4 py-4">
                                             <div class="flex flex-col">
                                                 <span class="text-gray-900 font-medium">{{ $returnDate->translatedFormat('d M Y') }}</span>
@@ -130,28 +136,43 @@
                                             </div>
                                         </td>
 
+                                        {{-- DURASI --}}
                                         <td class="px-4 py-4">
                                             <span class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-indigo-50 to-indigo-100 text-indigo-700 rounded-full text-xs font-semibold border border-indigo-200 shadow-sm">
-                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                                </svg>
                                                 {{ $durasi }}
                                             </span>
                                         </td>
 
+                                        {{-- KONDISI (BARU) --}}
+                                        <td class="px-4 py-4">
+                                            @php
+                                                $cond = $borrow->return_condition ?? 'good';
+                                                $condMeta = [
+                                                    'good'    => ['label' => 'Baik', 'class' => 'bg-emerald-100 text-emerald-700 border-emerald-200'],
+                                                    'damaged' => ['label' => 'Rusak Ringan', 'class' => 'bg-orange-100 text-orange-700 border-orange-200'],
+                                                    'broken'  => ['label' => 'Rusak Berat', 'class' => 'bg-red-100 text-red-700 border-red-200'],
+                                                ];
+                                                $meta = $condMeta[$cond] ?? $condMeta['good'];
+                                            @endphp
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border {{ $meta['class'] }}">
+                                                {{ $meta['label'] }}
+                                            </span>
+                                        </td>
+
+                                        {{-- STATUS --}}
                                         <td class="px-4 py-4">
                                             <span class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-green-100 to-green-200 text-green-700 rounded-full text-xs font-bold border border-green-300 shadow-sm">
                                                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                                                 </svg>
-                                                Returned
+                                                Selesai
                                             </span>
                                         </td>
                                     </tr>
 
                                 @empty
                                     <tr>
-                                        <td colspan="7" class="text-center py-12">
+                                        <td colspan="8" class="text-center py-12">
                                             <div class="flex flex-col items-center justify-center gap-3">
                                                 <svg class="w-16 h-16 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
@@ -195,9 +216,6 @@
                     <div class="relative">
                         <input type="date" name="from"
                                class="w-full border border-gray-300 px-4 py-2.5 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all">
-                        <svg class="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                        </svg>
                     </div>
                 </div>
 
@@ -206,9 +224,6 @@
                     <div class="relative">
                         <input type="date" name="to"
                                class="w-full border border-gray-300 px-4 py-2.5 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all">
-                        <svg class="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                        </svg>
                     </div>
                 </div>
 

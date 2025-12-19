@@ -25,21 +25,21 @@
             </div>
 
             {{-- Serial Number --}}
-<div>
-    <label class="block mb-1 font-semibold text-gray-700">
-        Serial Number
-    </label>
+            <div>
+                <label class="block mb-1 font-semibold text-gray-700">
+                    Serial Number
+                </label>
 
-    <input type="text"
-           name="serial_number"
-           class="w-full rounded-xl border-gray-300 focus:ring-blue-500 focus:border-blue-500 px-3 py-2"
-           value="{{ old('serial_number', $item->serial_number) }}"
-           required>
+                <input type="text"
+                       name="serial_number"
+                       class="w-full rounded-xl border-gray-300 focus:ring-blue-500 focus:border-blue-500 px-3 py-2"
+                       value="{{ old('serial_number', $item->serial_number) }}"
+                       required>
 
-    <p class="text-xs text-gray-500 mt-1">
-        Serial number akan digunakan sebagai isi QR Code
-    </p>
-</div>
+                <p class="text-xs text-gray-500 mt-1">
+                    Serial number akan digunakan sebagai isi QR Code
+                </p>
+            </div>
 
 
             {{-- Room --}}
@@ -65,6 +65,7 @@
                 <select name="categories[]" multiple
                     class="w-full rounded-xl border-gray-300 focus:ring-blue-500 focus:border-blue-500 px-3 py-2 h-32">
                     @php
+                        // Ambil ID kategori yang sudah ada di item untuk selected state
                         $selectedCategories = old('categories', $item->categories->pluck('id')->toArray());
                     @endphp
 
@@ -107,10 +108,11 @@
 
             {{-- Placed in Service --}}
             @php
+                // Format tanggal agar bisa masuk ke input type="date"
                 $placed = old(
                     'placed_in_service_at',
                     $item->placed_in_service_at
-                        ? \Carbon\Carbon::parse($item->placed_in_service_at)->format('Y-m-d')
+                        ? $item->placed_in_service_at->format('Y-m-d')
                         : null
                 );
             @endphp
@@ -130,15 +132,30 @@
                     value="{{ old('fiscal_group', $item->fiscal_group) }}">
             </div>
 
-            {{-- Status --}}
-            <div>
-                <label class="block mb-1 font-semibold text-gray-700">Status</label>
-                <select name="status"
-                    class="w-full rounded-xl border-gray-300 focus:ring-blue-500 focus:border-blue-500 px-3 py-2">
-                    <option value="available" {{ $item->status === 'available' ? 'selected' : '' }}>Available</option>
-                    <option value="borrowed" {{ $item->status === 'borrowed' ? 'selected' : '' }}>Borrowed</option>
-                    <option value="maintenance" {{ $item->status === 'maintenance' ? 'selected' : '' }}>Maintenance</option>
-                </select>
+            {{-- Grid Condition & Status --}}
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                
+                {{-- Condition (BARU) --}}
+                <div>
+                    <label class="block mb-1 font-semibold text-gray-700">Condition</label>
+                    <select name="condition"
+                            class="w-full rounded-xl border-gray-300 focus:ring-blue-500 focus:border-blue-500 px-3 py-2">
+                        <option value="good" {{ old('condition', $item->condition) == 'good' ? 'selected' : '' }}>Baik (Good)</option>
+                        <option value="damaged" {{ old('condition', $item->condition) == 'damaged' ? 'selected' : '' }}>Rusak Ringan (Damaged)</option>
+                        <option value="broken" {{ old('condition', $item->condition) == 'broken' ? 'selected' : '' }}>Rusak Berat (Broken)</option>
+                    </select>
+                </div>
+
+                {{-- Status --}}
+                <div>
+                    <label class="block mb-1 font-semibold text-gray-700">Status</label>
+                    <select name="status"
+                        class="w-full rounded-xl border-gray-300 focus:ring-blue-500 focus:border-blue-500 px-3 py-2">
+                        <option value="available" {{ old('status', $item->status) === 'available' ? 'selected' : '' }}>Available</option>
+                        <option value="borrowed" {{ old('status', $item->status) === 'borrowed' ? 'selected' : '' }}>Borrowed</option>
+                        <option value="maintenance" {{ old('status', $item->status) === 'maintenance' ? 'selected' : '' }}>Maintenance</option>
+                    </select>
+                </div>
             </div>
 
             {{-- Buttons --}}

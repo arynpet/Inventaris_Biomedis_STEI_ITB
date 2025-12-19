@@ -8,7 +8,6 @@
 
     <div class="p-6 max-w-5xl mx-auto">
 
-        <!-- Main Card with enhanced styling -->
         <div class="bg-gradient-to-br from-white to-gray-50 shadow-xl rounded-3xl p-8 border border-gray-100 hover:shadow-2xl transition-all duration-300">
             
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -21,6 +20,7 @@
                     </div>
 
                     <div class="space-y-3">
+                        {{-- Serial Number --}}
                         <div class="group flex items-start p-3 rounded-xl hover:bg-blue-50 transition-colors duration-200">
                             <div class="flex-shrink-0 w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center mr-3 group-hover:bg-blue-200 transition-colors">
                                 <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -33,6 +33,7 @@
                             </div>
                         </div>
 
+                        {{-- Asset Number --}}
                         <div class="group flex items-start p-3 rounded-xl hover:bg-purple-50 transition-colors duration-200">
                             <div class="flex-shrink-0 w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center mr-3 group-hover:bg-purple-200 transition-colors">
                                 <svg class="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -45,6 +46,7 @@
                             </div>
                         </div>
 
+                        {{-- Room --}}
                         <div class="group flex items-start p-3 rounded-xl hover:bg-green-50 transition-colors duration-200">
                             <div class="flex-shrink-0 w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center mr-3 group-hover:bg-green-200 transition-colors">
                                 <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -57,6 +59,7 @@
                             </div>
                         </div>
 
+                        {{-- Quantity --}}
                         <div class="group flex items-start p-3 rounded-xl hover:bg-orange-50 transition-colors duration-200">
                             <div class="flex-shrink-0 w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center mr-3 group-hover:bg-orange-200 transition-colors">
                                 <svg class="w-4 h-4 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -68,7 +71,37 @@
                                 <p class="text-sm font-semibold text-gray-800">{{ $item->quantity }}</p>
                             </div>
                         </div>
+                        
+                        {{-- KONDISI (NEW) --}}
+                        <div class="group flex items-start p-3 rounded-xl hover:bg-pink-50 transition-colors duration-200">
+                            <div class="flex-shrink-0 w-8 h-8 bg-pink-100 rounded-lg flex items-center justify-center mr-3 group-hover:bg-pink-200 transition-colors">
+                                {{-- Icon Heartbeat --}}
+                                <svg class="w-4 h-4 text-pink-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                                </svg>
+                            </div>
+                            <div class="flex-1">
+                                <p class="text-xs text-gray-500 font-medium mb-1">Kondisi</p>
+                                @php
+                                    $condColors = [
+                                        'good'    => 'bg-emerald-100 text-emerald-800',
+                                        'damaged' => 'bg-orange-100 text-orange-800',
+                                        'broken'  => 'bg-red-100 text-red-800',
+                                    ];
+                                    $condLabels = [
+                                        'good'    => 'Baik',
+                                        'damaged' => 'Rusak Ringan',
+                                        'broken'  => 'Rusak Berat',
+                                    ];
+                                    $cond = $item->condition ?? 'good';
+                                @endphp
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold {{ $condColors[$cond] ?? 'bg-gray-100' }}">
+                                    {{ $condLabels[$cond] ?? ucfirst($cond) }}
+                                </span>
+                            </div>
+                        </div>
 
+                        {{-- Status --}}
                         <div class="group flex items-start p-3 rounded-xl hover:bg-indigo-50 transition-colors duration-200">
                             <div class="flex-shrink-0 w-8 h-8 bg-indigo-100 rounded-lg flex items-center justify-center mr-3 group-hover:bg-indigo-200 transition-colors">
                                 <svg class="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -76,10 +109,11 @@
                                 </svg>
                             </div>
                             <div class="flex-1">
-                                <p class="text-xs text-gray-500 font-medium mb-1">Status</p>
-                                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold
-                                    @if($item->status == 'active') bg-green-100 text-green-800
-                                    @elseif($item->status == 'maintenance') bg-yellow-100 text-yellow-800
+                                <p class="text-xs text-gray-500 font-medium mb-1">Status Ketersediaan</p>
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold
+                                    @if($item->status == 'available') bg-green-100 text-green-800
+                                    @elseif($item->status == 'borrowed') bg-yellow-100 text-yellow-800
+                                    @elseif($item->status == 'maintenance') bg-red-100 text-red-800
                                     @else bg-gray-100 text-gray-800
                                     @endif">
                                     {{ ucfirst($item->status) }}

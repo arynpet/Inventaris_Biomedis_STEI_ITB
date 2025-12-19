@@ -11,6 +11,9 @@ use Barryvdh\DomPDF\Facade\Pdf;
 
 class BorrowingController extends Controller
 {
+    // ==========================================
+    // INDEX
+    // ==========================================
     public function index()
     {
         $borrowings = Borrowing::with(['item', 'borrower']) 
@@ -21,14 +24,20 @@ class BorrowingController extends Controller
         return view('borrowings.index', compact('borrowings'));
     }
 
+    // ==========================================
+    // CREATE FORM
+    // ==========================================
     public function create()
     {
-        $items = Item::orderBy('name')->get();
+        $items = Item::orderBy('name')->where('status', 'available')->get(); // Filter hanya yg available
         $users = PeminjamUser::orderBy('name')->get();
 
         return view('borrowings.create', compact('items', 'users'));
     }
 
+    // ==========================================
+    // STORE (Proses Pinjam)
+    // ==========================================
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -39,32 +48,33 @@ class BorrowingController extends Controller
             'notes'         => 'nullable|string',
         ]);
 
-        Borrowing::create([
-            'item_id'   => $validated['item_id'],
-            'user_id'   => $validated['user_id'],
-            'borrow_date' => $validated['borrow_date'],
-            'return_date' => $validated['return_date'],
-            'notes'     => $validated['notes'],
-            'status'    => 'borrowed',
-        ]);
-
-        
         $item = Item::findOrFail($validated['item_id']);
   
-        if ($item->status === 'borrowed') {
-        return back()->withErrors([
-            'item_id' => 'Item sedang dipinjam'
-            ]);
+        // Double check status barang
+        if ($item->status !== 'available') {
+            return back()->withErrors(['item_id' => 'Item sedang dipinjam atau dalam perbaikan.']);
         }
+
+        // Buat Peminjaman
+        Borrowing::create([
+            'item_id'     => $validated['item_id'],
+            'user_id'     => $validated['user_id'],
+            'borrow_date' => $validated['borrow_date'],
+            'return_date' => $validated['return_date'],
+            'notes'       => $validated['notes'],
+            'status'      => 'borrowed',
+        ]);
   
-        Item::where('id', $validated['item_id'])
-            ->update(['status' => 'borrowed']);
+        // Update Status Item
+        $item->update(['status' => 'borrowed']);
   
         return redirect()->route('borrowings.index')
-                        ->with('success', 'Borrowing created successfully!');
+                         ->with('success', 'Peminjaman berhasil dibuat!');
     }
 
-
+    // ==========================================
+    // EDIT & UPDATE (Admin Correction)
+    // ==========================================
     public function edit(Borrowing $borrowing)
     {
         $items = Item::orderBy('name')->get();
@@ -86,45 +96,72 @@ class BorrowingController extends Controller
 
         $borrowing->update($request->all());
 
-        return redirect()
-            ->route('borrowings.index')
+        return redirect()->route('borrowings.index')
             ->with('success', 'Peminjaman berhasil diperbarui.');
     }
 
+    // ==========================================
+    // DESTROY
+    // ==========================================
     public function destroy(Borrowing $borrowing)
     {
+        // Kembalikan status item jadi available jika peminjaman dihapus (opsional, tergantung kebijakan)
+        if($borrowing->status == 'borrowed') {
+            $borrowing->item()->update(['status' => 'available']);
+        }
+
         $borrowing->delete();
 
-        return redirect()
-            ->route('borrowings.index')
+        return redirect()->route('borrowings.index')
             ->with('success', 'Peminjaman berhasil dihapus.');
     }
 
     public function show(Borrowing $borrowing)
     {
-        // Load relasi item dan user
         $borrowing->load(['item.room', 'borrower']);
-
-        return view('borrowings.show', [
-            'borrow' => $borrowing
-        ]);
+        return view('borrowings.show', ['borrow' => $borrowing]);
     }
 
-    public function return($id)
+    // ==========================================
+    // RETURN (PENGEMBALIAN BARANG) - REVISI
+    // ==========================================
+    // Method ini sekarang menerima Request untuk menangkap input kondisi
+    public function returnItem(Request $request, $id)
     {
-        $borrow = Borrowing::findOrFail($id);
-
-        $borrow->update([
-            'status' => 'returned',
-            'return_date' => now(),
+        // 1. Validasi Input Kondisi dari Modal
+        $request->validate([
+            'condition' => 'required|in:good,damaged,broken', // Wajib pilih kondisi
         ]);
 
-            Item::where('id', $borrow->item_id)
-            ->update(['status' => 'available']);
+        $borrow = Borrowing::findOrFail($id);
+        $condition = $request->condition;
 
-        return redirect()->back()->with('success', 'Barang berhasil dikembalikan!');
+        // 2. Update Data Peminjaman (History)
+        $borrow->update([
+            'status'           => 'returned',
+            'return_date'      => now(),
+            'return_condition' => $condition, // Simpan sejarah kondisi saat kembali
+        ]);
+
+        // 3. Update Master Barang (Items Table)
+        $item = Item::findOrFail($borrow->item_id);
+
+        // LOGIKA INISIATIF:
+        // Jika kondisi Baik -> Status Available
+        // Jika kondisi Rusak/Pecah -> Status Maintenance (Supaya tidak dipinjam orang lain)
+        $newStatus = ($condition === 'good') ? 'available' : 'maintenance';
+
+        $item->update([
+            'status'    => $newStatus,
+            'condition' => $condition // Update kondisi fisik barang master
+        ]);
+
+        return redirect()->back()->with('success', 'Barang berhasil dikembalikan dengan kondisi: ' . $condition);
     }
 
+    // ==========================================
+    // HISTORY & REPORT
+    // ==========================================
     public function history(Request $request)
     {
         $from = $request->query('from');
@@ -134,7 +171,6 @@ class BorrowingController extends Controller
             ->where('status', 'returned')
             ->orderBy('return_date', 'desc');
 
-        // Filtering
         if ($from) {
             $query->whereDate('borrow_date', '>=', $from);
         }
@@ -146,7 +182,6 @@ class BorrowingController extends Controller
 
         return view('borrowings.history', compact('history', 'from', 'to'));
     }
-
 
     public function historyPdf(Request $request)
     {
@@ -178,71 +213,56 @@ class BorrowingController extends Controller
 
         return $pdf->stream('history.pdf');
     }
-public function findItemByQr(Request $request)
-{
-    $request->validate([
-        'qr' => 'required|string'
-    ]);
 
-    // QR berisi serial_number
-    $item = Item::where('serial_number', $request->qr)->first();
+    // ==========================================
+    // API / AJAX SCANNER
+    // ==========================================
+    public function findItemByQr(Request $request)
+    {
+        $request->validate(['qr' => 'required|string']);
 
-    if (!$item) {
+        $item = Item::where('serial_number', $request->qr)->first();
+
+        if (!$item) {
+            return response()->json(['success' => false, 'message' => 'Item tidak ditemukan'], 404);
+        }
+
+        if ($item->status !== 'available') {
+            return response()->json(['success' => false, 'message' => 'Item sedang tidak tersedia (Status: '.$item->status.')'], 400);
+        }
+
         return response()->json([
-            'success' => false,
-            'message' => 'Item tidak ditemukan'
-        ], 404);
-    }
-
-    // Optional: cek status item
-    if ($item->status !== 'available') {
-        return response()->json([
-            'success' => false,
-            'message' => 'Item sedang tidak tersedia'
-        ], 400);
-    }
-
-    return response()->json([
-        'success' => true,
-        'item' => [
-            'id' => $item->id,
-            'name' => $item->name,
-            'serial_number' => $item->serial_number,
-        ]
-    ]);
-}
-
-public function scan(Request $request)
-{
-    $request->validate([
-        'qr' => 'required|string'
-    ]);
-
-    $item = Item::where('serial_number', $request->qr)
-        ->orWhere('qr_code', $request->qr)
-        ->first();
-
-    if (!$item) {
-        return response()->json([
-            'success' => false,
-            'message' => 'Item tidak ditemukan'
+            'success' => true,
+            'item' => [
+                'id' => $item->id,
+                'name' => $item->name,
+                'serial_number' => $item->serial_number,
+            ]
         ]);
     }
 
-    // 🔴 CEK STATUS ITEM
-    if ($item->status === 'borrowed') {
+    public function scan(Request $request)
+    {
+        $request->validate(['qr' => 'required|string']);
+
+        $item = Item::where('serial_number', $request->qr)
+            ->orWhere('qr_code', $request->qr)
+            ->first();
+
+        if (!$item) {
+            return response()->json(['success' => false, 'message' => 'Item tidak ditemukan']);
+        }
+
+        if ($item->status === 'borrowed') {
+            return response()->json(['success' => false, 'message' => 'Item sedang dipinjam']);
+        }
+
         return response()->json([
-            'success' => false,
-            'message' => 'Item sedang dipinjam'
+            'success' => true,
+            'item' => [
+                'id'   => $item->id,
+                'name' => $item->name
+            ]
         ]);
     }
-
-    return response()->json([
-        'success' => true,
-        'item' => [
-            'id'   => $item->id,
-            'name' => $item->name
-        ]
-    ]);
-}
 }

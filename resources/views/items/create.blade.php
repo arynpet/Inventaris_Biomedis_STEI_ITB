@@ -24,13 +24,14 @@
             </div>
 
             {{-- SERIAL NUMBER --}}
-<div>
-    <label class="block text-sm font-semibold mb-1">Serial Number</label>
-    <input type="text" name="serial_number"
-           class="w-full rounded-lg border-gray-300"
-           placeholder="SN-XXXX"
-           required>
-</div>
+            <div>
+                <label class="block text-sm font-semibold mb-1">Serial Number</label>
+                <input type="text" name="serial_number"
+                       class="w-full rounded-lg border-gray-300 focus:ring-blue-500 focus:border-blue-500 px-3 py-2"
+                       placeholder="SN-XXXX"
+                       value="{{ old('serial_number') }}"
+                       required>
+            </div>
 
 
             {{-- Room --}}
@@ -41,7 +42,9 @@
                         required>
                     <option value="">-- Select Room --</option>
                     @foreach($rooms as $room)
-                        <option value="{{ $room->id }}">{{ $room->name }}</option>
+                        <option value="{{ $room->id }}" {{ old('room_id') == $room->id ? 'selected' : '' }}>
+                            {{ $room->name }}
+                        </option>
                     @endforeach
                 </select>
             </div>
@@ -53,7 +56,7 @@
                 <select name="categories[]" multiple
                         class="w-full rounded-xl border-gray-300 focus:ring-blue-500 focus:border-blue-500 px-3 py-2 h-32">
                     @foreach($categories as $category)
-                        <option value="{{ $category->id }}">
+                        <option value="{{ $category->id }}" {{ (collect(old('categories'))->contains($category->id)) ? 'selected' : '' }}>
                             {{ $category->name }}
                         </option>
                     @endforeach
@@ -102,15 +105,30 @@
                        value="{{ old('fiscal_group') }}">
             </div>
 
-            {{-- Status --}}
-            <div>
-                <label class="block mb-1 font-semibold text-gray-700">Status</label>
-                <select name="status"
-                        class="w-full rounded-xl border-gray-300 focus:ring-blue-500 focus:border-blue-500 px-3 py-2">
-                    <option value="available">Available</option>
-                    <option value="borrowed">Borrowed</option>
-                    <option value="maintenance">Maintenance</option>
-                </select>
+            {{-- Grid untuk Status & Kondisi --}}
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                
+                {{-- Condition (BARU) --}}
+                <div>
+                    <label class="block mb-1 font-semibold text-gray-700">Condition</label>
+                    <select name="condition"
+                            class="w-full rounded-xl border-gray-300 focus:ring-blue-500 focus:border-blue-500 px-3 py-2">
+                        <option value="good" {{ old('condition') == 'good' ? 'selected' : '' }}>Baik (Good)</option>
+                        <option value="damaged" {{ old('condition') == 'damaged' ? 'selected' : '' }}>Rusak Ringan (Damaged)</option>
+                        <option value="broken" {{ old('condition') == 'broken' ? 'selected' : '' }}>Rusak Berat (Broken)</option>
+                    </select>
+                </div>
+
+                {{-- Status --}}
+                <div>
+                    <label class="block mb-1 font-semibold text-gray-700">Status</label>
+                    <select name="status"
+                            class="w-full rounded-xl border-gray-300 focus:ring-blue-500 focus:border-blue-500 px-3 py-2">
+                        <option value="available" {{ old('status') == 'available' ? 'selected' : '' }}>Available</option>
+                        <option value="borrowed" {{ old('status') == 'borrowed' ? 'selected' : '' }}>Borrowed</option>
+                        <option value="maintenance" {{ old('status') == 'maintenance' ? 'selected' : '' }}>Maintenance</option>
+                    </select>
+                </div>
             </div>
 
             {{-- Buttons --}}

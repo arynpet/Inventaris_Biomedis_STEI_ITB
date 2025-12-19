@@ -9,21 +9,27 @@ class Item extends Model
 {
     use HasFactory;
 
-protected $fillable = [
-    'asset_number',
-    'serial_number',
-    'qr_code',
-    'name',
-    'room_id',
-    'quantity',
-    'source',
-    'acquisition_year',
-    'placed_in_service_at',
-    'fiscal_group',
-    'status',
-        'qr_code_path',
-];
+    protected $fillable = [
+        'asset_number',
+        'serial_number',
+        'qr_code',
+        'name',
+        'room_id',
+        'quantity',
+        'source',
+        'acquisition_year',
+        'placed_in_service_at',
+        'fiscal_group',
+        'status',      // Status ketersediaan (available, borrowed, maintenance)
+        'condition',   // Status fisik barang (good, damaged, broken) -> BARU
+    ];
 
+    // Konversi otomatis tipe data
+    protected $casts = [
+        'placed_in_service_at' => 'date',
+        'acquisition_year'     => 'integer',
+        'quantity'             => 'integer',
+    ];
 
     public function room()
     {

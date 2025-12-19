@@ -1,16 +1,14 @@
 <?php
 
 namespace App\Http\Controllers;
-use Illuminate\Support\Facades\Storage;
-use SimpleSoftwareIO\QrCode\Facades\QrCode;
-use SimpleSoftwareIO\QrCode\Generator;
-use Barryvdh\DomPDF\Facade\Pdf;
-
 
 use App\Models\Item;
 use App\Models\Room;
 use App\Models\Category;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
+use SimpleSoftwareIO\QrCode\Facades\QrCode;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class ItemController extends Controller
 {
@@ -40,7 +38,7 @@ class ItemController extends Controller
     // =========================
     // STORE
     // =========================
-public function store(Request $request)
+    public function store(Request $request)
     {
         $validated = $request->validate([
             'name'                 => 'required|string|max:255',
@@ -53,6 +51,7 @@ public function store(Request $request)
             'placed_in_service_at' => 'nullable|date',
             'fiscal_group'         => 'nullable|string|max:255',
             'status'               => 'required|in:available,borrowed,maintenance',
+            'condition'            => 'required|in:good,damaged,broken', // Validasi Kondisi Baru
             'categories'           => 'nullable|array',
             'categories.*'         => 'exists:categories,id',
         ]);
@@ -61,7 +60,6 @@ public function store(Request $request)
         $item = Item::create($validated);
 
         // 2. Generate QR Code Handling
-        // Memisahkan logika pembuatan QR ke fungsi private agar reusable (DRY Principle)
         $this->generateAndSaveQr($item);
 
         // 3. Sync Relation
@@ -72,8 +70,6 @@ public function store(Request $request)
         return redirect()->route('items.index')
             ->with('success', 'Item berhasil dibuat & QR otomatis dibuat.');
     }
-
-
 
     // =========================
     // EDIT FORM
@@ -89,12 +85,12 @@ public function store(Request $request)
     // =========================
     // UPDATE
     // =========================
-   public function update(Request $request, Item $item)
+    public function update(Request $request, Item $item)
     {
         $validated = $request->validate([
             'name'                 => 'required|string|max:255',
             'asset_number'         => 'nullable|string|max:255',
-            'serial_number'        => 'nullable|string|max:255',
+            'serial_number'        => 'required|string|max:255|unique:items,serial_number,' . $item->id,
             'room_id'              => 'required|exists:rooms,id',
             'quantity'             => 'required|integer|min:1',
             'source'               => 'nullable|string|max:255',
@@ -102,23 +98,29 @@ public function store(Request $request)
             'placed_in_service_at' => 'nullable|date',
             'fiscal_group'         => 'nullable|string|max:255',
             'status'               => 'required|in:available,borrowed,maintenance',
+            'condition'            => 'required|in:good,damaged,broken', // Validasi Kondisi Baru
             'categories'           => 'nullable|array',
             'categories.*'         => 'exists:categories,id',
         ]);
 
-        if (!empty($validated['serial_number']) && $validated['serial_number'] !== $item->serial_number) {
+        // Cek jika Serial Number berubah, maka QR Code harus diganti
+        if ($validated['serial_number'] !== $item->serial_number) {
+            // Hapus QR Lama jika ada
             if ($item->qr_code && Storage::disk('public')->exists($item->qr_code)) {
                 Storage::disk('public')->delete($item->qr_code);
             }
             
-            $qrPath = 'qr/items/' . $item->id . '.svg';
-            $qrContent = QrCode::format('svg')->size(300)->generate($validated['serial_number']);
-            Storage::disk('public')->put($qrPath, $qrContent);
+            // Update data item dulu (termasuk serial number baru)
+            $item->update($validated);
             
-            $validated['qr_code'] = $qrPath; 
+            // Generate ulang QR Code dengan serial number baru
+            $this->generateAndSaveQr($item);
+        } else {
+            // Jika serial number tidak berubah, update data seperti biasa (termasuk condition)
+            $item->update($validated);
         }
-    $item->update($validated);
 
+        // Sync Kategori
         $item->categories()->sync($request->categories ?? []);
 
         return redirect()->route('items.index')
@@ -130,10 +132,20 @@ public function store(Request $request)
     // =========================
     public function destroy(Item $item)
     {
+        // Opsional: Hapus file QR saat item dihapus agar tidak menumpuk sampah
+        if ($item->qr_code && Storage::disk('public')->exists($item->qr_code)) {
+            Storage::disk('public')->delete($item->qr_code);
+        }
+
         $item->delete();
 
         return redirect()->route('items.index')
             ->with('success', 'Item deleted successfully.');
+    }
+
+    public function show(Item $item)
+    {
+        return view('items.show', compact('item'));
     }
 
     public function qrPdf(Item $item)
@@ -143,11 +155,9 @@ public function store(Request $request)
             ->stream('qr-'.$item->serial_number.'.pdf');
     }
 
-        public function show(Item $item)
-    {
-        return view('items.show', compact('item'));
-    }
-
+    // =========================
+    // PRIVATE METHODS
+    // =========================
     private function generateAndSaveQr(Item $item)
     {
         // Tentukan Path Penyimpanan
@@ -163,9 +173,9 @@ public function store(Request $request)
         // Simpan File ke Disk
         Storage::disk('public')->put($qrPath, $qrContent);
 
-        // Update Kolom Database (Persistence)
-        // Kita menggunakan updateQuietly jika tidak ingin memicu event model, 
-        // tapi update() biasa sudah cukup di sini.
+        // Update Kolom Database
+        // Menggunakan updateQuietly jika tidak ingin mentrigger updated_at, 
+        // tapi update() biasa aman di sini.
         $item->update(['qr_code' => $qrPath]);
     }
 }
