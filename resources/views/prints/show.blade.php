@@ -11,7 +11,6 @@
 
             <div class="bg-gradient-to-br from-white to-gray-50 shadow-xl rounded-3xl overflow-hidden border border-gray-100 hover:shadow-2xl transition-all duration-300">
 
-                <!-- Header Card -->
                 <div class="bg-gradient-to-r from-cyan-500 to-blue-600 p-8">
                     <div class="flex items-center text-white">
                         <div class="w-16 h-16 bg-white/20 backdrop-blur rounded-2xl flex items-center justify-center mr-5 shadow-lg">
@@ -26,13 +25,10 @@
                     </div>
                 </div>
 
-                <!-- Content -->
                 <div class="p-8">
                     
-                    <!-- User & Schedule Section -->
                     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
 
-                        <!-- User Info -->
                         <div class="group p-6 rounded-2xl border-2 border-gray-100 hover:border-purple-200 hover:shadow-lg transition-all duration-300">
                             <div class="flex items-start">
                                 <div class="w-14 h-14 bg-gradient-to-br from-purple-100 to-purple-200 rounded-xl flex items-center justify-center mr-4 flex-shrink-0 group-hover:scale-110 transition-transform duration-300">
@@ -47,7 +43,6 @@
                             </div>
                         </div>
 
-                        <!-- Date Info -->
                         <div class="group p-6 rounded-2xl border-2 border-gray-100 hover:border-blue-200 hover:shadow-lg transition-all duration-300">
                             <div class="flex items-start">
                                 <div class="w-14 h-14 bg-gradient-to-br from-blue-100 to-blue-200 rounded-xl flex items-center justify-center mr-4 flex-shrink-0 group-hover:scale-110 transition-transform duration-300">
@@ -64,10 +59,8 @@
 
                     </div>
 
-                    <!-- Time & Duration Section -->
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
 
-                        <!-- Start Time -->
                         <div class="group p-5 rounded-2xl border-2 border-gray-100 hover:border-green-200 hover:shadow-lg transition-all duration-300">
                             <div class="flex items-center justify-center flex-col text-center">
                                 <div class="w-12 h-12 bg-gradient-to-br from-green-100 to-green-200 rounded-xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform duration-300">
@@ -80,7 +73,6 @@
                             </div>
                         </div>
 
-                        <!-- End Time -->
                         <div class="group p-5 rounded-2xl border-2 border-gray-100 hover:border-orange-200 hover:shadow-lg transition-all duration-300">
                             <div class="flex items-center justify-center flex-col text-center">
                                 <div class="w-12 h-12 bg-gradient-to-br from-orange-100 to-orange-200 rounded-xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform duration-300">
@@ -93,7 +85,6 @@
                             </div>
                         </div>
 
-                        <!-- Duration -->
                         <div class="group p-5 rounded-2xl border-2 border-cyan-100 bg-gradient-to-br from-cyan-50 to-blue-50 hover:shadow-lg transition-all duration-300">
                             <div class="flex items-center justify-center flex-col text-center">
                                 <div class="w-12 h-12 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform duration-300 shadow-lg">
@@ -108,7 +99,32 @@
 
                     </div>
 
-                    <!-- Material Section -->
+                    <div class="p-6 bg-gradient-to-br from-slate-50 to-gray-100 rounded-2xl border-2 border-slate-200 mb-6">
+                        <div class="flex items-center mb-4">
+                            <div class="w-10 h-10 bg-gradient-to-br from-slate-600 to-gray-700 rounded-xl flex items-center justify-center mr-3 shadow-lg">
+                                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path>
+                                </svg>
+                            </div>
+                            <h4 class="text-lg font-bold text-gray-800">Detail Printer</h4>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="bg-white p-4 rounded-xl shadow-sm">
+                                <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Nama Printer</p>
+                                <p class="text-base font-bold text-gray-800">
+                                    {{ $print->printer->name ?? 'Tidak diketahui' }}
+                                </p>
+                            </div>
+                            <div class="bg-white p-4 rounded-xl shadow-sm">
+                                <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Status Printer Saat Ini</p>
+                                <p class="text-base font-bold text-gray-800 capitalize">
+                                    {{ str_replace('_', ' ', $print->printer->status ?? '-') }}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="p-6 bg-gradient-to-br from-amber-50 to-orange-50 rounded-2xl border-2 border-amber-100 mb-6">
                         <div class="flex items-center mb-4">
                             <div class="w-10 h-10 bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl flex items-center justify-center mr-3 shadow-lg">
@@ -135,10 +151,8 @@
                         </div>
                     </div>
 
-                    <!-- Status & Notes Section -->
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                         
-                        <!-- Status -->
                         <div class="p-6 bg-white rounded-2xl border-2 border-gray-100 shadow-sm">
                             <div class="flex items-center mb-4">
                                 <div class="w-8 h-8 bg-gradient-to-br from-indigo-100 to-purple-100 rounded-lg flex items-center justify-center mr-3">
@@ -170,7 +184,6 @@
                             </div>
                         </div>
 
-                        <!-- File Download -->
                         <div class="p-6 bg-white rounded-2xl border-2 border-gray-100 shadow-sm">
                             <div class="flex items-center mb-4">
                                 <div class="w-8 h-8 bg-gradient-to-br from-rose-100 to-pink-100 rounded-lg flex items-center justify-center mr-3">
@@ -202,7 +215,6 @@
 
                     </div>
 
-                    <!-- Notes Section -->
                     @if($print->notes)
                     <div class="p-6 bg-gradient-to-br from-slate-50 to-gray-50 rounded-2xl border-2 border-slate-100">
                         <div class="flex items-start">
@@ -221,7 +233,6 @@
 
                 </div>
 
-                <!-- Action Footer -->
                 <div class="bg-gray-50 px-8 py-6 border-t border-gray-100">
                     <div class="flex justify-between items-center">
                         <a href="{{ route('prints.index') }}"
@@ -232,11 +243,10 @@
                             Kembali
                         </a>
 
-                        <!-- Optional: Print Button -->
                         <button onclick="window.print()"
                             class="group flex items-center px-6 py-3 bg-gradient-to-r from-cyan-500 to-blue-600 text-white rounded-xl font-medium shadow-lg hover:shadow-xl hover:from-cyan-600 hover:to-blue-700 transform hover:-translate-y-0.5 transition-all duration-200">
                             <svg class="w-5 h-5 mr-2 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2-2v4h10z"></path>
                             </svg>
                             Cetak
                         </button>
