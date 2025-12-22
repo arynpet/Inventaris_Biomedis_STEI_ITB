@@ -6,18 +6,14 @@
     </x-slot>
 
     @php
-        // pastikan menggunakan Carbon yang sudah terinstall
         $minDate = \Carbon\Carbon::now()->addDays(2)->format('Y-m-d');
-        // optional: default date to minDate
         $defaultDate = old('date', $minDate);
     @endphp
 
     <div class="py-6">
         <div class="max-w-3xl mx-auto sm:px-6 lg:px-8">
-
             <div class="bg-white shadow rounded-lg p-6">
 
-                {{-- Show validation errors --}}
                 @if ($errors->any())
                     <div class="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded">
                         <ul class="list-disc ml-5">
@@ -45,19 +41,21 @@
                         @error('user_id') <p class="text-red-600 text-sm mt-1">{{ $message }}</p> @enderror
                     </div>
 
-                    <div class="form-group">
-    <label for="printer_id">Pilih Mesin Printer</label>
-    <select name="printer_id" id="printer_id" class="form-control">
-        <option value="">-- Pilih Mesin --</option>
-        @foreach ($printers as $printer)
-            <option value="{{ $printer->id }}"
-                {{ old('printer_id', $print->printer_id ?? '') == $printer->id ? 'selected' : '' }}>
-                {{ $printer->name }} ({{ $printer->category }})
-            </option>
-        @endforeach
-    </select>
-</div>
-
+                    {{-- PRINTER --}}
+                    <div>
+                        <label class="block font-medium text-sm text-gray-700">Pilih Mesin Printer</label>
+                        <select name="printer_id" id="printer_id" class="w-full border-gray-300 rounded mt-1">
+                            <option value="" data-category="">-- Pilih Mesin --</option>
+                            @foreach ($printers as $printer)
+                                <option value="{{ $printer->id }}" 
+                                        data-category="{{ $printer->category }}" 
+                                        {{ old('printer_id') == $printer->id ? 'selected' : '' }}>
+                                    {{ $printer->name }} ({{ $printer->category }})
+                                </option>
+                            @endforeach
+                        </select>
+                        @error('printer_id') <p class="text-red-600 text-sm mt-1">{{ $message }}</p> @enderror
+                    </div>
 
                     {{-- DATE --}}
                     <div>
@@ -88,56 +86,45 @@
                         </div>
                     </div>
 
-{{-- MATERIAL --}}
-<div>
-    <label class="block font-medium text-sm text-gray-700">Jenis Material</label>
-    <select name="material_type_id" class="w-full border-gray-300 rounded mt-1">
-        <option value="">-- Pilih Material --</option>
-        @foreach($materials as $m)
-            <option value="{{ $m->id }}"
-                {{ old('material_type_id') == $m->id ? 'selected' : '' }}>
-                {{ $m->category }} - {{ $m->name }}
-                (Stock: {{ $m->stock_balance }} {{ $m->unit }})
-            </option>
-        @endforeach
-    </select>
-</div>
+                    {{-- MATERIAL --}}
+                    <div>
+                        <label class="block font-medium text-sm text-gray-700">Jenis Material</label>
+                        <select name="material_type_id" id="material_type_id" class="w-full border-gray-300 rounded mt-1" disabled>
+                            <option value="" data-category="" data-unit="">-- Pilih Material --</option>
+                            @foreach($materials as $m)
+                                <option value="{{ $m->id }}" 
+                                        data-category="{{ $m->category }}" 
+                                        data-unit="{{ $m->unit }}"
+                                        {{ old('material_type_id') == $m->id ? 'selected' : '' }}>
+                                    {{ $m->name }} (Stock: {{ $m->stock_balance }})
+                                </option>
+                            @endforeach
+                        </select>
+                        @error('material_type_id') <p class="text-red-600 text-sm mt-1">{{ $message }}</p> @enderror
+                    </div>
 
-<div class="grid grid-cols-2 gap-4">
-    <div>
-        <label class="block font-medium text-sm text-gray-700">
-            Jumlah Material Digunakan
-        </label>
-        <input type="number" step="0.1" name="material_amount"
-               class="w-full border-gray-300 rounded mt-1 p-2"
-               placeholder="Contoh: 20"
-               value="{{ old('material_amount') }}">
-    </div>
-
-    <div>
-        <label class="block font-medium text-sm text-gray-700">Unit</label>
-        <select name="material_unit" class="w-full border-gray-300 rounded mt-1">
-            <option value="">-</option>
-            <option value="gram">Gram</option>
-            <option value="mililiter">Mililiter</option>
-        </select>
-    </div>
-</div>
-
-<p class="text-xs text-gray-500">
-    ⚠ Material akan langsung dipotong dari stock saat disimpan
-</p>
-
+                    {{-- UNIT & AMOUNT --}}
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block font-medium text-sm text-gray-700">Jumlah</label>
+                            <input type="number" step="0.1" name="material_amount" class="w-full border-gray-300 rounded mt-1 p-2" value="{{ old('material_amount') }}">
+                        </div>
+                        <div>
+                            <label class="block font-medium text-sm text-gray-700">Unit</label>
+                            <input type="text" id="material_unit_display" name="material_unit" readonly class="w-full border-gray-300 bg-gray-100 rounded mt-1 p-2" value="{{ old('material_unit', '-') }}">
+                        </div>
+                    </div>
 
                     {{-- SOURCE --}}
                     <div>
                         <label class="block font-medium text-sm text-gray-700">Sumber Material</label>
                         <select name="material_source" class="w-full border-gray-300 rounded mt-1">
                             <option value="">-</option>
-                            <option value="lab" {{ old('material_source')=='lab' ? 'selected' : '' }}>Lab</option>
-                            <option value="penelitian" {{ old('material_source')=='penelitian' ? 'selected' : '' }}>Penelitian</option>
-                            <option value="dosen" {{ old('material_source')=='dosen' ? 'selected' : '' }}>Dosen</option>
-                            <option value="pribadi" {{ old('material_source')=='pribadi' ? 'selected' : '' }}>Pribadi</option>
+                            @foreach(['lab', 'penelitian', 'dosen', 'pribadi'] as $source)
+                                <option value="{{ $source }}" {{ old('material_source') == $source ? 'selected' : '' }}>
+                                    {{ ucfirst($source) }}
+                                </option>
+                            @endforeach
                         </select>
                     </div>
 
@@ -154,15 +141,61 @@
                         @error('file_upload') <p class="text-red-600 text-sm mt-1">{{ $message }}</p> @enderror
                     </div>
 
-                    <div class="flex justify-end">
-                        <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+                    <div class="flex justify-end items-center space-x-4">
+                        <p class="text-xs text-gray-500">
+                            ⚠ Material akan langsung dipotong dari stock saat disimpan
+                        </p>
+                        <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition">
                             Simpan
                         </button>
                     </div>
                 </form>
-
             </div>
-
         </div>
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const printerSelect = document.getElementById('printer_id');
+            const materialSelect = document.getElementById('material_type_id');
+            const unitInput = document.getElementById('material_unit_display');
+            
+            // Mengonversi HTMLOptionsCollection menjadi Array untuk persistensi data selama siklus hidup DOM
+            const allMaterialOptions = Array.from(materialSelect.options);
+
+            function updateMaterials() {
+                const selectedPrinter = printerSelect.options[printerSelect.selectedIndex];
+                const category = selectedPrinter.getAttribute('data-category');
+
+                // Membersihkan child nodes dari elemen select material
+                materialSelect.innerHTML = '';
+                
+                // Predikat filtrasi berdasarkan atribut data-category
+                const filteredOptions = allMaterialOptions.filter(option => {
+                    const materialCat = option.getAttribute('data-category');
+                    return materialCat === category || option.value === '';
+                });
+
+                // Rekonstruksi DocumentFragment ke dalam elemen select
+                filteredOptions.forEach(option => materialSelect.appendChild(option));
+                
+                // Sinkronisasi status disabled berdasarkan ketersediaan kategori
+                materialSelect.disabled = !category;
+                updateUnit();
+            }
+
+            function updateUnit() {
+                const selectedMaterial = materialSelect.options[materialSelect.selectedIndex];
+                const unit = selectedMaterial.getAttribute('data-unit');
+                unitInput.value = unit ? unit : '-';
+            }
+
+            // Registrasi event listener untuk mendeteksi perubahan state pada elemen input
+            printerSelect.addEventListener('change', updateMaterials);
+            materialSelect.addEventListener('change', updateUnit);
+
+            // Eksekusi inisial untuk menangani state setelah post-back atau validation errors
+            if (printerSelect.value) updateMaterials();
+        });
+    </script>
 </x-app-layout>

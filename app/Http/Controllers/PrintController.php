@@ -33,11 +33,10 @@ class PrintController extends Controller
     {
         $users = PeminjamUser::where('is_trained', true)->get();
         $materials = MaterialType::all();
-            $printers = Printer::all(); // list mesin
+        $printers = Printer::all(); // list mesin
     
-
-        return view('prints.create', compact('users', 'materials', 'printers'));
-    }
+    return view('prints.create', compact('users', 'materials', 'printers'));
+}
 
 
     // =============================
