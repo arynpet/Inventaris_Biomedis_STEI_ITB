@@ -103,24 +103,27 @@ class ItemController extends Controller
             'categories.*'         => 'exists:categories,id',
         ]);
 
-        // Cek jika Serial Number berubah, maka QR Code harus diganti
-        if ($validated['serial_number'] !== $item->serial_number) {
-            // Hapus QR Lama jika ada
+       $qrFieldsChanged = ($validated['name'] !== $item->name) || 
+                       ($validated['asset_number'] !== $item->asset_number) || 
+                       ($validated['serial_number'] !== $item->serial_number) ||
+                       ($validated['room_id'] !== $item->room_id) ||
+                       ($validated['condition'] !== $item->condition);
+
+        if ($qrFieldsChanged) {
+            // Purging file QR lama dari storage disk public untuk integritas data
             if ($item->qr_code && Storage::disk('public')->exists($item->qr_code)) {
                 Storage::disk('public')->delete($item->qr_code);
             }
             
-            // Update data item dulu (termasuk serial number baru)
+            // Melakukan persistensi data sebelum regenerasi QR
             $item->update($validated);
             
-            // Generate ulang QR Code dengan serial number baru
+            // Eksekusi ulang prosedur regenerasi QR dengan data terbaru
             $this->generateAndSaveQr($item);
         } else {
-            // Jika serial number tidak berubah, update data seperti biasa (termasuk condition)
             $item->update($validated);
         }
 
-        // Sync Kategori
         $item->categories()->sync($request->categories ?? []);
 
         return redirect()->route('items.index')
@@ -163,12 +166,20 @@ class ItemController extends Controller
         // Tentukan Path Penyimpanan
         $qrPath = 'qr/items/' . $item->id . '.svg';
 
+        $item->load('room');
+        $roomName = $item->room ? $item->room->name : 'N/A';
+
+        $qrPayload = "Item Name: " . $item->name . "\r\n" .
+                 "Asset No: " . ($item->asset_number ?? 'N/A') . "\r\n" .
+                 "Serial No: " . $item->serial_number . "\r\n" .
+                 "Room Name: " . $roomName . "\r\n" .
+                 "Condition: " . $item->condition;
         // Generate Konten QR (IO Operation)
         $qrContent = QrCode::format('svg')
             ->size(300)
             ->margin(2)
             ->errorCorrection('H')
-            ->generate($item->serial_number);
+            ->generate( $qrPayload);
 
         // Simpan File ke Disk
         Storage::disk('public')->put($qrPath, $qrContent);
