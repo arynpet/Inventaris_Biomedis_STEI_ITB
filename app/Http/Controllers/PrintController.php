@@ -57,7 +57,7 @@ class PrintController extends Controller
             'end_time'          => 'required|after:start_time',
             'material_type_id'  => 'nullable|exists:material_types,id',
             'material_amount'   => 'nullable|numeric|min:0',
-            'material_unit'     => 'nullable|in:gram,ml',
+            'material_unit'     => 'nullable|in:gram,mililiter',
             'material_source'   => 'nullable|in:lab,penelitian,dosen,pribadi',
 
             'file_upload'       => 'nullable|mimes:pdf,jpg,jpeg,png|max:2048',

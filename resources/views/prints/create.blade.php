@@ -119,7 +119,7 @@
         <select name="material_unit" class="w-full border-gray-300 rounded mt-1">
             <option value="">-</option>
             <option value="gram">Gram</option>
-            <option value="ml">ml</option>
+            <option value="mililiter">Mililiter</option>
         </select>
     </div>
 </div>

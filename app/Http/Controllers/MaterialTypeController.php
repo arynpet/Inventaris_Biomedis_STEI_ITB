@@ -24,7 +24,7 @@ $request->validate([
     'category'       => 'required|in:filament,resin',
     'name'           => 'required|string|max:255',
     'stock_balance'  => 'required|numeric|min:0',
-    'unit'           => 'required|in:gr,ml',
+    'unit'           => 'required|in:gram,mililiter',
 ]);
 
 

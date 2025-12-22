@@ -21,7 +21,7 @@ return new class extends Migration
 
             // Jumlah bahan + satuan
             $table->float('material_amount')->nullable()->after('material_type_id');
-            $table->enum('material_unit', ['gram', 'ml'])->nullable()->after('material_amount');
+            $table->enum('material_unit', ['gram', 'mililiter'])->nullable()->after('material_amount');
 
             // Sumber bahan
             $table->enum('material_source', ['lab', 'penelitian', 'dosen', 'pribadi'])

@@ -47,8 +47,8 @@
         Unit
     </label>
     <select name="unit" class="w-full border-gray-300 rounded mt-1">
-        <option value="gr">Gram (gr)</option>
-        <option value="ml">Milliliter (ml)</option>
+        <option value="gram">Gram</option>
+        <option value="mililiter">Mililiter</option>
     </select>
 </div>
 
