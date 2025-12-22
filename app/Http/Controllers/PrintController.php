@@ -33,11 +33,10 @@ class PrintController extends Controller
     {
         $users = PeminjamUser::where('is_trained', true)->get();
         $materials = MaterialType::all();
-            $printers = Printer::all(); // list mesin
+        $printers = Printer::all(); // list mesin
     
-
-        return view('prints.create', compact('users', 'materials', 'printers'));
-    }
+    return view('prints.create', compact('users', 'materials', 'printers'));
+}
 
 
     // =============================
@@ -57,7 +56,7 @@ class PrintController extends Controller
             'end_time'          => 'required|after:start_time',
             'material_type_id'  => 'nullable|exists:material_types,id',
             'material_amount'   => 'nullable|numeric|min:0',
-            'material_unit'     => 'nullable|in:gram,ml',
+            'material_unit'     => 'nullable|in:gram,mililiter',
             'material_source'   => 'nullable|in:lab,penelitian,dosen,pribadi',
 
             'file_upload'       => 'nullable|mimes:pdf,jpg,jpeg,png|max:2048',
