@@ -23,9 +23,7 @@
                         {{-- Serial Number --}}
                         <div class="group flex items-start p-3 rounded-xl hover:bg-blue-50 transition-colors duration-200">
                             <div class="flex-shrink-0 w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center mr-3 group-hover:bg-blue-200 transition-colors">
-                                <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path>
-                                </svg>
+                                <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path></svg>
                             </div>
                             <div class="flex-1">
                                 <p class="text-xs text-gray-500 font-medium mb-1">Serial Number</p>
@@ -36,9 +34,7 @@
                         {{-- Asset Number --}}
                         <div class="group flex items-start p-3 rounded-xl hover:bg-purple-50 transition-colors duration-200">
                             <div class="flex-shrink-0 w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center mr-3 group-hover:bg-purple-200 transition-colors">
-                                <svg class="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                                </svg>
+                                <svg class="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                             </div>
                             <div class="flex-1">
                                 <p class="text-xs text-gray-500 font-medium mb-1">Asset Number</p>
@@ -49,9 +45,7 @@
                         {{-- Room --}}
                         <div class="group flex items-start p-3 rounded-xl hover:bg-green-50 transition-colors duration-200">
                             <div class="flex-shrink-0 w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center mr-3 group-hover:bg-green-200 transition-colors">
-                                <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
-                                </svg>
+                                <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
                             </div>
                             <div class="flex-1">
                                 <p class="text-xs text-gray-500 font-medium mb-1">Ruangan</p>
@@ -62,9 +56,7 @@
                         {{-- Quantity --}}
                         <div class="group flex items-start p-3 rounded-xl hover:bg-orange-50 transition-colors duration-200">
                             <div class="flex-shrink-0 w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center mr-3 group-hover:bg-orange-200 transition-colors">
-                                <svg class="w-4 h-4 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14"></path>
-                                </svg>
+                                <svg class="w-4 h-4 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14"></path></svg>
                             </div>
                             <div class="flex-1">
                                 <p class="text-xs text-gray-500 font-medium mb-1">Jumlah</p>
@@ -72,27 +64,16 @@
                             </div>
                         </div>
                         
-                        {{-- KONDISI (NEW) --}}
+                        {{-- KONDISI --}}
                         <div class="group flex items-start p-3 rounded-xl hover:bg-pink-50 transition-colors duration-200">
                             <div class="flex-shrink-0 w-8 h-8 bg-pink-100 rounded-lg flex items-center justify-center mr-3 group-hover:bg-pink-200 transition-colors">
-                                {{-- Icon Heartbeat --}}
-                                <svg class="w-4 h-4 text-pink-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                                </svg>
+                                <svg class="w-4 h-4 text-pink-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" /></svg>
                             </div>
                             <div class="flex-1">
                                 <p class="text-xs text-gray-500 font-medium mb-1">Kondisi</p>
                                 @php
-                                    $condColors = [
-                                        'good'    => 'bg-emerald-100 text-emerald-800',
-                                        'damaged' => 'bg-orange-100 text-orange-800',
-                                        'broken'  => 'bg-red-100 text-red-800',
-                                    ];
-                                    $condLabels = [
-                                        'good'    => 'Baik',
-                                        'damaged' => 'Rusak Ringan',
-                                        'broken'  => 'Rusak Berat',
-                                    ];
+                                    $condColors = ['good'=>'bg-emerald-100 text-emerald-800', 'damaged'=>'bg-orange-100 text-orange-800', 'broken'=>'bg-red-100 text-red-800'];
+                                    $condLabels = ['good'=>'Baik', 'damaged'=>'Rusak Ringan', 'broken'=>'Rusak Berat'];
                                     $cond = $item->condition ?? 'good';
                                 @endphp
                                 <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold {{ $condColors[$cond] ?? 'bg-gray-100' }}">
@@ -104,9 +85,7 @@
                         {{-- Status --}}
                         <div class="group flex items-start p-3 rounded-xl hover:bg-indigo-50 transition-colors duration-200">
                             <div class="flex-shrink-0 w-8 h-8 bg-indigo-100 rounded-lg flex items-center justify-center mr-3 group-hover:bg-indigo-200 transition-colors">
-                                <svg class="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                </svg>
+                                <svg class="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                             </div>
                             <div class="flex-1">
                                 <p class="text-xs text-gray-500 font-medium mb-1">Status Ketersediaan</p>
@@ -114,6 +93,7 @@
                                     @if($item->status == 'available') bg-green-100 text-green-800
                                     @elseif($item->status == 'borrowed') bg-yellow-100 text-yellow-800
                                     @elseif($item->status == 'maintenance') bg-red-100 text-red-800
+                                    @elseif($item->status == 'dikeluarkan') bg-gray-800 text-white
                                     @else bg-gray-100 text-gray-800
                                     @endif">
                                     {{ ucfirst($item->status) }}
@@ -138,9 +118,7 @@
                             <p class="text-center text-sm text-gray-600 mt-4 font-medium">Scan QR Code</p>
                         @else
                             <div class="flex flex-col items-center justify-center w-56 h-56">
-                                <svg class="w-16 h-16 text-gray-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path>
-                                </svg>
+                                <svg class="w-16 h-16 text-gray-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path></svg>
                                 <p class="text-gray-400 text-sm font-medium">QR belum tersedia</p>
                             </div>
                         @endif
@@ -148,6 +126,78 @@
                 </div>
 
             </div>
+
+            {{-- 
+                ================================================
+                SECTION BARU: DETAIL PENGELUARAN (Jika Ada)
+                ================================================
+            --}}
+            @if($item->status == 'dikeluarkan' && $item->latestLog)
+            <div class="mt-8 pt-8 border-t border-gray-200">
+                <div class="flex items-center gap-3 mb-6">
+                    <div class="p-2 bg-orange-100 rounded-lg text-orange-600">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-800">Informasi Pengeluaran Barang</h3>
+                </div>
+
+                <div class="bg-orange-50/50 rounded-2xl p-6 border border-orange-100 grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {{-- Detail Text --}}
+                    <div class="space-y-4">
+                        <div>
+                            <p class="text-xs uppercase text-gray-500 font-bold tracking-wider">Penerima</p>
+                            <p class="text-gray-900 font-semibold text-lg">{{ $item->latestLog->recipient_name }}</p>
+                        </div>
+                        <div>
+                            <p class="text-xs uppercase text-gray-500 font-bold tracking-wider">Tanggal Keluar</p>
+                            <p class="text-gray-900 font-medium">{{ $item->latestLog->out_date->format('d F Y') }}</p>
+                        </div>
+                        <div>
+                            <p class="text-xs uppercase text-gray-500 font-bold tracking-wider">Alasan / Keterangan</p>
+                            <p class="text-gray-700 italic">"{{ $item->latestLog->reason ?? '-' }}"</p>
+                        </div>
+                    </div>
+
+                    {{-- Action Files --}}
+                    <div class="flex flex-col justify-center gap-3 border-l border-orange-200/50 pl-0 md:pl-6">
+                        
+                        {{-- Button Download File Upload --}}
+                        @if($item->latestLog->reference_file)
+                        <a href="{{ asset('storage/' . $item->latestLog->reference_file) }}" target="_blank"
+                           class="flex items-center justify-between px-4 py-3 bg-white border border-gray-200 rounded-xl hover:border-blue-400 hover:shadow-md transition group">
+                            <div class="flex items-center gap-3">
+                                <div class="p-2 bg-blue-50 text-blue-600 rounded-lg group-hover:bg-blue-100 transition">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                                </div>
+                                <div>
+                                    <p class="text-sm font-bold text-gray-800">File Bukti / Surat</p>
+                                    <p class="text-xs text-gray-500">Klik untuk melihat file</p>
+                                </div>
+                            </div>
+                            <svg class="w-5 h-5 text-gray-400 group-hover:text-blue-500 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+                        </a>
+                        @endif
+
+                        {{-- Button Cetak PDF Sistem --}}
+                        <a href="{{ route('items.out.pdf', $item->id) }}" target="_blank"
+                           class="flex items-center justify-between px-4 py-3 bg-white border border-gray-200 rounded-xl hover:border-red-400 hover:shadow-md transition group">
+                            <div class="flex items-center gap-3">
+                                <div class="p-2 bg-red-50 text-red-600 rounded-lg group-hover:bg-red-100 transition">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+                                </div>
+                                <div>
+                                    <p class="text-sm font-bold text-gray-800">Cetak Surat Jalan</p>
+                                    <p class="text-xs text-gray-500">Download PDF Resmi Sistem</p>
+                                </div>
+                            </div>
+                            <svg class="w-5 h-5 text-gray-400 group-hover:text-red-500 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                        </a>
+
+                    </div>
+                </div>
+            </div>
+            @endif
+
         </div>
 
         {{-- ACTION BUTTONS --}}

@@ -57,7 +57,22 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
 
     Route::resource('rooms', RoomController::class);
-    Route::resource('items', ItemController::class);
+Route::resource('items', ItemController::class);
+
+// Route Tambahan untuk Fitur Barang Keluar
+Route::prefix('items-management')->group(function () {
+    // Halaman daftar riwayat barang keluar
+    Route::get('out-logs', [ItemController::class, 'outIndex'])->name('items.out.index');
+    
+    // Halaman form proses pengeluaran barang
+    Route::get('out/{item}/create', [ItemController::class, 'outCreate'])->name('items.out.create');
+    
+    // Proses simpan data pengeluaran
+    Route::post('out/{item}', [ItemController::class, 'outStore'])->name('items.out.store');
+    
+    // Download PDF Surat Pengeluaran
+    Route::get('out/{item}/pdf', [ItemController::class, 'outPdf'])->name('items.out.pdf');
+});
     Route::resource('categories', CategoryController::class);
     Route::resource('peminjam-users', PeminjamUserController::class);
     Route::resource('materials', MaterialTypeController::class);

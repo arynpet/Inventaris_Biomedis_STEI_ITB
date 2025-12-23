@@ -1,8 +1,7 @@
 <x-app-layout>
-
     <x-slot name="header">
         <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            Items
+            {{ __('Items Inventory') }}
         </h2>
     </x-slot>
 
@@ -10,32 +9,88 @@
     @if (session('success'))
         <div x-data="{ show: true }"
              x-show="show"
-             x-init="setTimeout(() => show = false, 2500)"
-             class="mx-4 my-4 p-4 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-xl shadow-lg text-sm flex items-center gap-3">
+             x-init="setTimeout(() => show = false, 3000)"
+             class="mx-4 my-4 p-4 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-xl shadow-lg text-sm flex items-center gap-3 transition-all duration-500">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
             </svg>
-            {{ session('success') }}
+            <span class="font-medium">{{ session('success') }}</span>
         </div>
     @endif
 
     <div class="py-6" x-data="itemPage()">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
 
-            {{-- HEADER --}}
-            <div class="flex justify-between items-center mb-6">
+            {{-- HEADER SECTION --}}
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
                 <div>
                     <h3 class="text-2xl font-bold text-gray-800">Daftar Item</h3>
-                    <p class="text-sm text-gray-500 mt-1">Kelola semua item inventaris Anda</p>
+                    <p class="text-sm text-gray-500 mt-1">Kelola dan pantau seluruh aset inventaris Anda</p>
                 </div>
 
-                <a href="{{ route('items.create') }}"
-                   class="group relative px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl hover:from-blue-700 hover:to-blue-800 shadow-lg hover:shadow-xl transition-all duration-300 flex items-center gap-2 font-medium">
-                    <svg class="w-5 h-5 group-hover:rotate-90 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-                    </svg>
-                    Tambah Item
-                </a>
+                <div class="flex flex-wrap gap-3">
+                    {{-- Tombol Riwayat Barang Keluar (BARU) --}}
+                    <a href="{{ route('items.out.index') }}"
+                       class="px-5 py-3 bg-white border border-gray-200 text-gray-700 rounded-xl hover:bg-gray-50 shadow-sm transition-all duration-200 flex items-center gap-2 font-medium text-sm">
+                        <svg class="w-5 h-5 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        Riwayat Keluar
+                    </a>
+
+                    {{-- Tombol Tambah Item --}}
+                    <a href="{{ route('items.create') }}"
+                       class="group relative px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl hover:from-blue-700 hover:to-blue-800 shadow-lg hover:shadow-xl transition-all duration-300 flex items-center gap-2 font-medium">
+                        <svg class="w-5 h-5 group-hover:rotate-90 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                        </svg>
+                        Tambah Item
+                    </a>
+                </div>
+            </div>
+
+            {{-- SEARCH & FILTER SECTION (BARU) --}}
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 mb-6">
+                <form action="{{ route('items.index') }}" method="GET" class="flex flex-col lg:flex-row gap-4">
+                    {{-- Search Input --}}
+                    <div class="flex-1 relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                            </svg>
+                        </div>
+                        <input type="text" name="search" value="{{ request('search') }}"
+                               class="block w-full pl-10 pr-3 py-2.5 border border-gray-200 rounded-xl focus:ring-blue-500 focus:border-blue-500 text-sm"
+                               placeholder="Cari Nama, No Asset, atau Serial Number...">
+                    </div>
+
+                    {{-- Filters --}}
+                    <div class="flex flex-wrap md:flex-nowrap gap-3">
+                        <select name="status" class="w-full md:w-40 rounded-xl border-gray-200 text-sm focus:ring-blue-500 focus:border-blue-500">
+                            <option value="">Semua Status</option>
+                            @foreach(['available', 'borrowed', 'maintenance', 'dikeluarkan'] as $st)
+                                <option value="{{ $st }}" {{ request('status') == $st ? 'selected' : '' }}>{{ ucfirst($st) }}</option>
+                            @endforeach
+                        </select>
+
+                        <select name="room_id" class="w-full md:w-48 rounded-xl border-gray-200 text-sm focus:ring-blue-500 focus:border-blue-500">
+                            <option value="">Semua Ruangan</option>
+                            @foreach($rooms as $room)
+                                <option value="{{ $room->id }}" {{ request('room_id') == $room->id ? 'selected' : '' }}>{{ $room->name }}</option>
+                            @endforeach
+                        </select>
+
+                        <button type="submit" class="w-full md:w-auto px-6 py-2.5 bg-gray-800 text-white rounded-xl hover:bg-gray-900 transition-colors font-semibold text-sm">
+                            Filter
+                        </button>
+
+                        @if(request()->anyFilled(['search', 'status', 'room_id']))
+                            <a href="{{ route('items.index') }}" class="w-full md:w-auto px-6 py-2.5 bg-red-50 text-red-600 rounded-xl hover:bg-red-100 transition-colors font-semibold text-sm text-center">
+                                Reset
+                            </a>
+                        @endif
+                    </div>
+                </form>
             </div>
 
             {{-- WHITE WRAPPER --}}
@@ -50,7 +105,6 @@
                             <thead class="bg-gradient-to-r from-gray-50 to-gray-100 text-gray-700 border-b-2 border-gray-200">
                                 <tr>
                                     @foreach (['ID','Nama','No Asset','Serial','QR','Ruangan','Qty','Status','Kondisi','Kategori','Aksi'] as $head)
-
                                         <th class="px-4 py-4 text-left font-bold text-xs tracking-wider uppercase whitespace-nowrap">
                                             {{ $head }}
                                         </th>
@@ -82,7 +136,7 @@
 
                                         {{-- SERIAL --}}
                                         <td class="px-4 py-4 whitespace-nowrap">
-                                            <span class="text-gray-800 font-mono text-xs">
+                                            <span class="text-gray-800 font-mono text-xs font-bold">
                                                 {{ $item->serial_number ?? '-' }}
                                             </span>
                                         </td>
@@ -94,7 +148,7 @@
                                                      alt="QR {{ $item->serial_number }}"
                                                      class="w-10 h-10 rounded border hover:scale-150 transition-transform bg-white">
                                             @else
-                                                <span class="text-xs text-gray-400">Belum ada</span>
+                                                <span class="text-xs text-gray-400 italic">Belum ada</span>
                                             @endif
                                         </td>
 
@@ -120,7 +174,7 @@
                                             <x-status-badge :status="$item->status" />
                                         </td>
 
-                                        {{-- CONDITION (BARU) --}}
+                                        {{-- CONDITION --}}
                                         <td class="px-4 py-4 whitespace-nowrap">
                                             @php
                                                 $condColors = [
@@ -152,7 +206,7 @@
                                             </div>
                                         </td>
 
-                                        {{-- ACTIONS --}}
+                                        {{-- ACTIONS (LENGKAP) --}}
                                         <td class="px-4 py-4 whitespace-nowrap">
                                             <div class="flex items-center gap-2">
                                                 {{-- DETAIL --}}
@@ -166,6 +220,16 @@
                                                    class="p-1.5 bg-amber-100 text-amber-600 rounded-lg hover:bg-amber-200 transition" title="Edit">
                                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
                                                 </a>
+
+                                                {{-- KELUARKAN (BARU - Conditional) --}}
+                                                @if($item->status !== 'dikeluarkan')
+                                                <a href="{{ route('items.out.create', $item->id) }}"
+                                                   class="p-1.5 bg-orange-100 text-orange-600 rounded-lg hover:bg-orange-600 hover:text-white transition" title="Keluarkan Barang">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+                                                    </svg>
+                                                </a>
+                                                @endif
 
                                                 {{-- DELETE --}}
                                                 <button @click="confirmDelete({{ $item->id }}, '{{ $item->name }}')"
@@ -221,7 +285,8 @@
                  x-transition:leave="transition ease-in duration-200"
                  x-transition:leave-start="opacity-100 scale-100"
                  x-transition:leave-end="opacity-0 scale-90"
-                 class="bg-white w-full max-w-md rounded-2xl shadow-2xl p-6 border border-gray-200 mx-4">
+                 class="bg-white w-full max-w-md rounded-2xl shadow-2xl p-6 border border-gray-200 mx-4"
+                 @click.away="showModal = false">
 
                 <div class="flex items-center gap-3 mb-4">
                     <div class="flex-shrink-0 w-12 h-12 rounded-full bg-gradient-to-br from-red-100 to-red-200 flex items-center justify-center">

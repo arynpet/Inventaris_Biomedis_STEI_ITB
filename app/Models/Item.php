@@ -40,4 +40,9 @@ class Item extends Model
     {
         return $this->belongsToMany(Category::class, 'category_item');
     }
+
+    public function latestLog()
+{
+    return $this->hasOne(ItemOutLog::class)->latestOfMany();
+}
 }
