@@ -45,26 +45,23 @@ class PrintController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'user_id'           => 'required|exists:peminjam_users,id',
-                'date' => ['required', 'date', function($attribute, $value, $fail) {
-        $minDate = \Carbon\Carbon::now()->addDays(2)->startOfDay();
-        if (\Carbon\Carbon::parse($value)->lt($minDate)) {
-            $fail('Tanggal minimal harus 2 hari dari hari ini.');
-        }
-    }],
-            'start_time'        => 'required',
-            'end_time'          => 'required|after:start_time',
-            'material_type_id'  => 'nullable|exists:material_types,id',
-            'material_amount'   => 'nullable|numeric|min:0',
-            'material_unit'     => 'nullable|in:gram,mililiter',
-            'material_source'   => 'nullable|in:lab,penelitian,dosen,pribadi',
-
-            'file_upload'       => 'nullable|mimes:pdf,jpg,jpeg,png|max:2048',
-            'notes'             => 'nullable|string',
-
-
-            
-        ]);
+        'user_id'           => 'required|exists:peminjam_users,id',
+        'printer_id'        => 'required|exists:printers,id',
+        'date'              => ['required', 'date', function($attribute, $value, $fail) {
+            $minDate = \Carbon\Carbon::now()->addDays(2)->startOfDay();
+            if (\Carbon\Carbon::parse($value)->lt($minDate)) {
+                $fail('Tanggal minimal harus 2 hari dari hari ini.');
+            }
+        }],
+        'start_time'        => 'required',
+        'end_time'          => 'required|after:start_time',
+        'material_type_id'  => 'nullable|exists:material_types,id',
+        'material_amount'   => 'nullable|numeric|min:0',
+        'material_unit'     => 'nullable|in:gram,mililiter',
+        'material_source'   => 'nullable|in:lab,penelitian,dosen,pribadi',
+        'file_upload'       => 'nullable|mimes:pdf,jpg,jpeg,png|max:2048',
+        'notes'             => 'nullable|string',
+    ]);
 
         // Cek apakah user sudah ikut pelatihan
         $user = PeminjamUser::find($request->user_id);
