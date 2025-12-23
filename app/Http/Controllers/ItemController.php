@@ -14,40 +14,54 @@ use App\Models\ItemOutLog; // Tambahkan ini juga
 class ItemController extends Controller
 {
     // =========================
-    // INDEX
+    // INDEX dengan Grouping
     // =========================
-public function index(Request $request)
-{
-    $query = Item::with(['room', 'categories']);
+    public function index(Request $request)
+    {
+        $query = Item::with(['room', 'categories']);
 
-    // Filter Search (Nama, Serial, Asset Number)
-    if ($request->has('search')) {
-        $query->where(function($q) use ($request) {
-            $q->where('name', 'like', '%' . $request->search . '%')
-              ->orWhere('serial_number', 'like', '%' . $request->search . '%')
-              ->orWhere('asset_number', 'like', '%' . $request->search . '%');
-        });
+        // Filter Search (Nama, Serial, Asset Number)
+        if ($request->has('search')) {
+            $query->where(function($q) use ($request) {
+                $q->where('name', 'like', '%' . $request->search . '%')
+                  ->orWhere('serial_number', 'like', '%' . $request->search . '%')
+                  ->orWhere('asset_number', 'like', '%' . $request->search . '%');
+            });
+        }
+
+        // Filter Status
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        // Filter Ruangan
+        if ($request->filled('room_id')) {
+            $query->where('room_id', $request->room_id);
+        }
+
+        // Opsi Grouping by Asset Number
+        if ($request->get('group_by_asset') === '1') {
+            // Ambil semua items yang match filter
+            $allItems = $query->orderBy('asset_number')->orderBy('id')->get();
+            
+            // Group by asset_number
+            $groupedItems = $allItems->groupBy(function($item) {
+                return $item->asset_number ?? 'no-asset-' . $item->id;
+            });
+            
+            $rooms = Room::orderBy('name')->get();
+            
+            return view('items.index_grouped', compact('groupedItems', 'rooms'));
+        }
+
+        // Default: tampilan list biasa
+        $items = $query->orderBy('id', 'DESC')->paginate(10)->withQueryString();
+        $rooms = Room::orderBy('name')->get();
+
+        return view('items.index', compact('items', 'rooms'));
     }
 
-    // Filter Status
-    if ($request->filled('status')) {
-        $query->where('status', $request->status);
-    }
-
-    // Filter Ruangan
-    if ($request->filled('room_id')) {
-        $query->where('room_id', $request->room_id);
-    }
-
-    $items = $query->orderBy('id', 'DESC')->paginate(10)->withQueryString();
-    $rooms = \App\Models\Room::orderBy('name')->get();
-
-    return view('items.index', compact('items', 'rooms'));
-}
-
-    // =========================
-    // CREATE FORM
-    // =========================
+    // Sisanya tetap sama seperti sebelumnya...
     public function create()
     {
         $rooms = Room::orderBy('name')->get();
@@ -56,9 +70,6 @@ public function index(Request $request)
         return view('items.create', compact('rooms', 'categories'));
     }
 
-    // =========================
-    // STORE
-    // =========================
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -72,18 +83,16 @@ public function index(Request $request)
             'placed_in_service_at' => 'nullable|date',
             'fiscal_group'         => 'nullable|string|max:255',
             'status'               => 'required|in:available,borrowed,maintenance,dikeluarkan',
-            'condition'            => 'required|in:good,damaged,broken', // Validasi Kondisi Baru
+            'condition'            => 'required|in:good,damaged,broken',
             'categories'           => 'nullable|array',
             'categories.*'         => 'exists:categories,id',
+        ], [
+            'asset_number.unique' => 'Nomor Asset sudah digunakan untuk barang lain.',
         ]);
 
-        // 1. Initial Insert ke Database
         $item = Item::create($validated);
-
-        // 2. Generate QR Code Handling
         $this->generateAndSaveQr($item);
 
-        // 3. Sync Relation
         if ($request->categories) {
             $item->categories()->sync($request->categories);
         }
@@ -103,9 +112,6 @@ public function index(Request $request)
         return view('items.edit', compact('item', 'rooms', 'categories'));
     }
 
-    // =========================
-    // UPDATE
-    // =========================
     public function update(Request $request, Item $item)
     {
         $validated = $request->validate([
@@ -118,28 +124,26 @@ public function index(Request $request)
             'acquisition_year'     => 'nullable|digits:4|integer',
             'placed_in_service_at' => 'nullable|date',
             'fiscal_group'         => 'nullable|string|max:255',
-            'status' => 'required|in:available,borrowed,maintenance,dikeluarkan',
-            'condition'            => 'required|in:good,damaged,broken', // Validasi Kondisi Baru
+            'status'               => 'required|in:available,borrowed,maintenance,dikeluarkan',
+            'condition'            => 'required|in:good,damaged,broken',
             'categories'           => 'nullable|array',
             'categories.*'         => 'exists:categories,id',
+        ], [
+            'asset_number.unique' => 'Nomor Asset sudah digunakan untuk barang lain.',
         ]);
 
-       $qrFieldsChanged = ($validated['name'] !== $item->name) || 
+        $qrFieldsChanged = ($validated['name'] !== $item->name) || 
                        ($validated['asset_number'] !== $item->asset_number) || 
                        ($validated['serial_number'] !== $item->serial_number) ||
                        ($validated['room_id'] !== $item->room_id) ||
                        ($validated['condition'] !== $item->condition);
 
         if ($qrFieldsChanged) {
-            // Purging file QR lama dari storage disk public untuk integritas data
             if ($item->qr_code && Storage::disk('public')->exists($item->qr_code)) {
                 Storage::disk('public')->delete($item->qr_code);
             }
             
-            // Melakukan persistensi data sebelum regenerasi QR
             $item->update($validated);
-            
-            // Eksekusi ulang prosedur regenerasi QR dengan data terbaru
             $this->generateAndSaveQr($item);
         } else {
             $item->update($validated);
@@ -151,12 +155,8 @@ public function index(Request $request)
             ->with('success', 'Item updated successfully.');
     }
 
-    // =========================
-    // DESTROY
-    // =========================
     public function destroy(Item $item)
     {
-        // Opsional: Hapus file QR saat item dihapus agar tidak menumpuk sampah
         if ($item->qr_code && Storage::disk('public')->exists($item->qr_code)) {
             Storage::disk('public')->delete($item->qr_code);
         }
@@ -179,12 +179,8 @@ public function index(Request $request)
             ->stream('qr-'.$item->serial_number.'.pdf');
     }
 
-    // =========================
-    // PRIVATE METHODS
-    // =========================
     private function generateAndSaveQr(Item $item)
     {
-        // Tentukan Path Penyimpanan
         $qrPath = 'qr/items/' . $item->id . '.svg';
 
         $item->load('room');
@@ -195,103 +191,83 @@ public function index(Request $request)
                  "Serial No: " . $item->serial_number . "\r\n" .
                  "Room Name: " . $roomName . "\r\n" .
                  "Condition: " . $item->condition;
-        // Generate Konten QR (IO Operation)
+
         $qrContent = QrCode::format('svg')
             ->size(300)
             ->margin(2)
             ->errorCorrection('H')
-            ->generate( $qrPayload);
+            ->generate($qrPayload);
 
-        // Simpan File ke Disk
         Storage::disk('public')->put($qrPath, $qrContent);
-
-        // Update Kolom Database
-        // Menggunakan updateQuietly jika tidak ingin mentrigger updated_at, 
-        // tapi update() biasa aman di sini.
         $item->update(['qr_code' => $qrPath]);
     }
 
     // Tambahkan di App\Http\Controllers\ItemController.php
 
-// 1. Tampilkan Halaman Barang Keluar
 public function outIndex()
-{
-    $items = Item::where('status', 'dikeluarkan')
-        ->with(['room']) // Anda bisa join ke itemOutLogs jika ingin detail
-        ->orderBy('updated_at', 'DESC')
-        ->paginate(10);
+    {
+        $items = Item::where('status', 'dikeluarkan')
+            ->with(['room'])
+            ->orderBy('updated_at', 'DESC')
+            ->paginate(10);
 
-    return view('items.out_index', compact('items'));
-}
-
-// 2. Form untuk mengisi data pengeluaran
-public function outCreate(Item $item)
-{
-    return view('items.out_form', compact('item'));
-}
-
-// 3. Proses simpan data pengeluaran
-public function outStore(Request $request, Item $item)
-{
-    $validated = $request->validate([
-        'recipient_name' => 'required|string|max:255',
-        'out_date'       => 'required|date',
-        'reason'         => 'nullable|string',
-        // Validasi File: Wajib file, tipe pdf/img, max 2MB
-        'reference_file' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:2048', 
-    ]);
-
-    // Handle File Upload
-    $filePath = null;
-    if ($request->hasFile('reference_file')) {
-        // Simpan ke folder 'storage/app/public/surat_keluar'
-        $filePath = $request->file('reference_file')->store('surat_keluar', 'public');
+        return view('items.out_index', compact('items'));
     }
 
-    // Update Item Status
-    $item->update(['status' => 'dikeluarkan']);
+    public function outCreate(Item $item)
+    {
+        return view('items.out_form', compact('item'));
+    }
 
-    // Simpan Log
-    \App\Models\ItemOutLog::create([
-        'item_id'        => $item->id,
-        'recipient_name' => $validated['recipient_name'],
-        'out_date'       => $validated['out_date'],
-        'reason'         => $validated['reason'],
-        'reference_file' => $filePath, // Simpan path-nya
-    ]);
+    public function outStore(Request $request, Item $item)
+    {
+        $validated = $request->validate([
+            'recipient_name' => 'required|string|max:255',
+            'out_date'       => 'required|date',
+            'reason'         => 'nullable|string',
+            'reference_file' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:2048',
+        ]);
 
-    return redirect()->route('items.out.index')
-        ->with('success', 'Barang berhasil dikeluarkan dan surat tersimpan.');
-}
+        $filePath = null;
+        if ($request->hasFile('reference_file')) {
+            $filePath = $request->file('reference_file')->store('surat_keluar', 'public');
+        }
 
-// 4. Generate PDF Surat Pengeluaran
-public function downloadOutPdf(Item $item)
-{
-    // Ambil data log pengeluaran terakhir
-    $log = \App\Models\ItemOutLog::where('item_id', $item->id)->latest()->first();
-    
-    $pdf = Pdf::loadView('items.out-pdf', compact('item', 'log'))
+        $item->update(['status' => 'dikeluarkan']);
+
+        ItemOutLog::create([
+            'item_id'        => $item->id,
+            'recipient_name' => $validated['recipient_name'],
+            'out_date'       => $validated['out_date'],
+            'reason'         => $validated['reason'],
+            'reference_file' => $filePath,
+        ]);
+
+        return redirect()->route('items.out.index')
+            ->with('success', 'Barang berhasil dikeluarkan dan surat tersimpan.');
+    }
+
+    public function downloadOutPdf(Item $item)
+    {
+        $log = ItemOutLog::where('item_id', $item->id)->latest()->first();
+        
+        $pdf = Pdf::loadView('items.out-pdf', compact('item', 'log'))
               ->setPaper('a4', 'portrait');
               
-    return $pdf->stream('Surat_Keluar_'.$item->serial_number.'.pdf');
-}
-
-public function outPdf(Item $item)
-{
-    // Ambil data log pengeluaran terakhir dari barang ini
-    $log = ItemOutLog::where('item_id', $item->id)->latest()->first();
-
-    // Validasi jika data log tidak ditemukan (misal barang belum dikeluarkan)
-    if (!$log) {
-        return redirect()->back()->with('error', 'Data pengeluaran tidak ditemukan untuk item ini.');
+        return $pdf->stream('Surat_Keluar_'.$item->serial_number.'.pdf');
     }
 
-    // Generate PDF menggunakan view 'items.out-pdf'
-    // 'setPaper' bisa diatur 'a4' atau 'a5' sesuai kebutuhan
-    $pdf = Pdf::loadView('items.out-pdf', compact('item', 'log'))
+    public function outPdf(Item $item)
+    {
+        $log = ItemOutLog::where('item_id', $item->id)->latest()->first();
+
+        if (!$log) {
+            return redirect()->back()->with('error', 'Data pengeluaran tidak ditemukan untuk item ini.');
+        }
+
+        $pdf = Pdf::loadView('items.out-pdf', compact('item', 'log'))
               ->setPaper('a4', 'portrait');
 
-    // 'stream' agar terbuka di browser dulu (preview), kalau mau langsung download ganti jadi 'download'
-    return $pdf->stream('Surat_Jalan_' . str_replace(' ', '_', $item->serial_number) . '.pdf');
-}
+        return $pdf->stream('Surat_Jalan_' . str_replace(' ', '_', $item->serial_number) . '.pdf');
+    }
 }
