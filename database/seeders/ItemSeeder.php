@@ -4,12 +4,14 @@ namespace Database\Seeders;
 
 use App\Models\Item;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Storage;
+use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class ItemSeeder extends Seeder
 {
     public function run(): void
     {
-        Item::insert([
+        $items = [
             [
                 'asset_number' => '0012',
                 'serial_number' => '',
@@ -141,7 +143,7 @@ class ItemSeeder extends Seeder
             [
                 'asset_number' => '45',
                 'serial_number' => 'SN-62324',
-                'qr_code' => 'qr/items/9.svg',
+                'qr_code' => 'null',
                 'name' => 'Meja 23',
                 'room_id' => 1,
                 'quantity' => 1,
@@ -157,7 +159,7 @@ class ItemSeeder extends Seeder
             [
                 'asset_number' => '3213',
                 'serial_number' => 'SN-624112',
-                'qr_code' => 'qr/items/10.svg',
+                'qr_code' => 'null',
                 'name' => 'Meja',
                 'room_id' => 1,
                 'quantity' => 1,
@@ -173,7 +175,7 @@ class ItemSeeder extends Seeder
             [
                 'asset_number' => 'deqeq',
                 'serial_number' => 'eq',
-                'qr_code' => 'qr/items/11.svg',
+                'qr_code' => 'null',
                 'name' => 'Meja',
                 'room_id' => 1,
                 'quantity' => 1,
@@ -189,7 +191,7 @@ class ItemSeeder extends Seeder
             [
                 'asset_number' => 'QR',
                 'serial_number' => 'SN-31241',
-                'qr_code' => 'qr/items/12.svg',
+                'qr_code' => 'null',
                 'name' => 'Tes QR',
                 'room_id' => 1,
                 'quantity' => 10,
@@ -205,7 +207,7 @@ class ItemSeeder extends Seeder
             [
                 'asset_number' => '45',
                 'serial_number' => 'SN-62324',
-                'qr_code' => 'qr/items/9.svg',
+                'qr_code' => 'null',
                 'name' => 'Meja 23',
                 'room_id' => 1,
                 'quantity' => 1,
@@ -221,7 +223,7 @@ class ItemSeeder extends Seeder
             [
                 'asset_number' => '3213',
                 'serial_number' => 'SN-624112',
-                'qr_code' => 'qr/items/10.svg',
+                'qr_code' => 'null',
                 'name' => 'Meja',
                 'room_id' => 1,
                 'quantity' => 1,
@@ -237,7 +239,7 @@ class ItemSeeder extends Seeder
             [
                 'asset_number' => 'deqeq',
                 'serial_number' => 'eq',
-                'qr_code' => 'qr/items/11.svg',
+                'qr_code' => 'null',
                 'name' => 'Meja',
                 'room_id' => 1,
                 'quantity' => 1,
@@ -253,7 +255,7 @@ class ItemSeeder extends Seeder
             [
                 'asset_number' => 'QR',
                 'serial_number' => 'SN-31241',
-                'qr_code' => 'qr/items/12.svg',
+                'qr_code' => 'null',
                 'name' => 'Tes QR',
                 'room_id' => 1,
                 'quantity' => 10,
@@ -266,6 +268,31 @@ class ItemSeeder extends Seeder
                 'created_at' => '2025-12-18 04:05:12',
                 'updated_at' => '2025-12-18 04:10:47',
             ],
-        ]);
+        ];
+
+        foreach ($items as $data) {
+            $item = Item::create($data);
+            $this->generateQrForSeeder($item);
+        }
+    }
+        private function generateQrForSeeder(Item $item): void
+        {
+            $qrPath = 'qr/items/' . $item->id . '.svg';
+            $item->load('room');
+            
+            $payload = "Item Name: " . $item->name . "\r\n" .
+                    "Asset No: " . ($item->asset_number ?? 'N/A') . "\r\n" .
+                    "Serial No: " . $item->serial_number . "\r\n" .
+                    "Room Name: " . ($item->room->name ?? 'N/A') . "\r\n" .
+                    "Condition: " . $item->condition;
+
+            $qrContent = QrCode::format('svg')
+                ->size(300)
+                ->margin(2)
+                ->errorCorrection('H')
+                ->generate($payload);
+
+            Storage::disk('public')->put($qrPath, $qrContent);
+            $item->update(['qr_code' => $qrPath]);
     }
 }
