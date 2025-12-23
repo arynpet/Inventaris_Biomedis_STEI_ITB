@@ -61,7 +61,7 @@ class ItemSeeder extends Seeder
                 'updated_at' => '2025-12-07 09:38:06',
             ],
             [
-                'asset_number' => '0012',
+                'asset_number' => '0013',
                 'serial_number' => '',
                 'qr_code' => null,
                 'name' => 'Meja Lipat',
@@ -93,7 +93,7 @@ class ItemSeeder extends Seeder
                 'updated_at' => '2025-12-17 07:33:46',
             ],
             [
-                'asset_number' => '0001',
+                'asset_number' => '0015',
                 'serial_number' => '',
                 'qr_code' => null,
                 'name' => 'Jangka Sorong 1',
@@ -109,7 +109,7 @@ class ItemSeeder extends Seeder
                 'updated_at' => '2025-12-07 20:47:14',
             ],
             [
-                'asset_number' => '0002',
+                'asset_number' => '0016',
                 'serial_number' => '',
                 'qr_code' => null,
                 'name' => 'Jangka Sorong 2',
@@ -125,7 +125,7 @@ class ItemSeeder extends Seeder
                 'updated_at' => '2025-12-07 09:38:06',
             ],
             [
-                'asset_number' => '1',
+                'asset_number' => '0020',
                 'serial_number' => 'SN-62781',
                 'qr_code' => null,
                 'name' => 'Meja',
@@ -157,7 +157,7 @@ class ItemSeeder extends Seeder
                 'updated_at' => '2025-12-18 02:57:56',
             ],
             [
-                'asset_number' => '3213',
+                'asset_number' => '0323',
                 'serial_number' => 'SN-624112',
                 'qr_code' => 'null',
                 'name' => 'Meja',
@@ -173,7 +173,7 @@ class ItemSeeder extends Seeder
                 'updated_at' => '2025-12-18 03:13:03',
             ],
             [
-                'asset_number' => 'deqeq',
+                'asset_number' => '5326',
                 'serial_number' => 'eq',
                 'qr_code' => 'null',
                 'name' => 'Meja',
@@ -189,7 +189,7 @@ class ItemSeeder extends Seeder
                 'updated_at' => '2025-12-18 04:03:21',
             ],
             [
-                'asset_number' => 'QR',
+                'asset_number' => '7323',
                 'serial_number' => 'SN-31241',
                 'qr_code' => 'null',
                 'name' => 'Tes QR',
@@ -205,7 +205,7 @@ class ItemSeeder extends Seeder
                 'updated_at' => '2025-12-18 04:10:47',
             ],
             [
-                'asset_number' => '45',
+                'asset_number' => '7328',
                 'serial_number' => 'SN-62324',
                 'qr_code' => 'null',
                 'name' => 'Meja 23',
@@ -237,7 +237,7 @@ class ItemSeeder extends Seeder
                 'updated_at' => '2025-12-18 03:13:03',
             ],
             [
-                'asset_number' => 'deqeq',
+                'asset_number' => '7256',
                 'serial_number' => 'eq',
                 'qr_code' => 'null',
                 'name' => 'Meja',
@@ -253,7 +253,7 @@ class ItemSeeder extends Seeder
                 'updated_at' => '2025-12-18 04:03:21',
             ],
             [
-                'asset_number' => 'QR',
+                'asset_number' => '9283',
                 'serial_number' => 'SN-31241',
                 'qr_code' => 'null',
                 'name' => 'Tes QR',
