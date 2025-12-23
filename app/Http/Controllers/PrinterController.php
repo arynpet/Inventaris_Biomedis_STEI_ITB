@@ -37,13 +37,10 @@ class PrinterController extends Controller
             'available_at'=> 'nullable|date',
         ]);
 
-        Printer::create($request->only([
-            'name',
-            'category',
-            'description',
-            'status',
-            'available_at',
-        ]));
+        $data = $request->only(['name', 'category', 'description', 'status', 'available_at']);
+        $data['material_type_id'] = $request->category; 
+
+        Printer::create($data);
 
         return redirect()->route('printers.index')
             ->with('success', 'Printer berhasil ditambahkan!');

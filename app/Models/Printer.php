@@ -14,6 +14,7 @@ class Printer extends Model
         'name',
         'description',
         'category',        // filament / resin
+        'material_type_id',
         'status',
         'available_at',
     ];
