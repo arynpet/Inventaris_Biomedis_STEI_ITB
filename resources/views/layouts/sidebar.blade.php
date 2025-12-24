@@ -11,22 +11,14 @@
                 <div class="w-10 h-10 bg-blue-600 text-white rounded-xl flex items-center justify-center font-semibold text-lg flex-shrink-0">
                     S
                 </div>
-                <div x-show="sidebarOpen" 
-                     x-transition:enter="transition ease-out duration-200"
-                     x-transition:enter-start="opacity-0"
-                     x-transition:enter-end="opacity-100"
-                     x-transition:leave="transition ease-in duration-150"
-                     x-transition:leave-start="opacity-100"
-                     x-transition:leave-end="opacity-0"
-                     class="min-w-0">
+                <div x-show="sidebarOpen" x-transition class="min-w-0">
                     <h1 class="text-base font-bold text-gray-900 truncate">STEIKA</h1>
                     <p class="text-xs text-gray-500 truncate">Biomedis Inventory</p>
                 </div>
             </div>
             
             <!-- Toggle Button -->
-            <button @click="sidebarOpen = !sidebarOpen" 
-                    class="flex-shrink-0 w-7 h-7 rounded-lg hover:bg-gray-100 flex items-center justify-center transition-colors duration-200">
+            <button @click="sidebarOpen = !sidebarOpen" class="w-7 h-7 rounded-lg hover:bg-gray-100 flex items-center justify-center">
                 <i :data-lucide="sidebarOpen ? 'chevron-left' : 'chevron-right'" class="w-4 h-4 text-gray-500"></i>
             </button>
         </div>
@@ -34,27 +26,21 @@
         <!-- Navigation -->
         <nav class="flex-1 overflow-y-auto px-3 py-4 space-y-1">
 
-            @php
-                function activeLink($route) {
-                    return request()->is($route.'*') ? 
-                        'bg-blue-50 text-blue-600' : 
-                        'text-gray-700 hover:bg-gray-50';
+           @php
+                if (!function_exists('activeLink')) {
+                    function activeLink($route) {
+                        return request()->is($route.'*') ? 
+                            'bg-blue-50 text-blue-600' : 
+                            'text-gray-700 hover:bg-gray-50';
+                    }
                 }
             @endphp
 
             <!-- Dashboard -->
-            <a href="/dashboard" 
-               :class="sidebarOpen ? 'justify-start' : 'justify-center'"
-               class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group {{ activeLink('dashboard') }}">
-                <div class="relative flex-shrink-0">
-                    <i data-lucide="home" class="w-5 h-5"></i>
-                    @if (request()->is('dashboard*'))
-                        <span class="absolute -top-0.5 -right-0.5 w-2 h-2 bg-blue-600 rounded-full"></span>
-                    @endif
-                </div>
-                <span x-show="sidebarOpen" 
-                      x-transition
-                      class="text-sm font-medium truncate">Dashboard</span>
+            <a href="/dashboard" :class="sidebarOpen ? 'justify-start' : 'justify-center'"
+               class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all {{ activeLink('dashboard') }}">
+                <i data-lucide="home" class="w-5 h-5"></i>
+                <span x-show="sidebarOpen" class="text-sm font-medium">Dashboard</span>
             </a>
 
             <!-- Items -->
