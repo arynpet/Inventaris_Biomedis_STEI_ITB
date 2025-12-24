@@ -8,11 +8,35 @@ use Illuminate\Http\Request;
 class PeminjamUserController extends Controller
 {
     // List
-    public function index()
-    {
-        $users = PeminjamUser::orderBy('name')->paginate(10);
-        return view('peminjam-users.index', compact('users'));
+public function index(Request $request)
+{
+    $query = PeminjamUser::query();
+
+    // 1. Logic Search (Nama, NIM, Email)
+    if ($request->has('search') && $request->search != '') {
+        $search = $request->search;
+        $query->where(function($q) use ($search) {
+            $q->where('name', 'like', "%{$search}%")
+              ->orWhere('nim', 'like', "%{$search}%")
+              ->orWhere('email', 'like', "%{$search}%");
+        });
     }
+
+    // 2. Logic Filter Role
+    if ($request->has('role') && $request->role != '') {
+        $query->where('role', $request->role);
+    }
+
+    // 3. Logic Filter Status Pelatihan
+    if ($request->has('is_trained') && $request->is_trained != '') {
+        $query->where('is_trained', $request->is_trained);
+    }
+
+    // 4. Urutkan dan Pagination
+    $users = $query->latest()->paginate(10);
+
+    return view('peminjam-users.index', compact('users'));
+}
 
     // Create Form
     public function create()
