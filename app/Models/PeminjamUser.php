@@ -2,12 +2,15 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class PeminjamUser extends Model
 {
     protected $table = 'peminjam_users';
 
+    use HasFactory;
+    
     protected $fillable = [
         'name',
         'nim',

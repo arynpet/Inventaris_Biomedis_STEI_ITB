@@ -7,285 +7,229 @@
 
     {{-- SUCCESS ALERT --}}
     @if (session('success'))
-        <div x-data="{ show: true }" 
-             x-show="show" 
-             x-init="setTimeout(() => show = false, 3000)"
-             x-transition:enter="transition ease-out duration-300"
-             x-transition:enter-start="opacity-0 transform -translate-y-2"
-             x-transition:enter-end="opacity-100 transform translate-y-0"
-             x-transition:leave="transition ease-in duration-300"
-             x-transition:leave-start="opacity-100 transform translate-y-0"
-             x-transition:leave-end="opacity-0 transform -translate-y-2"
-             class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4">
-            <div class="p-4 bg-emerald-500 text-white rounded-xl shadow-lg flex items-center gap-3">
-                <svg class="w-6 h-6 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                </svg>
-                <span class="font-medium text-sm">{{ session('success') }}</span>
-            </div>
-        </div>
+        <x-alert type="success">
+            {{ session('success') }}
+        </x-alert>
     @endif
 
+    {{-- MAIN WRAPPER (Start x-data scope) --}}
     <div class="py-12" x-data="itemPage()">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
 
             {{-- HEADER SECTION --}}
-            <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
-                <div>
-                    <h3 class="text-3xl font-bold text-gray-900 tracking-tight">Data Induk Barang</h3>
-                    <p class="text-sm text-gray-500 mt-1">Kelola inventaris dan aset laboratorium secara terpusat.</p>
-                </div>
-
-                <div class="flex flex-wrap gap-3">
-                    {{-- Tombol Riwayat --}}
+            <x-page-header 
+                title="Data Induk Barang" 
+                description="Kelola inventaris dan aset laboratorium secara terpusat.">
+                
+                <x-slot:actions>
                     <a href="{{ route('items.out.index') }}" 
-                       class="inline-flex items-center px-4 py-2.5 bg-white border border-gray-300 rounded-lg font-semibold text-xs text-gray-700 uppercase tracking-widest shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-25 transition ease-in-out duration-150">
+                        class="inline-flex items-center px-4 py-2.5 bg-white border border-gray-300 rounded-lg font-semibold text-xs text-gray-700 uppercase tracking-widest shadow-sm hover:bg-gray-50 transition">
                         <svg class="w-4 h-4 mr-2 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                         </svg>
                         Riwayat Keluar
                     </a>
-
-                    {{-- Tombol Grouping --}}
-                    <a href="{{ route('items.index', array_merge(request()->all(), ['group_by_asset' => '1'])) }}" 
-                       class="inline-flex items-center px-4 py-2.5 bg-purple-600 border border-transparent rounded-lg font-semibold text-xs text-white uppercase tracking-widest hover:bg-purple-700 focus:bg-purple-700 active:bg-purple-900 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 transition ease-in-out duration-150 shadow-sm">
-                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path>
-                        </svg>
+                    
+                    <x-button 
+                        variant="purple" 
+                        size="sm"
+                        :href="route('items.index', array_merge(request()->all(), ['group_by_asset' => '1']))"
+                        icon="M4 6h16M4 12h16m-7 6h7"
+                        class="uppercase tracking-widest text-xs">
                         Group By Asset
-                    </a>
-
-                    {{-- Tombol Tambah --}}
-                    <a href="{{ route('items.create') }}" 
-                       class="inline-flex items-center px-4 py-2.5 bg-blue-600 border border-transparent rounded-lg font-semibold text-xs text-white uppercase tracking-widest hover:bg-blue-700 focus:bg-blue-700 active:bg-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition ease-in-out duration-150 shadow-sm">
-                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-                        </svg>
+                    </x-button>
+                    
+                    <x-button 
+                        variant="primary" 
+                        size="sm"
+                        :href="route('items.create')"
+                        icon="M12 4v16m8-8H4"
+                        class="uppercase tracking-widest text-xs">
                         Tambah Barang
-                    </a>
+                    </x-button>
+                </x-slot:actions>
+            </x-page-header>
+
+            {{-- FILTER & SEARCH --}}
+            <x-filter-bar action="{{ route('items.index') }}">
+                <div class="w-full lg:flex-1 relative">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                        </svg>
+                    </div>
+                    <input type="text" name="search" value="{{ request('search') }}"
+                           class="block w-full pl-10 pr-4 py-2.5 border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm placeholder-gray-400 shadow-sm transition"
+                           placeholder="Cari Nama, No Asset, atau S/N...">
                 </div>
-            </div>
 
-            {{-- FILTER & SEARCH CARD --}}
-            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-8">
-                <form action="{{ route('items.index') }}" method="GET" class="flex flex-col lg:flex-row gap-4 items-end lg:items-center">
-                    {{-- Search Input --}}
-                    <div class="w-full lg:flex-1 relative">
-                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-                            </svg>
-                        </div>
-                        <input type="text" 
-                               name="search" 
-                               value="{{ request('search') }}"
-                               class="block w-full pl-10 pr-4 py-2.5 border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm placeholder-gray-400 shadow-sm transition"
-                               placeholder="Cari Nama, No Asset, atau S/N...">
-                    </div>
+                <div class="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
+                    <select name="status" class="w-full sm:w-40 rounded-lg border-gray-300 text-sm focus:ring-blue-500 focus:border-blue-500 shadow-sm cursor-pointer">
+                        <option value="">Semua Status</option>
+                        @foreach(['available', 'borrowed', 'maintenance', 'dikeluarkan'] as $st)
+                            <option value="{{ $st }}" {{ request('status') == $st ? 'selected' : '' }}>
+                                {{ ucfirst($st) }}
+                            </option>
+                        @endforeach
+                    </select>
 
-                    {{-- Dropdown Filters --}}
-                    <div class="w-full lg:w-auto flex flex-col sm:flex-row gap-4">
-                        <select name="status" class="w-full sm:w-40 rounded-lg border-gray-300 text-sm focus:ring-blue-500 focus:border-blue-500 shadow-sm cursor-pointer">
-                            <option value="">Semua Status</option>
-                            @foreach(['available', 'borrowed', 'maintenance', 'dikeluarkan'] as $st)
-                                <option value="{{ $st }}" {{ request('status') == $st ? 'selected' : '' }}>
-                                    {{ ucfirst($st) }}
-                                </option>
-                            @endforeach
-                        </select>
+                    <select name="room_id" class="w-full sm:w-48 rounded-lg border-gray-300 text-sm focus:ring-blue-500 focus:border-blue-500 shadow-sm cursor-pointer">
+                        <option value="">Semua Ruangan</option>
+                        @foreach($rooms as $room)
+                            <option value="{{ $room->id }}" {{ request('room_id') == $room->id ? 'selected' : '' }}>
+                                {{ $room->name }}
+                            </option>
+                        @endforeach
+                    </select>
 
-                        <select name="room_id" class="w-full sm:w-48 rounded-lg border-gray-300 text-sm focus:ring-blue-500 focus:border-blue-500 shadow-sm cursor-pointer">
-                            <option value="">Semua Ruangan</option>
-                            @foreach($rooms as $room)
-                                <option value="{{ $room->id }}" {{ request('room_id') == $room->id ? 'selected' : '' }}>
-                                    {{ $room->name }}
-                                </option>
-                            @endforeach
-                        </select>
+                    <button type="submit" class="w-full sm:w-auto px-6 py-2.5 bg-gray-800 hover:bg-gray-900 text-white rounded-lg text-sm font-semibold transition-colors shadow-sm inline-flex items-center justify-center">
+                        Filter
+                    </button>
 
-                        <button type="submit" class="w-full sm:w-auto px-6 py-2.5 bg-gray-800 hover:bg-gray-900 text-white rounded-lg text-sm font-semibold transition-colors shadow-sm">
-                            Filter
-                        </button>
-
-                        @if(request()->anyFilled(['search', 'status', 'room_id']))
-                            <a href="{{ route('items.index') }}" class="w-full sm:w-auto px-6 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-sm font-semibold text-center transition-colors">
-                                Reset
-                            </a>
-                        @endif
-                    </div>
-                </form>
-            </div>
+                    @if(request()->anyFilled(['search', 'status', 'room_id']))
+                        <a href="{{ route('items.index') }}" class="w-full sm:w-auto px-6 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-sm font-semibold text-center transition-colors inline-flex items-center justify-center">
+                            Reset
+                        </a>
+                    @endif
+                </div>
+            </x-filter-bar>
 
             {{-- DATA TABLE --}}
-            <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                <div class="overflow-x-auto">
-                    <table class="min-w-full divide-y divide-gray-200">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                @foreach (['ID', 'Nama Barang', 'No Asset', 'Serial Number', 'QR', 'Ruangan', 'Qty', 'Status', 'Kondisi', 'Kategori', 'Aksi'] as $header)
-                                    <th scope="col" class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap">
-                                        {{ $header }}
-                                    </th>
-                                @endforeach
-                            </tr>
-                        </thead>
-                        <tbody class="bg-white divide-y divide-gray-200">
-                            @forelse ($items as $item)
-                                <tr class="hover:bg-gray-50 transition-colors duration-150">
-                                    {{-- ID --}}
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                        #{{ $item->id }}
-                                    </td>
-
-                                    {{-- Name --}}
-                                    <td class="px-6 py-4">
-                                        <div class="text-sm font-semibold text-gray-900 line-clamp-2 max-w-xs" title="{{ $item->name }}">
-                                            {{ $item->name }}
-                                        </div>
-                                    </td>
-
-                                    {{-- Asset Number --}}
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600 font-mono">
-                                        {{ $item->asset_number ?? '-' }}
-                                    </td>
-
-                                    {{-- Serial Number --}}
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-mono font-medium text-gray-800">
-                                        {{ $item->serial_number ?? '-' }}
-                                    </td>
-
-                                    {{-- QR Code --}}
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        @if ($item->qr_code)
-                                            <div class="group relative">
-                                                <img src="{{ asset('storage/'.$item->qr_code) }}" 
-                                                     alt="QR" 
-                                                     class="h-10 w-10 rounded border border-gray-200 bg-white p-0.5 transition-transform group-hover:scale-[3] group-hover:absolute group-hover:z-10 group-hover:shadow-xl cursor-zoom-in">
-                                            </div>
-                                        @else
-                                            <span class="text-xs text-gray-400 italic">No QR</span>
-                                        @endif
-                                    </td>
-
-                                    {{-- Room --}}
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                                        <div class="flex items-center gap-2">
-                                            <svg class="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                                            </svg>
-                                            {{ $item->room->name ?? 'Unassigned' }}
-                                        </div>
-                                    </td>
-
-                                    {{-- Quantity --}}
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <span class="px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 border border-gray-200">
-                                            {{ $item->quantity }}
-                                        </span>
-                                    </td>
-
-                                    {{-- Status --}}
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <x-status-badge :status="$item->status" />
-                                    </td>
-
-                                    {{-- Condition --}}
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        @php
-                                            $condClass = match($item->condition) {
-                                                'good'    => 'bg-emerald-100 text-emerald-700 border-emerald-200',
-                                                'damaged' => 'bg-orange-100 text-orange-700 border-orange-200',
-                                                'broken'  => 'bg-red-100 text-red-700 border-red-200',
-                                                default   => 'bg-gray-100 text-gray-600 border-gray-200',
-                                            };
-                                            $condLabel = match($item->condition) {
-                                                'good'    => 'Baik',
-                                                'damaged' => 'Rusak Ringan',
-                                                'broken'  => 'Rusak Berat',
-                                                default   => $item->condition,
-                                            };
-                                        @endphp
-                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border {{ $condClass }}">
-                                            {{ $condLabel }}
-                                        </span>
-                                    </td>
-
-                                    {{-- Categories --}}
-                                    <td class="px-6 py-4">
-                                        <div class="flex flex-wrap gap-1 max-w-[150px]">
-                                            @forelse ($item->categories as $cat)
-                                                <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-blue-50 text-blue-700 border border-blue-100">
-                                                    {{ $cat->name }}
-                                                </span>
-                                            @empty
-                                                <span class="text-xs text-gray-400">-</span>
-                                            @endforelse
-                                        </div>
-                                    </td>
-
-                                    {{-- Actions --}}
-                                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                        <div class="flex items-center justify-end gap-2">
-                                            {{-- Detail --}}
-                                            <a href="{{ route('items.show', $item->id) }}" 
-                                               class="text-sky-600 hover:text-sky-900 bg-sky-50 hover:bg-sky-100 p-2 rounded-lg transition-colors" 
-                                               title="Detail">
-                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
-                                            </a>
-
-                                            {{-- Edit --}}
-                                            <a href="{{ route('items.edit', $item->id) }}" 
-                                               class="text-amber-600 hover:text-amber-900 bg-amber-50 hover:bg-amber-100 p-2 rounded-lg transition-colors" 
-                                               title="Edit">
-                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
-                                            </a>
-
-                                            {{-- Out (Keluarkan) --}}
-                                            @if($item->status !== 'dikeluarkan')
-                                                <a href="{{ route('items.out.create', $item->id) }}" 
-                                                   class="text-orange-600 hover:text-orange-900 bg-orange-50 hover:bg-orange-100 p-2 rounded-lg transition-colors" 
-                                                   title="Keluarkan Barang">
-                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
-                                                </a>
-                                            @endif
-
-                                            {{-- Delete --}}
-                                            <button @click="confirmDelete({{ $item->id }}, '{{ $item->name }}')" 
-                                                    class="text-red-600 hover:text-red-900 bg-red-50 hover:bg-red-100 p-2 rounded-lg transition-colors" 
-                                                    title="Hapus">
-                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            @empty
-                                <tr>
-                                    <td colspan="11" class="px-6 py-12 text-center text-gray-500 bg-gray-50">
-                                        <div class="flex flex-col items-center justify-center">
-                                            <svg class="w-12 h-12 text-gray-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path>
-                                            </svg>
-                                            <p class="text-base font-medium text-gray-900">Tidak ada item ditemukan</p>
-                                            <p class="mt-1 text-sm text-gray-500">Coba ubah filter pencarian atau tambahkan item baru.</p>
-                                            <a href="{{ route('items.create') }}" class="mt-4 inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700">
-                                                Tambah Item Baru
-                                            </a>
-                                        </div>
-                                    </td>
-                                </tr>
-                            @endforelse
-                        </tbody>
-                    </table>
-                </div>
+            <x-data-table 
+                :headers="['ID', 'Nama Barang', 'No Asset', 'Serial Number', 'QR', 'Ruangan', 'Qty', 'Status', 'Kondisi', 'Kategori', 'Aksi']"
+                :pagination="$items->links()">
                 
-                {{-- Pagination --}}
-                <div class="bg-gray-50 px-6 py-4 border-t border-gray-200">
-                    {{ $items->links() }}
-                </div>
-            </div>
-        </div>
+                @forelse ($items as $item)
+                    <tr class="hover:bg-gray-50 transition-colors duration-150">
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            #{{ $item->id }}
+                        </td>
+                        
+                        <td class="px-6 py-4">
+                            <div class="text-sm font-semibold text-gray-900 line-clamp-2 max-w-xs" title="{{ $item->name }}">
+                                {{ $item->name }}
+                            </div>
+                        </td>
+
+                        {{-- Asset Number --}}
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600 font-mono">
+                            {{ $item->asset_number ?? '-' }}
+                        </td>
+
+                        {{-- Serial Number --}}
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-mono font-medium text-gray-800">
+                            {{ $item->serial_number ?? '-' }}
+                        </td>
+
+                        {{-- QR Code --}}
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            @if ($item->qr_code)
+                                <div class="group relative inline-block">
+                                    <img src="{{ asset('storage/'.$item->qr_code) }}" 
+                                         alt="QR" 
+                                         class="h-10 w-10 rounded border border-gray-200 bg-white p-0.5 transition-transform group-hover:scale-[3] group-hover:absolute group-hover:z-10 group-hover:shadow-xl cursor-zoom-in origin-left">
+                                </div>
+                            @else
+                                <span class="text-xs text-gray-400 italic">No QR</span>
+                            @endif
+                        </td>
+
+                        {{-- Room --}}
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                            <div class="flex items-center gap-2">
+                                <svg class="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                                </svg>
+                                <span class="truncate max-w-[120px]" title="{{ $item->room->name ?? 'Unassigned' }}">
+                                    {{ $item->room->name ?? 'Unassigned' }}
+                                </span>
+                            </div>
+                        </td>
+
+                        {{-- Quantity --}}
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 border border-gray-200">
+                                {{ $item->quantity }}
+                            </span>
+                        </td>
+
+                        {{-- Status --}}
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <x-status-badge :status="$item->status" />
+                        </td>
+
+                        {{-- Condition --}}
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            @php
+                                $condClass = match($item->condition) {
+                                    'good'    => 'bg-emerald-100 text-emerald-700 border-emerald-200',
+                                    'damaged' => 'bg-orange-100 text-orange-700 border-orange-200',
+                                    'broken'  => 'bg-red-100 text-red-700 border-red-200',
+                                    default   => 'bg-gray-100 text-gray-600 border-gray-200',
+                                };
+                                $condLabel = match($item->condition) {
+                                    'good'    => 'Baik',
+                                    'damaged' => 'Rusak Ringan',
+                                    'broken'  => 'Rusak Berat',
+                                    default   => $item->condition,
+                                };
+                            @endphp
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border {{ $condClass }}">
+                                {{ $condLabel }}
+                            </span>
+                        </td>
+
+                        {{-- Categories --}}
+                        <td class="px-6 py-4">
+                            <div class="flex flex-wrap gap-1 max-w-[150px]">
+                                @forelse ($item->categories as $cat)
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-blue-50 text-blue-700 border border-blue-100">
+                                        {{ $cat->name }}
+                                    </span>
+                                @empty
+                                    <span class="text-xs text-gray-400">-</span>
+                                @endforelse
+                            </div>
+                        </td>
+
+                        {{-- Actions --}}
+                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                            <x-action-buttons 
+                                :showRoute="route('items.show', $item->id)"
+                                :editRoute="route('items.edit', $item->id)"
+                                :deleteId="$item->id"
+                                :deleteName="$item->name">
+                                
+                                @if($item->status !== 'dikeluarkan')
+                                    <x-slot:additionalButtons>
+                                        <a href="{{ route('items.out.create', $item->id) }}" 
+                                           class="p-2 text-orange-600 hover:text-orange-900 bg-orange-50 hover:bg-orange-100 rounded-lg transition-colors" 
+                                           title="Keluarkan Barang">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+                                            </svg>
+                                        </a>
+                                    </x-slot:additionalButtons>
+                                @endif
+                            </x-action-buttons>
+                        </td>
+                    </tr>
+                @empty
+                    <tr>
+                        <td colspan="11" class="text-center py-12">
+                            <x-empty-state 
+                                message="Tidak ada item ditemukan"
+                                description="Coba ubah filter pencarian atau tambahkan item baru."
+                                actionText="Tambah Item Baru"
+                                :actionRoute="route('items.create')" />
+                        </td>
+                    </tr>
+                @endforelse
+            </x-data-table>
+        </div> {{-- END max-w-7xl --}}
 
         {{-- DELETE CONFIRMATION MODAL --}}
+        {{-- Modal ini sekarang ADA DI DALAM div yang memiliki x-data="itemPage()" --}}
         <div x-show="showModal" 
              style="display: none;"
              class="fixed inset-0 z-50 overflow-y-auto" 
@@ -348,7 +292,8 @@
                 </div>
             </div>
         </div>
-    </div>
+
+    </div> {{-- END py-12 / x-data scope --}}
 
     {{-- SCRIPT --}}
     <script>

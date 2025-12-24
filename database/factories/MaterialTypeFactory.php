@@ -8,11 +8,22 @@ class MaterialTypeFactory extends Factory
 {
     public function definition(): array
     {
+        $category = $this->faker->randomElement(['filament', 'resin']);
+        
+        if ($category === 'filament') {
+            $name = $this->faker->randomElement(['PLA', 'ABS', 'PETG', 'TPU']) . ' ' . 
+                    $this->faker->randomElement(['Black', 'White', 'Red', 'Blue']);
+            $unit = 'gram';
+        } else {
+            $name = $this->faker->randomElement(['Standard', 'Tough', 'Flexible', 'Clear']);
+            $unit = 'mililiter';
+        }
+        
         return [
-            'category' => $this->faker->randomElement(['filament', 'resin']),
-            'name' => $this->faker->colorName() . ' Material',
-            'stock_balance' => 1000,
-            'unit' => 'gram',
+            'category' => $category,
+            'name' => $name,
+            'stock_balance' => $this->faker->numberBetween(0, 5000),
+            'unit' => $unit,
         ];
     }
 }

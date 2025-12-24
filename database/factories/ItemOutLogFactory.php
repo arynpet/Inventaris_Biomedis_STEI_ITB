@@ -5,7 +5,7 @@ namespace Database\Factories;
 use App\Models\Item;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
-class ItemOut extends Factory
+class ItemOutLogFactory extends Factory
 {
     public function definition(): array
     {
