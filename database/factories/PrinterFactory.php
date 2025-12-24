@@ -11,11 +11,12 @@ class PrinterFactory extends Factory
         $category = $this->faker->randomElement(['filament', 'resin']);
         
         return [
-            'name' => $this->faker->word . ' Printer 3D',
+            'name' => $this->faker->company . ' Printer 3D',
             'category' => $category,
-            'material_type_id' => $category,
+            'material_type_id' => $category, // Sesuai dengan kolom di tabel
             'status' => 'available',
             'description' => $this->faker->optional(0.5)->sentence(),
+            'available_at' => null,
         ];
     }
 }

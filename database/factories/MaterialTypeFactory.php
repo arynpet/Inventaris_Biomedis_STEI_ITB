@@ -22,7 +22,7 @@ class MaterialTypeFactory extends Factory
         return [
             'category' => $category,
             'name' => $name,
-            'stock_balance' => $this->faker->numberBetween(0, 5000),
+            'stock_balance' => $this->faker->numberBetween(100, 5000), // Stock awal yang cukup
             'unit' => $unit,
         ];
     }

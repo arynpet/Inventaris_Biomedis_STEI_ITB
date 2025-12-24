@@ -27,8 +27,9 @@ class ItemFactory extends Factory
             'acquisition_year' => $this->faker->numberBetween(2015, 2025),
             'placed_in_service_at' => $this->faker->dateTimeBetween('-5 years', 'now'),
             'fiscal_group' => $this->faker->randomElement(['1', '2', '3', '4']),
-            'status' => $this->faker->randomElement(['available', 'borrowed', 'maintenance', 'dikeluarkan']),
+            'status' => $this->faker->randomElement(['available', 'borrowed', 'maintenance']),
             'condition' => $this->faker->randomElement(['good', 'damaged', 'broken']),
+            'qr_code' => null, // Set null dulu, akan di-generate di afterCreating
         ];
     }
 
@@ -49,34 +50,48 @@ class ItemFactory extends Factory
 
     public function configure(): static
     {
-        // FIX: Remove the type hint or use the correct Model class
-        return $this->afterCreating(function (Item $item) { 
-            
-            // 1. Attach Categories
-            $categories = Category::inRandomOrder()->limit(rand(1, 2))->get();
-            if ($categories->isNotEmpty()) {
-                $item->categories()->attach($categories);
+        return $this->afterCreating(function (Item $item) {
+            // 1. Attach Categories (optional)
+            if (Category::count() > 0) {
+                $categories = Category::inRandomOrder()->limit(rand(1, 2))->get();
+                if ($categories->isNotEmpty()) {
+                    $item->categories()->attach($categories);
+                }
             }
 
-            // 2. Generate QR Code
-            if (!Storage::disk('public')->exists('qrcodes')) {
-                Storage::disk('public')->makeDirectory('qrcodes');
-            }
-
-            $fileName = 'qr_' . $item->serial_number . '.png';
-            $fullPath = storage_path('app/public/qrcodes/' . $fileName);
-
+            // 2. Generate QR Code (simplified untuk testing)
             try {
-                QrCode::format('png')
-                      ->size(200)
-                      ->margin(1)
-                      ->generate($item->serial_number, $fullPath);
+                // Pastikan direktori exists
+                if (!Storage::disk('public')->exists('qr/items')) {
+                    Storage::disk('public')->makeDirectory('qr/items');
+                }
 
-                $item->qr_code = 'qrcodes/' . $fileName;
-                $item->saveQuietly(); 
+                $qrPath = 'qr/items/' . $item->id . '.svg';
+                
+                // Load relasi yang dibutuhkan
+                $item->load('room');
+                $roomName = $item->room ? $item->room->name : 'N/A';
+
+                $qrPayload = "Item Name: " . $item->name . "\r\n" .
+                         "Asset No: " . ($item->asset_number ?? 'N/A') . "\r\n" .
+                         "Serial No: " . $item->serial_number . "\r\n" .
+                         "Room Name: " . $roomName . "\r\n" .
+                         "Condition: " . $item->condition;
+
+                $qrContent = QrCode::format('svg')
+                    ->size(300)
+                    ->margin(2)
+                    ->errorCorrection('H')
+                    ->generate($qrPayload);
+
+                Storage::disk('public')->put($qrPath, $qrContent);
+                
+                // Update tanpa trigger event lagi
+                $item->updateQuietly(['qr_code' => $qrPath]);
                 
             } catch (\Exception $e) {
-                // Handle exception
+                // Silent fail untuk testing - QR code bukan critical
+                \Log::warning('QR Code generation failed in factory: ' . $e->getMessage());
             }
         });
     }

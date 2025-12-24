@@ -14,7 +14,7 @@ class BorrowingFactory extends Factory
         $hasReturned = $this->faker->boolean(60);
 
         return [
-            'item_id' => Item::factory(),
+            'item_id' => Item::factory()->available(), // Pastikan item available
             'user_id' => PeminjamUser::factory()->trained(),
             'borrow_date' => $borrowDate,
             'return_date' => $hasReturned 
@@ -38,5 +38,15 @@ class BorrowingFactory extends Factory
             'status' => 'returned',
             'return_condition' => $this->faker->randomElement(['good', 'damaged']),
         ]);
+    }
+    
+    public function configure(): static
+    {
+        return $this->afterCreating(function ($borrowing) {
+            // Update status item jika borrowed
+            if ($borrowing->status === 'borrowed') {
+                $borrowing->item->update(['status' => 'borrowed']);
+            }
+        });
     }
 }
