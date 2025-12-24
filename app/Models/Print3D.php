@@ -4,11 +4,14 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Print3D extends Model
 {
     protected $table = 'prints';
 
+    use HasFactory;
+    
     protected $fillable = [
         'user_id',
         'printer_id',
