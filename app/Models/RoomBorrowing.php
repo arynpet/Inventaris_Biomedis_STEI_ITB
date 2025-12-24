@@ -18,6 +18,11 @@ class RoomBorrowing extends Model
         'notes',
     ];
 
+    protected $casts = [
+        'start_time' => 'datetime',
+        'end_time'   => 'datetime',
+    ];
+    
     // Relasi ke Room
     public function room()
     {
