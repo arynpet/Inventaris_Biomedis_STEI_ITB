@@ -19,8 +19,8 @@ class Print3DFactory extends Factory
             'user_id' => PeminjamUser::factory()->trained(),
             'printer_id' => Printer::factory(),
             'date' => $date->format('Y-m-d'),
-            'start_time' => sprintf('%02d:00', $startHour),
-            'end_time' => sprintf('%02d:00', $startHour + $duration),
+            'start_time' => sprintf('%02d:00:00', $startHour), // Format dengan seconds
+            'end_time' => sprintf('%02d:00:00', $startHour + $duration),
             'status' => $this->faker->randomElement(['pending', 'printing', 'done']),
             'material_type_id' => MaterialType::factory(),
             'material_amount' => $this->faker->numberBetween(10, 500),
@@ -28,6 +28,8 @@ class Print3DFactory extends Factory
             'material_source' => $this->faker->randomElement(['lab', 'penelitian', 'dosen', 'pribadi']),
             'material_deducted' => false,
             'notes' => $this->faker->optional(0.4)->sentence(),
+            'file_name' => null,
+            'file_path' => null,
         ];
     }
 }

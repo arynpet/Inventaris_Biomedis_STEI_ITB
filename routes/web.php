@@ -75,6 +75,10 @@ Route::prefix('items-management')->group(function () {
 });
     Route::resource('categories', CategoryController::class);
     Route::resource('peminjam-users', PeminjamUserController::class);
+
+    Route::post('/materials/{material}/add-stock', [MaterialTypeController::class, 'addStock'])
+        ->name('materials.addStock');
+
     Route::resource('materials', MaterialTypeController::class);
     Route::resource('prints', PrintController::class);
     Route::resource('printers', PrinterController::class);
@@ -85,8 +89,8 @@ Route::prefix('items-management')->group(function () {
 
     Route::get('/borrowings/history', [BorrowingController::class, 'history'])
         ->name('borrowings.history');
-    Route::post('/borrowings/{id}/return', [BorrowingController::class, 'return'])
-        ->name('borrowings.return');
+    // Route::post('/borrowings/{id}/return', [BorrowingController::class, 'return'])
+    //     ->name('borrowings.return');
     Route::resource('borrowings', BorrowingController::class);
 
     Route::resource('room_borrowings', RoomBorrowingController::class);
@@ -97,14 +101,11 @@ Route::prefix('items-management')->group(function () {
 
     // Export whole history (optionally accept ?from=YYYY-MM-DD&to=YYYY-MM-DD)
     Route::get('/borrowings/history/pdf', [BorrowingController::class, 'historyPdf'])
-        ->name('borrowings.history.pdf');
+        ->name('borrowings.historyPdf');
 
     // Export single borrowing detail
     Route::get('/borrowings/{id}/pdf', [BorrowingController::class, 'pdf'])
         ->name('borrowings.pdf');
-
-    Route::get('/borrowings/history/pdf', [BorrowingController::class, 'historyPdf'])
-    ->name('borrowings.historyPdf');
 
     Route::post('/borrowings/scan-qr', [BorrowingController::class, 'findItemByQr'])
      ->name('borrowings.scan');

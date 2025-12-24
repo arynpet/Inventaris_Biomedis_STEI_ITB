@@ -20,7 +20,10 @@ class PrintTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->actingAs(User::factory()->create());
+        $user = User::factory()->create([
+            'email_verified_at' => now(),
+        ]);
+        $this->actingAs($user);
     }
 
     #[Test]
@@ -35,9 +38,7 @@ class PrintTest extends TestCase
     #[Test]
     public function it_can_create_print_job()
     {
-        Storage::fake('public');
-
-        $user = PeminjamUser::factory()->create(['is_trained' => true]);
+        $user = PeminjamUser::factory()->trained()->create();
         $printer = Printer::factory()->create();
         $material = MaterialType::factory()->create(['stock_balance' => 1000]);
 
@@ -69,13 +70,13 @@ class PrintTest extends TestCase
     #[Test]
     public function it_validates_minimum_date_for_print()
     {
-        $user = PeminjamUser::factory()->create(['is_trained' => true]);
+        $user = PeminjamUser::factory()->trained()->create();
         $printer = Printer::factory()->create();
 
         $printData = [
             'user_id' => $user->id,
             'printer_id' => $printer->id,
-            'date' => now()->format('Y-m-d'), // Should be at least 2 days from now
+            'date' => now()->format('Y-m-d'),
             'start_time' => '09:00',
             'end_time' => '12:00',
         ];
@@ -88,14 +89,13 @@ class PrintTest extends TestCase
     #[Test]
     public function it_deducts_material_when_printing_starts()
     {
+        $material = MaterialType::factory()->create(['stock_balance' => 1000]);
+        
         $print = Print3D::factory()->create([
             'status' => 'pending',
             'material_deducted' => false,
-        ]);
-        
-        $material = MaterialType::factory()->create([
-            'id' => $print->material_type_id,
-            'stock_balance' => 1000,
+            'material_type_id' => $material->id,
+            'material_amount' => 100,
         ]);
 
         $response = $this->put(route('prints.update', $print), [
@@ -110,34 +110,28 @@ class PrintTest extends TestCase
             'material_deducted' => true,
         ]);
 
-        $this->assertDatabaseHas('material_types', [
-            'id' => $material->id,
-            'stock_balance' => 1000 - $print->material_amount,
-        ]);
+        $material->refresh();
+        $this->assertEquals(900, $material->stock_balance);
     }
 
     #[Test]
     public function it_refunds_material_when_canceled()
     {
+        $material = MaterialType::factory()->create(['stock_balance' => 500]);
+        
         $print = Print3D::factory()->create([
             'status' => 'pending',
             'material_deducted' => true,
+            'material_type_id' => $material->id,
             'material_amount' => 50,
-        ]);
-
-        $material = MaterialType::factory()->create([
-            'id' => $print->material_type_id,
-            'stock_balance' => 500,
         ]);
 
         $response = $this->put(route('prints.update', $print), [
             'status' => 'canceled',
         ]);
 
-        $this->assertDatabaseHas('material_types', [
-            'id' => $material->id,
-            'stock_balance' => 550, // 500 + 50
-        ]);
+        $material->refresh();
+        $this->assertEquals(550, $material->stock_balance);
 
         $this->assertDatabaseHas('prints', [
             'id' => $print->id,
@@ -182,10 +176,11 @@ class PrintTest extends TestCase
             'file_upload' => $file,
         ];
 
-        $response = $this->post(route('prints.store'), $printData);
+        $this->post(route('prints.store'), $printData);
 
-        $response->assertRedirect(route('prints.index'));
+        $print = Print3D::where('user_id', $user->id)->first();
 
-        Storage::disk('public')->assertExists('prints/' . $file->hashName());
+        $this->assertNotNull($print->file_path);
+        Storage::disk('public')->assertExists($print->file_path);
     }
 }

@@ -5,11 +5,12 @@ namespace App\Http\Controllers;
 use App\Models\Item;
 use App\Models\Room;
 use App\Models\Category;
+use App\Models\ItemOutLog; 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 use Barryvdh\DomPDF\Facade\Pdf;
-use App\Models\ItemOutLog; // Tambahkan ini juga
+use Illuminate\Support\Arr;
 
 class ItemController extends Controller
 {
@@ -90,7 +91,10 @@ class ItemController extends Controller
             'asset_number.unique' => 'Nomor Asset sudah digunakan untuk barang lain.',
         ]);
 
-        $item = Item::create($validated);
+        // FIX: Hapus 'categories' dari array sebelum create
+        $itemData = Arr::except($validated, ['categories']);
+        
+        $item = Item::create($itemData);
         $this->generateAndSaveQr($item);
 
         if ($request->categories) {
@@ -100,7 +104,6 @@ class ItemController extends Controller
         return redirect()->route('items.index')
             ->with('success', 'Item berhasil dibuat & QR otomatis dibuat.');
     }
-
     // =========================
     // EDIT FORM
     // =========================
@@ -112,7 +115,7 @@ class ItemController extends Controller
         return view('items.edit', compact('item', 'rooms', 'categories'));
     }
 
-    public function update(Request $request, Item $item)
+public function update(Request $request, Item $item)
     {
         $validated = $request->validate([
             'name'                 => 'required|string|max:255',
@@ -138,15 +141,18 @@ class ItemController extends Controller
                        ($validated['room_id'] !== $item->room_id) ||
                        ($validated['condition'] !== $item->condition);
 
+        // FIX: Hapus 'categories' dari array sebelum update
+        $itemData = Arr::except($validated, ['categories']);
+
         if ($qrFieldsChanged) {
             if ($item->qr_code && Storage::disk('public')->exists($item->qr_code)) {
                 Storage::disk('public')->delete($item->qr_code);
             }
             
-            $item->update($validated);
+            $item->update($itemData);
             $this->generateAndSaveQr($item);
         } else {
-            $item->update($validated);
+            $item->update($itemData);
         }
 
         $item->categories()->sync($request->categories ?? []);

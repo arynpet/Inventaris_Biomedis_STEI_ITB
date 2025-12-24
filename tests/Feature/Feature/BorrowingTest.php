@@ -54,10 +54,9 @@ class BorrowingTest extends TestCase
             'status' => 'borrowed',
         ]);
 
-        $this->assertDatabaseHas('items', [
-            'id' => $item->id,
-            'status' => 'borrowed',
-        ]);
+        // Refresh item untuk cek status
+        $item->refresh();
+        $this->assertEquals('borrowed', $item->status);
     }
 
     #[Test]
@@ -80,7 +79,14 @@ class BorrowingTest extends TestCase
     #[Test]
     public function it_can_return_borrowed_item()
     {
-        $borrowing = Borrowing::factory()->create(['status' => 'borrowed']);
+        $item = Item::factory()->create(['status' => 'available']);
+        $borrowing = Borrowing::factory()->create([
+            'status' => 'borrowed',
+            'item_id' => $item->id,
+        ]);
+        
+        // Update item status
+        $item->update(['status' => 'borrowed']);
 
         $returnData = [
             'condition' => 'good',
@@ -96,33 +102,35 @@ class BorrowingTest extends TestCase
             'return_condition' => 'good',
         ]);
 
-        $this->assertDatabaseHas('items', [
-            'id' => $borrowing->item_id,
-            'status' => 'available',
-            'condition' => 'good',
-        ]);
+        $item->refresh();
+        $this->assertEquals('available', $item->status);
+        $this->assertEquals('good', $item->condition);
     }
 
     #[Test]
     public function returning_damaged_item_sets_maintenance_status()
     {
-        $borrowing = Borrowing::factory()->create(['status' => 'borrowed']);
+        $item = Item::factory()->create(['status' => 'available']);
+        $borrowing = Borrowing::factory()->create([
+            'status' => 'borrowed',
+            'item_id' => $item->id,
+        ]);
+        
+        $item->update(['status' => 'borrowed']);
 
         $response = $this->put(route('borrowings.return', $borrowing), [
             'condition' => 'damaged',
         ]);
 
-        $this->assertDatabaseHas('items', [
-            'id' => $borrowing->item_id,
-            'status' => 'maintenance',
-            'condition' => 'damaged',
-        ]);
+        $item->refresh();
+        $this->assertEquals('maintenance', $item->status);
+        $this->assertEquals('damaged', $item->condition);
     }
 
     #[Test]
     public function it_can_display_borrowing_history()
     {
-        Borrowing::factory()->create(['status' => 'returned']);
+        Borrowing::factory()->returned()->create();
 
         $response = $this->get(route('borrowings.history'));
 
@@ -133,9 +141,9 @@ class BorrowingTest extends TestCase
     #[Test]
     public function it_can_generate_history_pdf()
     {
-        Borrowing::factory()->count(3)->create(['status' => 'returned']);
+        Borrowing::factory()->count(3)->returned()->create();
 
-        $response = $this->get(route('borrowings.history.pdf'));
+        $response = $this->get(route('borrowings.historyPdf'));
 
         $response->assertStatus(200);
         $response->assertHeader('Content-Type', 'application/pdf');
