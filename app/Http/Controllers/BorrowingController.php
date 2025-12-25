@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Borrowing;
 use App\Models\Item;
 use App\Models\PeminjamUser;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -128,35 +129,35 @@ class BorrowingController extends Controller
     // Method ini sekarang menerima Request untuk menangkap input kondisi
     public function returnItem(Request $request, $id)
     {
-        // 1. Validasi Input Kondisi dari Modal
-        $request->validate([
-            'condition' => 'required|in:good,damaged,broken', // Wajib pilih kondisi
+        $validated = $request->validate([
+            'condition' => 'required|in:good,damaged,broken',
         ]);
 
-        $borrow = Borrowing::findOrFail($id);
-        $condition = $request->condition;
+        $borrow = Borrowing::with('item')->findOrFail($id); 
 
-        // 2. Update Data Peminjaman (History)
-        $borrow->update([
-            'status'           => 'returned',
-            'return_date'      => now(),
-            'return_condition' => $condition, // Simpan sejarah kondisi saat kembali
-        ]);
+        if ($borrow->status === 'returned') {
+            return back()->withErrors(['error' => 'Barang sudah dikembalikan sebelumnya.']);
+        }
 
-        // 3. Update Master Barang (Items Table)
-        $item = Item::findOrFail($borrow->item_id);
+        DB::transaction(function () use ($borrow, $validated) {
+            $condition = $validated['condition'];
+            
+            // A. Update Peminjaman
+            $borrow->update([
+                'status'           => 'returned',
+                'return_date'      => now(),
+                'return_condition' => $condition,
+            ]);
 
-        // LOGIKA INISIATIF:
-        // Jika kondisi Baik -> Status Available
-        // Jika kondisi Rusak/Pecah -> Status Maintenance (Supaya tidak dipinjam orang lain)
-        $newStatus = ($condition === 'good') ? 'available' : 'maintenance';
+            $newStatus = ($condition === 'good') ? 'available' : 'maintenance';
+            
+            $borrow->item->update([
+                'status'    => $newStatus,
+                'condition' => $condition
+            ]);
+        });
 
-        $item->update([
-            'status'    => $newStatus,
-            'condition' => $condition // Update kondisi fisik barang master
-        ]);
-
-        return redirect()->back()->with('success', 'Barang berhasil dikembalikan dengan kondisi: ' . $condition);
+        return back()->with('success', 'Barang berhasil dikembalikan dengan kondisi: ' . $validated['condition']);
     }
 
     // ==========================================
