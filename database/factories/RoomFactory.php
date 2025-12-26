@@ -9,10 +9,10 @@ class RoomFactory extends Factory
     public function definition(): array
     {
         return [
-            'code' => strtoupper($this->faker->unique()->lexify('??-###')),
+            'code' => strtoupper($this->faker->unique()->bothify('??-###')),
             'name' => $this->faker->words(3, true),
-            'description' => $this->faker->sentence(),
-            'status' => 'sedia', // Default status (WAJIB ADA)
+            'description' => $this->faker->optional(0.7)->sentence(),
+            'status' => $this->faker->randomElement(['sedia', 'dipinjam']),
         ];
     }
 }

@@ -5,12 +5,13 @@ namespace App\Http\Controllers;
 use App\Models\Item;
 use App\Models\Room;
 use App\Models\Category;
+use App\Models\ItemOutLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 use Barryvdh\DomPDF\Facade\Pdf;
-use App\Models\ItemOutLog; // Tambahkan ini juga
-use Illuminate\Support\Str;
+use Illuminate\Support\Str; // Dari Local (Penting untuk serial number)
+use Illuminate\Support\Arr; // Dari Remote (Penting untuk array manipulation)
 
 class ItemController extends Controller
 {
@@ -21,7 +22,7 @@ class ItemController extends Controller
     {
         $query = Item::with(['room', 'categories']);
 
-        // Filter Search (Nama, Serial, Asset Number)
+        // Filter Search
         if ($request->has('search')) {
             $query->where(function($q) use ($request) {
                 $q->where('name', 'like', '%' . $request->search . '%')
@@ -30,28 +31,21 @@ class ItemController extends Controller
             });
         }
 
-        // Filter Status
+        // Filter Status & Room
         if ($request->filled('status')) {
             $query->where('status', $request->status);
         }
-
-        // Filter Ruangan
         if ($request->filled('room_id')) {
             $query->where('room_id', $request->room_id);
         }
 
         // Opsi Grouping by Asset Number
         if ($request->get('group_by_asset') === '1') {
-            // Ambil semua items yang match filter
             $allItems = $query->orderBy('asset_number')->orderBy('id')->get();
-            
-            // Group by asset_number
             $groupedItems = $allItems->groupBy(function($item) {
                 return $item->asset_number ?? 'no-asset-' . $item->id;
             });
-            
             $rooms = Room::orderBy('name')->get();
-            
             return view('items.index_grouped', compact('groupedItems', 'rooms'));
         }
 
@@ -62,20 +56,18 @@ class ItemController extends Controller
         return view('items.index', compact('items', 'rooms'));
     }
 
-    // Sisanya tetap sama seperti sebelumnya...
+    // =========================
+    // CREATE
+    // =========================
     public function create()
     {
         $rooms = Room::orderBy('name')->get();
         $categories = Category::orderBy('name')->get();
-
         return view('items.create', compact('rooms', 'categories'));
     }
 
-// =========================
-    // STORE (SINGLE & BATCH)
     // =========================
-// =========================
-    // STORE (REVISI: Asset Number Sama, Nama Berurut)
+    // STORE (GABUNGAN BATCH & Arr::except)
     // =========================
     public function store(Request $request)
     {
@@ -104,18 +96,14 @@ class ItemController extends Controller
         }
 
         $validated = $request->validate($rules);
-
-        // 2. Proses Penyimpanan
         $savedCount = 0;
 
         if ($isBatch) {
             // --- MODE BATCH ---
-            
-            // Pecah serial number per baris
             $rawSerials = preg_split('/\r\n|\r|\n/', $request->serial_numbers_batch);
             $serials = array_values(array_filter(array_map('trim', $rawSerials)));
             
-            // Cek duplikat serial di DB
+            // Cek duplikat serial
             $existingSerials = Item::whereIn('serial_number', $serials)->pluck('serial_number')->toArray();
             if (!empty($existingSerials)) {
                 return back()->withInput()->withErrors([
@@ -123,23 +111,14 @@ class ItemController extends Controller
                 ]);
             }
 
-            // Loop Simpan
             foreach ($serials as $index => $sn) {
-                // Siapkan data dasar (kecuali serial batch & categories)
-                $itemData = collect($validated)->except(['serial_numbers_batch', 'categories'])->toArray();
+                // Gunakan Arr::except (Fitur Remote) agar lebih bersih
+                $itemData = Arr::except($validated, ['serial_numbers_batch', 'categories']);
                 
-                // A. Set Serial Number (Beda-beda setiap item)
                 $itemData['serial_number'] = $sn;
+                $itemData['name'] = $validated['name'] . ' ' . ($index + 1); // Logic Nama Berurut (Fitur Local)
+                $itemData['asset_number'] = $validated['asset_number']; // Asset Number Sama
 
-                // B. Logic Nama Berurut (PC Lab 1, PC Lab 2, dst)
-                // Kalau mau nama SAMA PERSIS juga, hapus bagian . ' ' . ($index + 1) ini
-                $itemData['name'] = $validated['name'] . ' ' . ($index + 1);
-
-                // C. Asset Number (SAMA SEMUA dalam satu batch)
-                // Kita ambil langsung dari inputan tanpa diubah-ubah
-                $itemData['asset_number'] = $validated['asset_number'];
-
-                // Create Item
                 $item = Item::create($itemData);
                 $this->generateAndSaveQr($item);
                 
@@ -153,8 +132,11 @@ class ItemController extends Controller
             $message = "Berhasil menambahkan $savedCount item secara batch!";
 
         } else {
-            // --- MODE SINGLE (Tetap sama) ---
-            $item = Item::create($validated);
+            // --- MODE SINGLE ---
+            // Gunakan Arr::except (Fitur Remote)
+            $itemData = Arr::except($validated, ['categories']);
+            
+            $item = Item::create($itemData);
             $this->generateAndSaveQr($item);
 
             if ($request->categories) {
@@ -167,16 +149,18 @@ class ItemController extends Controller
     }
 
     // =========================
-    // EDIT FORM
+    // EDIT
     // =========================
     public function edit(Item $item)
     {
         $rooms = Room::orderBy('name')->get();
         $categories = Category::orderBy('name')->get();
-
         return view('items.edit', compact('item', 'rooms', 'categories'));
     }
 
+    // =========================
+    // UPDATE (GABUNGAN QR LOGIC & Arr::except)
+    // =========================
     public function update(Request $request, Item $item)
     {
         $validated = $request->validate([
@@ -193,45 +177,48 @@ class ItemController extends Controller
             'condition'            => 'required|in:good,damaged,broken',
             'categories'           => 'nullable|array',
             'categories.*'         => 'exists:categories,id',
-        ], [
-            'asset_number.unique' => 'Nomor Asset sudah digunakan untuk barang lain.',
         ]);
 
         $qrFieldsChanged = ($validated['name'] !== $item->name) || 
-                       ($validated['asset_number'] !== $item->asset_number) || 
-                       ($validated['serial_number'] !== $item->serial_number) ||
-                       ($validated['room_id'] !== $item->room_id) ||
-                       ($validated['condition'] !== $item->condition);
+                           ($validated['asset_number'] !== $item->asset_number) || 
+                           ($validated['serial_number'] !== $item->serial_number) ||
+                           ($validated['room_id'] !== $item->room_id) ||
+                           ($validated['condition'] !== $item->condition);
+
+        // Gunakan Arr::except (Fitur Remote)
+        $itemData = Arr::except($validated, ['categories']);
 
         if ($qrFieldsChanged) {
+            // Logic Hapus QR Lama (Fitur Local)
             if ($item->qr_code && Storage::disk('public')->exists($item->qr_code)) {
                 Storage::disk('public')->delete($item->qr_code);
             }
-            
-            $item->update($validated);
+            $item->update($itemData);
             $this->generateAndSaveQr($item);
         } else {
-            $item->update($validated);
+            $item->update($itemData);
         }
 
         $item->categories()->sync($request->categories ?? []);
 
-        return redirect()->route('items.index')
-            ->with('success', 'Item updated successfully.');
+        return redirect()->route('items.index')->with('success', 'Item updated successfully.');
     }
 
+    // =========================
+    // DESTROY (SINGLE)
+    // =========================
     public function destroy(Item $item)
     {
         if ($item->qr_code && Storage::disk('public')->exists($item->qr_code)) {
             Storage::disk('public')->delete($item->qr_code);
         }
-
         $item->delete();
-
-        return redirect()->route('items.index')
-            ->with('success', 'Item deleted successfully.');
+        return redirect()->route('items.index')->with('success', 'Item deleted successfully.');
     }
 
+    // =========================
+    // SHOW & PDF
+    // =========================
     public function show(Item $item)
     {
         return view('items.show', compact('item'));
@@ -244,38 +231,15 @@ class ItemController extends Controller
             ->stream('qr-'.$item->serial_number.'.pdf');
     }
 
-    private function generateAndSaveQr(Item $item)
-    {
-        $qrPath = 'qr/items/' . $item->id . '.svg';
-
-        $item->load('room');
-        $roomName = $item->room ? $item->room->name : 'N/A';
-
-        $qrPayload = "Item Name: " . $item->name . "\r\n" .
-                 "Asset No: " . ($item->asset_number ?? 'N/A') . "\r\n" .
-                 "Serial No: " . $item->serial_number . "\r\n" .
-                 "Room Name: " . $roomName . "\r\n" .
-                 "Condition: " . $item->condition;
-
-        $qrContent = QrCode::format('svg')
-            ->size(300)
-            ->margin(2)
-            ->errorCorrection('H')
-            ->generate($qrPayload);
-
-        Storage::disk('public')->put($qrPath, $qrContent);
-        $item->update(['qr_code' => $qrPath]);
-    }
-
-    // Tambahkan di App\Http\Controllers\ItemController.php
-
-public function outIndex()
+    // =========================
+    // BARANG KELUAR
+    // =========================
+    public function outIndex()
     {
         $items = Item::where('status', 'dikeluarkan')
             ->with(['room'])
             ->orderBy('updated_at', 'DESC')
             ->paginate(10);
-
         return view('items.out_index', compact('items'));
     }
 
@@ -309,38 +273,28 @@ public function outIndex()
         ]);
 
         return redirect()->route('items.out.index')
-            ->with('success', 'Barang berhasil dikeluarkan dan surat tersimpan.');
+            ->with('success', 'Barang berhasil dikeluarkan.');
     }
 
     public function downloadOutPdf(Item $item)
     {
         $log = ItemOutLog::where('item_id', $item->id)->latest()->first();
-        
-        $pdf = Pdf::loadView('items.out-pdf', compact('item', 'log'))
-              ->setPaper('a4', 'portrait');
-              
+        $pdf = Pdf::loadView('items.out-pdf', compact('item', 'log'))->setPaper('a4', 'portrait');
         return $pdf->stream('Surat_Keluar_'.$item->serial_number.'.pdf');
     }
 
     public function outPdf(Item $item)
     {
         $log = ItemOutLog::where('item_id', $item->id)->latest()->first();
-
         if (!$log) {
-            return redirect()->back()->with('error', 'Data pengeluaran tidak ditemukan untuk item ini.');
+            return redirect()->back()->with('error', 'Data pengeluaran tidak ditemukan.');
         }
-
-        $pdf = Pdf::loadView('items.out-pdf', compact('item', 'log'))
-              ->setPaper('a4', 'portrait');
-
+        $pdf = Pdf::loadView('items.out-pdf', compact('item', 'log'))->setPaper('a4', 'portrait');
         return $pdf->stream('Surat_Jalan_' . str_replace(' ', '_', $item->serial_number) . '.pdf');
     }
 
     // =========================
-    // NEW FEATURE: BULK ACTION (DELETE / COPY)
-    // =========================
-// =========================
-    // BULK ACTION (UPDATED LOGIC)
+    // BULK ACTION (Fitur Local)
     // =========================
     public function bulkAction(Request $request)
     {
@@ -354,7 +308,6 @@ public function outIndex()
         $action = $request->action_type;
         $count = 0;
 
-        // --- ACTION DELETE ---
         if ($action === 'delete') {
             $items = Item::whereIn('id', $ids)->get();
             foreach ($items as $item) {
@@ -364,89 +317,81 @@ public function outIndex()
                 $item->delete();
                 $count++;
             }
-            return redirect()->route('items.index')
-                ->with('success', "$count item berhasil dihapus.");
+            return redirect()->route('items.index')->with('success', "$count item berhasil dihapus.");
         }
 
-        // --- ACTION COPY (REVISI BERURUT) ---
         if ($action === 'copy') {
-            // Kita sorting berdasarkan ID agar urutan copy-nya rapi
             $items = Item::whereIn('id', $ids)->orderBy('id')->get();
-
             foreach ($items as $item) {
                 $newItem = $item->replicate();
-                
-                // 1. Generate Nama Berurut (Meja -> Meja 1 -> Meja 2)
                 $newItem->name = $this->generateIncrementedName($item->name);
-                
-                // 2. Serial Number Unik (Tetap butuh random agar tidak error database unique)
-                $newItem->serial_number = $item->serial_number . '-COPY-' . Str::upper(Str::random(4));
-                
-                // 3. Reset QR & Save
+                $newItem->serial_number = $item->serial_number . '-CPY-' . Str::upper(Str::random(3));
                 $newItem->qr_code = null;
-                $newItem->push(); 
+                $newItem->push();
                 
-                // 4. Generate QR Baru & Copy Kategori
                 $this->generateAndSaveQr($newItem);
                 
                 $categoryIds = $item->categories->pluck('id')->toArray();
                 if (!empty($categoryIds)) {
                     $newItem->categories()->sync($categoryIds);
                 }
-
                 $count++;
             }
-
-            return redirect()->route('items.index')
-                ->with('success', "$count item berhasil diduplikasi.");
+            return redirect()->route('items.index')->with('success', "$count item berhasil diduplikasi.");
         }
-
-        return redirect()->back()->with('error', 'Aksi tidak valid.');
+        return redirect()->back();
     }
 
     // =========================
-    // HELPER BARU: GENERATE NAMA BERURUT
-    // =========================
-    private function generateIncrementedName($originalName)
-    {
-        // Cek apakah nama aslinya sudah berakhiran angka (Misal: "Meja 1")
-        // Regex: Ambil teks apapun di depan, spasi, lalu angka di akhir
-        if (preg_match('/^(.*?) (\d+)$/', $originalName, $matches)) {
-            $baseName = $matches[1]; // "Meja"
-            $number   = (int)$matches[2]; // 1
-        } else {
-            // Jika tidak ada angka (Misal: "Meja")
-            $baseName = $originalName;
-            $number   = 0;
-        }
-
-        // Loop cari nama yang tersedia di database
-        do {
-            $number++; // Naikkan angka (0 jadi 1, 1 jadi 2, dst)
-            $newName = $baseName . ' ' . $number; // Gabungkan: "Meja 1"
-        } while (Item::where('name', $newName)->exists()); // Cek DB, kalau ada, ulang loop naikkan angka lagi
-
-        return $newName;
-    }
-
-    // =========================
-    // FITUR: REGENERATE ALL QR
+    // REGENERATE QR (Fitur Local)
     // =========================
     public function regenerateAllQr()
     {
-        // Ambil semua item yang ada di database
-        // Gunakan chunk() untuk hemat memori jika datanya ribuan
         $count = 0;
-        
         Item::chunk(100, function ($items) use (&$count) {
             foreach ($items as $item) {
-                // Panggil fungsi private yang sudah ada
                 $this->generateAndSaveQr($item);
                 $count++;
             }
         });
+        return redirect()->route('items.index')->with('success', "Berhasil refresh $count QR Code.");
+    }
 
-        return redirect()->route('items.index')
-            ->with('success', "Berhasil membuat ulang $count QR Code.");
+    // =========================
+    // HELPERS
+    // =========================
+    private function generateAndSaveQr(Item $item)
+    {
+        $qrPath = 'qr/items/' . $item->id . '.svg';
+        $item->load('room');
+        $roomName = $item->room ? $item->room->name : 'N/A';
+
+        $qrPayload = "Item Name: " . $item->name . "\r\n" .
+                     "Asset No: " . ($item->asset_number ?? 'N/A') . "\r\n" .
+                     "Serial No: " . $item->serial_number . "\r\n" .
+                     "Room Name: " . $roomName . "\r\n" .
+                     "Condition: " . $item->condition;
+
+        $qrContent = QrCode::format('svg')->size(300)->margin(2)->errorCorrection('H')->generate($qrPayload);
+        Storage::disk('public')->put($qrPath, $qrContent);
+        $item->update(['qr_code' => $qrPath]);
+    }
+
+    private function generateIncrementedName($originalName)
+    {
+        if (preg_match('/^(.*?) (\d+)$/', $originalName, $matches)) {
+            $baseName = $matches[1];
+            $number   = (int)$matches[2];
+        } else {
+            $baseName = $originalName;
+            $number   = 0;
+        }
+
+        do {
+            $number++;
+            $newName = $baseName . ' ' . $number;
+        } while (Item::where('name', $newName)->exists());
+
+        return $newName;
     }
 }

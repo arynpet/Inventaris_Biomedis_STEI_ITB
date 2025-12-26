@@ -62,12 +62,17 @@ class RoomBorrowingTest extends TestCase
         ]);
     }
 
-    #[Test]
+#[Test]
     public function it_can_update_room_borrowing()
     {
-        $borrowing = RoomBorrowing::factory()->create();
+        // FIX: Tentukan start_time dan end_time awal secara eksplisit
+        // agar kita punya titik referensi yang pasti.
+        $borrowing = RoomBorrowing::factory()->create([
+            'start_time' => now()->addHour(),      // Mulai 1 jam lagi
+            'end_time' => now()->addHours(3),      // Selesai 3 jam lagi
+        ]);
         
-        // Data baru untuk update
+        // Data baru: Perpanjang durasi sampai 5 jam lagi
         $newEnd = now()->addHours(5)->format('Y-m-d H:i:s');
 
         $updateData = [
@@ -81,8 +86,6 @@ class RoomBorrowingTest extends TestCase
 
         $response->assertRedirect(route('room_borrowings.index'));
         
-        // Verifikasi database menggunakan format tanggal yang konsisten
-        // Kita cek manual karena format datetime database mungkin berbeda presisi
         $updatedBorrowing = RoomBorrowing::find($borrowing->id);
         $this->assertEquals($newEnd, $updatedBorrowing->end_time->format('Y-m-d H:i:s'));
     }

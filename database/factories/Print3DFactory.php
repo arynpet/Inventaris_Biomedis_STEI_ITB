@@ -11,19 +11,25 @@ class Print3DFactory extends Factory
 {
     public function definition(): array
     {
+        $date = $this->faker->dateTimeBetween('+2 days', '+30 days');
+        $startHour = $this->faker->numberBetween(8, 18);
+        $duration = $this->faker->numberBetween(2, 8);
+        
         return [
-            'user_id' => PeminjamUser::factory(),
-            'printer_id' => Printer::factory(), // Pastikan PrinterFactory juga ada
-            'date' => now()->addDays(2)->format('Y-m-d'),
-            'start_time' => '09:00',
-            'end_time' => '12:00',
-            'status' => 'pending',
+            'user_id' => PeminjamUser::factory()->trained(),
+            'printer_id' => Printer::factory(),
+            'date' => $date->format('Y-m-d'),
+            'start_time' => sprintf('%02d:00:00', $startHour), // Format dengan seconds
+            'end_time' => sprintf('%02d:00:00', $startHour + $duration),
+            'status' => $this->faker->randomElement(['pending', 'printing', 'done']),
             'material_type_id' => MaterialType::factory(),
-            'material_amount' => 50,
+            'material_amount' => $this->faker->numberBetween(10, 500),
             'material_unit' => 'gram',
-            'material_source' => 'lab',
+            'material_source' => $this->faker->randomElement(['lab', 'penelitian', 'dosen', 'pribadi']),
             'material_deducted' => false,
-            'notes' => 'Factory generated print job',
+            'notes' => $this->faker->optional(0.4)->sentence(),
+            'file_name' => null,
+            'file_path' => null,
         ];
     }
 }

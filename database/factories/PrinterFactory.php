@@ -8,12 +8,15 @@ class PrinterFactory extends Factory
 {
     public function definition(): array
     {
+        $category = $this->faker->randomElement(['filament', 'resin']);
+        
         return [
-            'name' => $this->faker->word . ' Printer 3D',
-            // Sesuaikan nama kolom kategori sesuai database (category atau material_type_id)
-            // Berdasarkan PrinterTest Anda, sepertinya 'material_type_id' digunakan untuk menyimpan string kategori
-            'material_type_id' => 'filament', 
+            'name' => $this->faker->company . ' Printer 3D',
+            'category' => $category,
+            'material_type_id' => $category, // Sesuai dengan kolom di tabel
             'status' => 'available',
+            'description' => $this->faker->optional(0.5)->sentence(),
+            'available_at' => null,
         ];
     }
 }
