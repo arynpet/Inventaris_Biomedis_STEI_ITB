@@ -221,20 +221,35 @@ public function update(Request $request, Print3D $print)
     // =============================
     // DELETE
     // =============================
-    public function destroy($id)
+   public function destroy($id)
     {
         $print = Print3D::findOrFail($id);
 
-        if ($print->file_path) {
-            Storage::disk('public')->delete($print->file_path);
+        // Validasi: tidak boleh hapus print job yang sudah done
+        if ($print->status === 'done') {
+            return back()->withErrors(['error' => 'Print job yang sudah selesai tidak bisa dihapus.']);
         }
 
-        $print->delete();
+        DB::transaction(function () use ($print) {
+            // Refund material jika sudah dipotong
+            if ($print->material_deducted && $print->material_type_id) {
+                $material = MaterialType::find($print->material_type_id);
+                if ($material) {
+                    $material->increment('stock_balance', $print->material_amount);
+                }
+            }
+
+            // Hapus file jika ada
+            if ($print->file_path && Storage::disk('public')->exists($print->file_path)) {
+                Storage::disk('public')->delete($print->file_path);
+            }
+
+            $print->delete();
+        });
 
         return redirect()->route('prints.index')
-                         ->with('success', 'Data berhasil dihapus.');
+                        ->with('success', 'Data berhasil dihapus.');
     }
-
 
     public function show($id)
 {
