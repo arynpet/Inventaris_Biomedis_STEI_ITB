@@ -59,6 +59,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::resource('rooms', RoomController::class);
 Route::resource('items', ItemController::class);
 
+// Route untuk Bulk Action (Delete/Copy)
+Route::post('items/bulk-action', [App\Http\Controllers\ItemController::class, 'bulkAction'])->name('items.bulk_action');
+
+// Route untuk Regenerate All QR Code
+Route::post('items/regenerate-qr', [App\Http\Controllers\ItemController::class, 'regenerateAllQr'])->name('items.regenerate_qr');
 // Route Tambahan untuk Fitur Barang Keluar
 Route::prefix('items-management')->group(function () {
     // Halaman daftar riwayat barang keluar

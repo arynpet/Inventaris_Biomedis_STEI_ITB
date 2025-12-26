@@ -1,148 +1,230 @@
 <x-app-layout>
-    <div class="p-6 max-w-3xl mx-auto">
+    <div class="p-6 max-w-4xl mx-auto">
 
-        <h1 class="text-2xl font-bold text-gray-800 mb-6">Add Item</h1>
-
-        <form action="{{ route('items.store') }}" method="POST"
-              class="bg-white shadow-sm border border-gray-100 p-6 rounded-2xl space-y-5">
-            @csrf
-
-            {{-- Name --}}
+        {{-- Header & Title --}}
+        <div class="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
             <div>
-                <label class="block mb-1 font-semibold text-gray-700">Name</label>
-                <input type="text" name="name"
-                       class="w-full rounded-xl border-gray-300 focus:ring-blue-500 focus:border-blue-500 px-3 py-2"
-                       value="{{ old('name') }}" required>
+                <h1 class="text-2xl font-bold text-gray-800">Add New Item</h1>
+                <p class="text-sm text-gray-500">Create new inventory items easily.</p>
+            </div>
+            
+            <a href="{{ route('items.index') }}" 
+               class="inline-flex items-center text-gray-600 hover:text-gray-900 font-medium text-sm transition">
+                <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+                Back to List
+            </a>
+        </div>
+
+        {{-- FORM CONTAINER (Alpine Data Scope) --}}
+        {{-- Default mode: 'single' (input biasa) --}}
+        <div x-data="{ mode: 'single' }" class="bg-white shadow-xl border border-gray-100 rounded-3xl overflow-hidden">
+            
+            {{-- TOGGLE SWITCH HEADER --}}
+            <div class="bg-gray-50 border-b border-gray-200 p-2 flex justify-center">
+                <div class="bg-gray-200 p-1 rounded-xl flex shadow-inner relative">
+                    {{-- Tombol Single --}}
+                    <button @click="mode = 'single'"
+                            :class="mode === 'single' ? 'bg-white text-blue-600 shadow' : 'text-gray-500 hover:text-gray-700'"
+                            class="px-6 py-2 rounded-lg text-sm font-bold transition-all duration-300 w-32 flex justify-center items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                        Single
+                    </button>
+
+                    {{-- Tombol Batch --}}
+                    <button @click="mode = 'batch'"
+                            :class="mode === 'batch' ? 'bg-white text-blue-600 shadow' : 'text-gray-500 hover:text-gray-700'"
+                            class="px-6 py-2 rounded-lg text-sm font-bold transition-all duration-300 w-32 flex justify-center items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+                        Batch Input
+                    </button>
+                </div>
             </div>
 
-            {{-- Asset Number --}}
-            <div>
-                <label class="block mb-1 font-semibold text-gray-700">Asset Number</label>
-                <input type="text" name="asset_number"
-                       class="w-full rounded-xl border-gray-300 focus:ring-blue-500 focus:border-blue-500 px-3 py-2"
-                       value="{{ old('asset_number') }}">
-            </div>
-
-            {{-- SERIAL NUMBER --}}
-            <div>
-                <label class="block text-sm font-semibold mb-1">Serial Number</label>
-                <input type="text" name="serial_number"
-                       class="w-full rounded-lg border-gray-300 focus:ring-blue-500 focus:border-blue-500 px-3 py-2"
-                       placeholder="SN-XXXX"
-                       value="{{ old('serial_number') }}"
-                       required>
-            </div>
-
-
-            {{-- Room --}}
-            <div>
-                <label class="block mb-1 font-semibold text-gray-700">Room</label>
-                <select name="room_id"
-                        class="w-full rounded-xl border-gray-300 focus:ring-blue-500 focus:border-blue-500 px-3 py-2"
-                        required>
-                    <option value="">-- Select Room --</option>
-                    @foreach($rooms as $room)
-                        <option value="{{ $room->id }}" {{ old('room_id') == $room->id ? 'selected' : '' }}>
-                            {{ $room->name }}
-                        </option>
-                    @endforeach
-                </select>
-            </div>
-
-            {{-- Categories --}}
-            <div>
-                <label class="block mb-1 font-semibold text-gray-700">Categories</label>
-
-                <select name="categories[]" multiple
-                        class="w-full rounded-xl border-gray-300 focus:ring-blue-500 focus:border-blue-500 px-3 py-2 h-32">
-                    @foreach($categories as $category)
-                        <option value="{{ $category->id }}" {{ (collect(old('categories'))->contains($category->id)) ? 'selected' : '' }}>
-                            {{ $category->name }}
-                        </option>
-                    @endforeach
-                </select>
-
-                <p class="text-xs text-gray-500 mt-1">Hold CTRL (Windows) atau CMD (Mac) untuk memilih lebih dari satu.</p>
-            </div>
-
-            {{-- Quantity --}}
-            <div>
-                <label class="block mb-1 font-semibold text-gray-700">Quantity</label>
-                <input type="number" name="quantity"
-                       class="w-full rounded-xl border-gray-300 focus:ring-blue-500 focus:border-blue-500 px-3 py-2"
-                       value="{{ old('quantity', 1) }}" required>
-            </div>
-
-            {{-- Source --}}
-            <div>
-                <label class="block mb-1 font-semibold text-gray-700">Source</label>
-                <input type="text" name="source"
-                       class="w-full rounded-xl border-gray-300 focus:ring-blue-500 focus:border-blue-500 px-3 py-2"
-                       value="{{ old('source') }}">
-            </div>
-
-            {{-- Acquisition Year --}}
-            <div>
-                <label class="block mb-1 font-semibold text-gray-700">Acquisition Year</label>
-                <input type="number" name="acquisition_year"
-                       class="w-full rounded-xl border-gray-300 focus:ring-blue-500 focus:border-blue-500 px-3 py-2"
-                       value="{{ old('acquisition_year') }}">
-            </div>
-
-            {{-- Placed in Service --}}
-            <div>
-                <label class="block mb-1 font-semibold text-gray-700">Date Placed in Service</label>
-                <input type="date" name="placed_in_service_at"
-                       class="w-full rounded-xl border-gray-300 focus:ring-blue-500 focus:border-blue-500 px-3 py-2"
-                       value="{{ old('placed_in_service_at') }}">
-            </div>
-
-            {{-- Fiscal Group --}}
-            <div>
-                <label class="block mb-1 font-semibold text-gray-700">Fiscal Group</label>
-                <input type="text" name="fiscal_group"
-                       class="w-full rounded-xl border-gray-300 focus:ring-blue-500 focus:border-blue-500 px-3 py-2"
-                       value="{{ old('fiscal_group') }}">
-            </div>
-
-            {{-- Grid untuk Status & Kondisi --}}
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {{-- FORM CONTENT --}}
+            <form action="{{ route('items.store') }}" method="POST" class="p-8 space-y-6">
+                @csrf
                 
-                {{-- Condition (BARU) --}}
-                <div>
-                    <label class="block mb-1 font-semibold text-gray-700">Condition</label>
-                    <select name="condition"
-                            class="w-full rounded-xl border-gray-300 focus:ring-blue-500 focus:border-blue-500 px-3 py-2">
-                        <option value="good" {{ old('condition') == 'good' ? 'selected' : '' }}>Baik (Good)</option>
-                        <option value="damaged" {{ old('condition') == 'damaged' ? 'selected' : '' }}>Rusak Ringan (Damaged)</option>
-                        <option value="broken" {{ old('condition') == 'broken' ? 'selected' : '' }}>Rusak Berat (Broken)</option>
-                    </select>
+                {{-- Input Mode (Hidden) --}}
+                <input type="hidden" name="input_mode" x-model="mode">
+
+                {{-- INFO ALERT UNTUK BATCH MODE --}}
+                <div x-show="mode === 'batch'" 
+                     x-transition:enter="transition ease-out duration-300"
+                     x-transition:enter-start="opacity-0 -translate-y-2"
+                     x-transition:enter-end="opacity-100 translate-y-0"
+                     class="bg-blue-50 border border-blue-200 rounded-xl p-4 flex gap-3 text-blue-800 text-sm">
+                    <svg class="w-5 h-5 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    <div>
+                        <strong>Mode Batch Aktif!</strong><br>
+                        Anda dapat memasukkan banyak barang sekaligus. Cukup isi data umum sekali, lalu paste daftar Serial Number.
+                    </div>
                 </div>
 
-                {{-- Status --}}
-                <div>
-                    <label class="block mb-1 font-semibold text-gray-700">Status</label>
-                    <select name="status"
-                            class="w-full rounded-xl border-gray-300 focus:ring-blue-500 focus:border-blue-500 px-3 py-2">
-                        <option value="available" {{ old('status') == 'available' ? 'selected' : '' }}>Available</option>
-                        <option value="borrowed" {{ old('status') == 'borrowed' ? 'selected' : '' }}>Borrowed</option>
-                        <option value="maintenance" {{ old('status') == 'maintenance' ? 'selected' : '' }}>Maintenance</option>
-                    </select>
+                {{-- 1. IDENTITAS UMUM (General Identity) --}}
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {{-- Name --}}
+                    <div class="col-span-1 md:col-span-2">
+                        <label class="block mb-2 font-bold text-gray-700">Nama Barang</label>
+                        <input type="text" name="name"
+                               class="w-full rounded-xl border-gray-300 focus:ring-blue-500 focus:border-blue-500 px-4 py-3"
+                               placeholder="Contoh: Laptop Dell Latitude 5420"
+                               value="{{ old('name') }}" required>
+                    </div>
+
+                    {{-- Asset Number --}}
+                    <div>
+                        <label class="block mb-2 font-bold text-gray-700">Asset Number <span class="text-gray-400 font-normal text-xs">(Optional)</span></label>
+                        <input type="text" name="asset_number"
+                               class="w-full rounded-xl border-gray-300 focus:ring-blue-500 focus:border-blue-500 px-4 py-3"
+                               placeholder="AST-001"
+                               value="{{ old('asset_number') }}">
+                        <p x-show="mode === 'batch'" class="text-xs text-orange-500 mt-1">*Diabaikan saat mode Batch untuk mencegah duplikat.</p>
+                    </div>
+
+                    {{-- Fiscal Group --}}
+                    <div>
+                        <label class="block mb-2 font-bold text-gray-700">Fiscal Group</label>
+                        <input type="text" name="fiscal_group"
+                               class="w-full rounded-xl border-gray-300 focus:ring-blue-500 focus:border-blue-500 px-4 py-3"
+                               value="{{ old('fiscal_group') }}">
+                    </div>
                 </div>
-            </div>
 
-            {{-- Buttons --}}
-            <div class="flex justify-end gap-3 pt-4">
-                <a href="{{ route('items.index') }}"
-                   class="px-4 py-2 bg-gray-200 rounded-xl hover:bg-gray-300 transition">
-                    Cancel
-                </a>
+                <hr class="border-gray-100">
 
-                <button class="px-4 py-2 bg-blue-600 rounded-xl text-white hover:bg-blue-700 transition">
-                    Save
-                </button>
-            </div>
+                {{-- 2. SERIAL NUMBER SECTION (DINAMIS) --}}
+                <div class="bg-gray-50 rounded-2xl p-6 border border-gray-200">
+                    
+                    {{-- KONDISI 1: SINGLE MODE --}}
+                    <div x-show="mode === 'single'">
+                        <label class="block mb-2 font-bold text-gray-700">Serial Number <span class="text-red-500">*</span></label>
+                        <input type="text" name="serial_number"
+                               class="w-full rounded-xl border-gray-300 focus:ring-blue-500 focus:border-blue-500 px-4 py-3 font-mono"
+                               placeholder="Masukkan Serial Number Unik"
+                               :required="mode === 'single'"
+                               :disabled="mode !== 'single'"
+                               value="{{ old('serial_number') }}">
+                    </div>
 
-        </form>
+                    {{-- KONDISI 2: BATCH MODE --}}
+                    <div x-show="mode === 'batch'" x-cloak>
+                        <div class="flex justify-between items-center mb-2">
+                            <label class="block font-bold text-gray-700">Daftar Serial Number <span class="text-red-500">*</span></label>
+                            <span class="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded font-bold">Satu per baris</span>
+                        </div>
+                        <textarea name="serial_numbers_batch" rows="8"
+                                  class="w-full rounded-xl border-gray-300 focus:ring-blue-500 focus:border-blue-500 px-4 py-3 font-mono text-sm"
+                                  placeholder="SN-001&#10;SN-002&#10;SN-003&#10;..."
+                                  :required="mode === 'batch'"
+                                  :disabled="mode !== 'batch'">{{ old('serial_numbers_batch') }}</textarea>
+                        <p class="text-xs text-gray-500 mt-2">Tips: Anda bisa copy-paste langsung dari kolom Excel ke sini.</p>
+                    </div>
+                </div>
+
+                <hr class="border-gray-100">
+
+                {{-- 3. DETAIL LOKASI & STATUS --}}
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    
+                    {{-- Room --}}
+                    <div>
+                        <label class="block mb-2 font-bold text-gray-700">Ruangan <span class="text-red-500">*</span></label>
+                        <select name="room_id" required
+                                class="w-full rounded-xl border-gray-300 focus:ring-blue-500 focus:border-blue-500 px-4 py-3">
+                            <option value="">-- Pilih Ruangan --</option>
+                            @foreach($rooms as $room)
+                                <option value="{{ $room->id }}" {{ old('room_id') == $room->id ? 'selected' : '' }}>
+                                    {{ $room->name }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    {{-- Categories --}}
+                    <div>
+                        <label class="block mb-2 font-bold text-gray-700">Kategori</label>
+                        <select name="categories[]" multiple
+                                class="w-full rounded-xl border-gray-300 focus:ring-blue-500 focus:border-blue-500 px-4 py-2 h-[120px] text-sm">
+                            @foreach($categories as $category)
+                                <option value="{{ $category->id }}" {{ (collect(old('categories'))->contains($category->id)) ? 'selected' : '' }}>
+                                    {{ $category->name }}
+                                </option>
+                            @endforeach
+                        </select>
+                        <p class="text-[10px] text-gray-400 mt-1">Tahan CTRL/CMD untuk pilih banyak.</p>
+                    </div>
+
+                    {{-- Quantity --}}
+                    <div>
+                        <label class="block mb-2 font-bold text-gray-700">Quantity (Per Item)</label>
+                        <input type="number" name="quantity"
+                               class="w-full rounded-xl border-gray-300 focus:ring-blue-500 focus:border-blue-500 px-4 py-3 bg-gray-50"
+                               value="{{ old('quantity', 1) }}" required readonly>
+                        <p class="text-xs text-gray-400 mt-1">Default 1 karena setiap serial number unik.</p>
+                    </div>
+
+                    {{-- Source --}}
+                    <div>
+                        <label class="block mb-2 font-bold text-gray-700">Sumber Perolehan</label>
+                        <input type="text" name="source"
+                               class="w-full rounded-xl border-gray-300 focus:ring-blue-500 focus:border-blue-500 px-4 py-3"
+                               placeholder="Misal: Hibah Dikti / Pembelian"
+                               value="{{ old('source') }}">
+                    </div>
+
+                    {{-- Dates --}}
+                    <div>
+                        <label class="block mb-2 font-bold text-gray-700">Tahun Perolehan</label>
+                        <input type="number" name="acquisition_year"
+                               class="w-full rounded-xl border-gray-300 focus:ring-blue-500 focus:border-blue-500 px-4 py-3"
+                               placeholder="2023"
+                               value="{{ old('acquisition_year') }}">
+                    </div>
+
+                    <div>
+                        <label class="block mb-2 font-bold text-gray-700">Tanggal Digunakan</label>
+                        <input type="date" name="placed_in_service_at"
+                               class="w-full rounded-xl border-gray-300 focus:ring-blue-500 focus:border-blue-500 px-4 py-3"
+                               value="{{ old('placed_in_service_at') }}">
+                    </div>
+
+                    {{-- Status --}}
+                    <div>
+                        <label class="block mb-2 font-bold text-gray-700">Status Awal</label>
+                        <select name="status"
+                                class="w-full rounded-xl border-gray-300 focus:ring-blue-500 focus:border-blue-500 px-4 py-3">
+                            <option value="available" {{ old('status') == 'available' ? 'selected' : '' }}>Available</option>
+                            <option value="borrowed" {{ old('status') == 'borrowed' ? 'selected' : '' }}>Borrowed</option>
+                            <option value="maintenance" {{ old('status') == 'maintenance' ? 'selected' : '' }}>Maintenance</option>
+                        </select>
+                    </div>
+
+                    {{-- Condition --}}
+                    <div>
+                        <label class="block mb-2 font-bold text-gray-700">Kondisi Fisik</label>
+                        <select name="condition"
+                                class="w-full rounded-xl border-gray-300 focus:ring-blue-500 focus:border-blue-500 px-4 py-3">
+                            <option value="good" {{ old('condition') == 'good' ? 'selected' : '' }}>Baik (Good)</option>
+                            <option value="damaged" {{ old('condition') == 'damaged' ? 'selected' : '' }}>Rusak Ringan</option>
+                            <option value="broken" {{ old('condition') == 'broken' ? 'selected' : '' }}>Rusak Berat</option>
+                        </select>
+                    </div>
+                </div>
+
+                {{-- ACTION BUTTONS --}}
+                <div class="flex justify-end gap-4 pt-6 border-t border-gray-100">
+                    <a href="{{ route('items.index') }}"
+                       class="px-6 py-3 bg-white border border-gray-300 text-gray-700 font-bold rounded-xl hover:bg-gray-50 transition">
+                        Batal
+                    </a>
+
+                    <button type="submit"
+                            class="px-8 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white font-bold rounded-xl shadow-lg hover:shadow-xl hover:from-blue-700 hover:to-blue-800 transition transform hover:-translate-y-0.5">
+                        <span x-text="mode === 'batch' ? 'Simpan Semua Data' : 'Simpan Data'"></span>
+                    </button>
+                </div>
+
+            </form>
+        </div>
     </div>
 </x-app-layout>
