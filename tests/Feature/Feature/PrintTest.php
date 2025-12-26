@@ -183,4 +183,106 @@ class PrintTest extends TestCase
         $this->assertNotNull($print->file_path);
         Storage::disk('public')->assertExists($print->file_path);
     }
+
+    #[Test]
+    public function it_prevents_invalid_status_transitions()
+    {
+        // Skenario: Status sudah 'done', mencoba diubah kembali ke 'pending'
+        $print = Print3D::factory()->create(['status' => 'done']);
+
+        $response = $this->put(route('prints.update', $print), [
+            'status' => 'pending',
+        ]);
+
+        // Harapannya: Gagal, kembali ke halaman sebelumnya, ada error di field 'status'
+        $response->assertSessionHasErrors('status');
+        
+        // Pastikan data di database TIDAK berubah
+        $this->assertEquals('done', $print->fresh()->status);
+    }
+
+    #[Test]
+    public function it_prevents_printing_if_stock_is_insufficient()
+    {
+        // Material sisa 10 gram
+        $material = MaterialType::factory()->create(['stock_balance' => 10]);
+        
+        // Print butuh 50 gram
+        $print = Print3D::factory()->create([
+            'status' => 'pending',
+            'material_type_id' => $material->id,
+            'material_amount' => 50, 
+            'material_deducted' => false,
+        ]);
+
+        // Coba update ke 'printing'
+        $response = $this->put(route('prints.update', $print), [
+            'status' => 'printing',
+        ]);
+
+        // Harapannya: Error pada key 'stock' (sesuai controller tadi)
+        $response->assertSessionHasErrors('stock');
+
+        // Pastikan status masih 'pending' dan stok TIDAK berkurang
+        $this->assertEquals('pending', $print->fresh()->status);
+        $this->assertEquals(10, $material->fresh()->stock_balance);
+    }
+
+    #[Test]
+    public function it_deducts_material_when_status_changes_to_printing()
+    {
+        $material = MaterialType::factory()->create(['stock_balance' => 1000]);
+        
+        $print = Print3D::factory()->create([
+            'status' => 'pending',
+            'material_deducted' => false,
+            'material_type_id' => $material->id,
+            'material_amount' => 100,
+        ]);
+
+        $response = $this->put(route('prints.update', $print), [
+            'status' => 'printing',
+        ]);
+
+        $response->assertSessionHas('success');
+
+        // Cek DB: Status berubah, flag deducted true
+        $this->assertDatabaseHas('prints', [
+            'id' => $print->id,
+            'status' => 'printing',
+            'material_deducted' => true,
+        ]);
+
+        // Cek Stok: 1000 - 100 = 900
+        $this->assertEquals(900, $material->fresh()->stock_balance);
+    }
+
+    #[Test]
+    public function it_refunds_material_when_canceled_after_deduction()
+    {
+        $material = MaterialType::factory()->create(['stock_balance' => 500]);
+        
+        // Skenario: Sedang printing (stok sudah terpotong)
+        $print = Print3D::factory()->create([
+            'status' => 'printing',
+            'material_deducted' => true, // Stok sudah diambil
+            'material_type_id' => $material->id,
+            'material_amount' => 50,
+        ]);
+
+        // User membatalkan
+        $response = $this->put(route('prints.update', $print), [
+            'status' => 'canceled',
+        ]);
+
+        // Cek DB: Status canceled, flag deducted false
+        $this->assertDatabaseHas('prints', [
+            'id' => $print->id,
+            'status' => 'canceled',
+            'material_deducted' => false,
+        ]);
+
+        // Cek Stok: 500 + 50 = 550 (Refund berhasil)
+        $this->assertEquals(550, $material->fresh()->stock_balance);
+    }
 }
