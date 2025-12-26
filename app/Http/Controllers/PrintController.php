@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class PrintController extends Controller
 {
@@ -154,8 +155,6 @@ public function update(Request $request, Print3D $print)
     ]);
 
     DB::transaction(function () use ($request, $print) {
-
-        // 🔒 LOCK ROW (ANTI DOBEL REQUEST)
         $print = Print3D::where('id', $print->id)
             ->lockForUpdate()
             ->first();
@@ -163,9 +162,19 @@ public function update(Request $request, Print3D $print)
         $oldStatus = $print->status;
         $newStatus = $request->status;
 
-        // =============================
-        // POTONG MATERIAL (PENDING → PRINTING)
-        // =============================
+        $validTransitions = [
+            'pending' => ['printing', 'canceled'],
+            'printing' => ['done', 'canceled'],
+            'done' => [],
+            'canceled' => []
+        ];
+
+        if (!in_array($newStatus, $validTransitions[$oldStatus])) {
+           throw ValidationException::withMessages([
+                'status' => "Tidak dapat mengubah status dari {$oldStatus} ke {$newStatus}."
+            ]);
+        }
+
         if (
             $oldStatus === 'pending' &&
             $newStatus === 'printing' &&
@@ -175,16 +184,14 @@ public function update(Request $request, Print3D $print)
             $material = MaterialType::findOrFail($print->material_type_id);
 
             if ($material->stock_balance < $print->material_amount) {
-                throw new \Exception('Stock material tidak mencukupi.');
+                throw ValidationException::withMessages([
+                    'stock' => "Stock material '{$material->name}' tidak mencukupi (Sisa: {$material->stock_balance})."
+                ]);
             }
-
             $material->decrement('stock_balance', $print->material_amount);
             $print->material_deducted = true;
         }
 
-        // =============================
-        // REFUND MATERIAL (CANCELED)
-        // =============================
         if (
             in_array($oldStatus, ['pending', 'printing']) &&
             $newStatus === 'canceled' &&
@@ -200,9 +207,6 @@ public function update(Request $request, Print3D $print)
             $print->material_deducted = false;
         }
 
-        // =============================
-        // UPDATE STATUS
-        // =============================
         $print->status = $newStatus;
         $print->save();
     });
