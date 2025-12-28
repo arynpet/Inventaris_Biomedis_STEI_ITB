@@ -14,30 +14,88 @@ use Illuminate\Support\Facades\DB;
 class PrintController extends Controller
 {
     // =============================
-    // INDEX
+    // INDEX (Ongoing: Pending/Printing)
     // =============================
-    public function index()
+    public function index(Request $request)
     {
-        $prints = Print3D::with(['user', 'materialType'])
-                    ->orderBy('created_at', 'desc')
-                    ->get();
+        // 1. Ambil Input Filter
+        $search = $request->input('search');
+        $status = $request->input('status'); // pending, printing
+
+        // 2. Query Builder
+        // HANYA ambil status 'pending' dan 'printing' (Ongoing)
+        $query = Print3D::with(['user', 'materialType', 'printer'])
+            ->whereIn('status', ['pending', 'printing']);
+
+        // Filter Search (User, Material, atau Printer)
+        if ($search) {
+            $query->where(function($q) use ($search) {
+                $q->whereHas('user', function($u) use ($search) {
+                    $u->where('name', 'like', "%{$search}%");
+                })
+                ->orWhereHas('materialType', function($m) use ($search) {
+                    $m->where('name', 'like', "%{$search}%");
+                })
+                ->orWhereHas('printer', function($p) use ($search) {
+                    $p->where('name', 'like', "%{$search}%");
+                });
+            });
+        }
+
+        // Filter Status Spesifik (Pending/Printing)
+        if ($status) {
+            $query->where('status', $status);
+        }
+
+        $prints = $query->orderBy('date', 'desc')->paginate(10)->withQueryString();
 
         return view('prints.index', compact('prints'));
     }
 
+    // =============================
+    // HISTORY (Done/Canceled)
+    // =============================
+    public function history(Request $request)
+    {
+        $search = $request->input('search');
+        $status = $request->input('status'); // done, canceled
+
+        // HANYA ambil status 'done' dan 'canceled' (Arsip)
+        $query = Print3D::with(['user', 'materialType', 'printer'])
+            ->whereIn('status', ['done', 'canceled']);
+
+        if ($search) {
+            $query->where(function($q) use ($search) {
+                $q->whereHas('user', function($u) use ($search) {
+                    $u->where('name', 'like', "%{$search}%");
+                })
+                ->orWhereHas('materialType', function($m) use ($search) {
+                    $m->where('name', 'like', "%{$search}%");
+                });
+            });
+        }
+
+        if ($status) {
+            $query->where('status', $status);
+        }
+
+        $histories = $query->orderBy('updated_at', 'desc')->paginate(10)->withQueryString();
+
+        return view('prints.history', compact('histories'));
+    }
 
     // =============================
     // CREATE FORM
     // =============================
     public function create()
     {
-        $users = PeminjamUser::where('is_trained', true)->get();
-        $materials = MaterialType::all();
-        $printers = Printer::all(); // list mesin
+        // Hanya user yang sudah 'trained' (terlatih)
+        $users = PeminjamUser::where('is_trained', true)->orderBy('name')->get();
+        $materials = MaterialType::orderBy('name')->get();
+        $printers = Printer::orderBy('name')->get();
     
-    return view('prints.create', compact('users', 'materials', 'printers'));
-}
-
+        return view('prints.create', compact('users', 'materials', 'printers'));
+    }
 
     // =============================
     // STORE (SAVE PRINT REQUEST)
@@ -45,33 +103,32 @@ class PrintController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-        'user_id'           => 'required|exists:peminjam_users,id',
-        'printer_id'        => 'required|exists:printers,id',
-        'date'              => ['required', 'date', function($attribute, $value, $fail) {
-            $minDate = \Carbon\Carbon::now()->addDays(2)->startOfDay();
-            if (\Carbon\Carbon::parse($value)->lt($minDate)) {
-                $fail('Tanggal minimal harus 2 hari dari hari ini.');
-            }
-        }],
-        'start_time'        => 'required',
-        'end_time'          => 'required|after:start_time',
-        'material_type_id'  => 'nullable|exists:material_types,id',
-        'material_amount'   => 'nullable|numeric|min:0',
-        'material_unit'     => 'nullable|in:gram,mililiter',
-        'material_source'   => 'nullable|in:lab,penelitian,dosen,pribadi',
-        'file_upload'       => 'nullable|mimes:pdf,jpg,jpeg,png|max:2048',
-        'notes'             => 'nullable|string',
-    ]);
+            'user_id'           => 'required|exists:peminjam_users,id',
+            'project_name'      => 'required|string|max:255', // <--- Validasi Baru
+            'printer_id'        => 'required|exists:printers,id',
+            'date'              => ['required', 'date', function($attribute, $value, $fail) {
+                // Aturan: Minimal booking H+2 dari hari ini
+                $minDate = Carbon::now()->addDays(2)->startOfDay();
+                if (Carbon::parse($value)->lt($minDate)) {
+                    $fail('Tanggal minimal harus 2 hari dari hari ini.');
+                }
+            }],
+            'start_time'        => 'required',
+            'end_time'          => 'required|after:start_time',
+            'material_type_id'  => 'nullable|exists:material_types,id',
+            'material_amount'   => 'nullable|numeric|min:0',
+            'material_unit'     => 'nullable|in:gram,mililiter',
+            'material_source'   => 'nullable|in:lab,penelitian,dosen,pribadi',
+            'file_upload'       => 'nullable|mimes:pdf,jpg,jpeg,png,stl,obj|max:10240', // Max 10MB
+            'notes'             => 'nullable|string',
+        ]);
 
-        // Cek apakah user sudah ikut pelatihan
         $user = PeminjamUser::find($request->user_id);
         if (!$user->is_trained) {
-            return back()->withErrors(['user_id' => 'User ini belum mengikuti pelatihan!']);
+            return back()->withErrors(['user_id' => 'User ini belum mengikuti pelatihan (Training)!']);
         }
 
-        // =============================
-        // CEK WAKTU BENTROK
-        // =============================
+        // Cek Bentrok Jadwal
         $overlap = Print3D::where('date', $request->date)
             ->where('printer_id', $request->printer_id)
             ->where(function($q) use ($request){
@@ -81,55 +138,37 @@ class PrintController extends Controller
             ->exists();
 
         if ($overlap) {
-            return back()->withErrors(['start_time' => 'Waktu print bentrok dengan jadwal lain!']);
+            return back()->withErrors(['start_time' => 'Waktu print bentrok dengan jadwal lain di mesin ini!']);
         }
 
-        // =============================
-        // HITUNG DURASI (MENIT)
-        // =============================
-        $start  = Carbon::parse($request->start_time);
-        $end    = Carbon::parse($request->end_time);
-        $duration = $start->diffInMinutes($end);
-
-        // =============================
-        // HANDLE UPLOAD FILE
-        // =============================
+        // Upload File
         $filePath = null;
         $fileName = null;
-
         if ($request->hasFile('file_upload')) {
             $fileName = time() . '_' . $request->file_upload->getClientOriginalName();
             $filePath = $request->file_upload->storeAs('prints', $fileName, 'public');
         }
 
-        // =============================
-        // SAVE DATABASE
-        // =============================
         Print3D::create([
-            'user_id'          => $request->user_id,
-            'printer_id'       => $request->printer_id,   // ⬅ WAJIB
-            'date'             => $request->date,
-            'start_time'       => $request->start_time,
-            'end_time'         => $request->end_time,
-
-            'material_type_id' => $request->material_type_id,
-            'material_amount'  => $request->material_amount,
-            'material_unit'    => $request->material_unit,
-            'material_source'  => $request->material_source,
-
-            'notes'            => $request->notes,
-            'file_name'        => $fileName,
-            'file_path'        => $filePath,
-            'status'           => 'pending',
+            'user_id'           => $request->user_id,
+            'project_name'      => $request->project_name, // <--- Simpan Nama File
+            'printer_id'        => $request->printer_id,
+            'date'              => $request->date,
+            'start_time'        => $request->start_time,
+            'end_time'          => $request->end_time,
+            'material_type_id'  => $request->material_type_id,
+            'material_amount'   => $request->material_amount,
+            'material_unit'     => $request->material_unit,
+            'material_source'   => $request->material_source,
+            'notes'             => $request->notes,
+            'file_name'         => $fileName,
+            'file_path'         => $filePath,
+            'status'            => 'pending',
         ]);
 
-
         return redirect()->route('prints.index')
-                         ->with('success', 'Request print berhasil dibuat!');
-
-                         
+            ->with('success', 'Request print berhasil dibuat! Menunggu persetujuan.');
     }
-
 
     // =============================
     // EDIT
@@ -137,82 +176,91 @@ class PrintController extends Controller
     public function edit($id)
     {
         $print = Print3D::findOrFail($id);
-        $users = PeminjamUser::all();
-        $materials = MaterialType::all();
-;
+        
+        // Cek jika sudah selesai/batal, tidak boleh diedit sembarangan
+        if (in_array($print->status, ['done', 'canceled'])) {
+            return redirect()->route('prints.history')->with('error', 'Data arsip tidak dapat diedit.');
+        }
 
-        return view('prints.edit', compact('print', 'users', 'materials'));
+        $users = PeminjamUser::where('is_trained', true)->get();
+        $materials = MaterialType::all();
+        $printers = Printer::all();
+
+        return view('prints.edit', compact('print', 'users', 'materials', 'printers'));
     }
 
     // =============================
-    // UPDATE
+    // UPDATE (Status Change Logic)
     // =============================
-public function update(Request $request, Print3D $print)
-{
-    $request->validate([
-        'status' => 'required|in:pending,printing,done,canceled',
-    ]);
+    public function update(Request $request, Print3D $print)
+    {
+        // Validasi status yang diperbolehkan
+        $request->validate([
+            'status' => 'required|in:pending,printing,done,canceled',
+        ]);
 
-    DB::transaction(function () use ($request, $print) {
+        try {
+            DB::transaction(function () use ($request, $print) {
+                // Lock row untuk mencegah race condition
+                $print = Print3D::where('id', $print->id)->lockForUpdate()->first();
 
-        // 🔒 LOCK ROW (ANTI DOBEL REQUEST)
-        $print = Print3D::where('id', $print->id)
-            ->lockForUpdate()
-            ->first();
+                $oldStatus = $print->status;
+                $newStatus = $request->status;
 
-        $oldStatus = $print->status;
-        $newStatus = $request->status;
+                // LOGIC 1: POTONG MATERIAL (Pending -> Printing)
+                // Hanya jika material dari LAB
+                if (
+                    $oldStatus === 'pending' &&
+                    $newStatus === 'printing' &&
+                    !$print->material_deducted &&
+                    $print->material_type_id &&
+                    $print->material_source === 'lab'
+                ) {
+                    $material = MaterialType::findOrFail($print->material_type_id);
 
-        // =============================
-        // POTONG MATERIAL (PENDING → PRINTING)
-        // =============================
-        if (
-            $oldStatus === 'pending' &&
-            $newStatus === 'printing' &&
-            !$print->material_deducted &&
-            $print->material_type_id
-        ) {
-            $material = MaterialType::findOrFail($print->material_type_id);
+                    if ($material->stock_balance < $print->material_amount) {
+                        throw new \Exception("Stok material '{$material->name}' tidak mencukupi (Sisa: {$material->stock_balance}).");
+                    }
 
-            if ($material->stock_balance < $print->material_amount) {
-                throw new \Exception('Stock material tidak mencukupi.');
-            }
+                    $material->decrement('stock_balance', $print->material_amount);
+                    $print->material_deducted = true;
+                }
 
-            $material->decrement('stock_balance', $print->material_amount);
-            $print->material_deducted = true;
+                // LOGIC 2: REFUND MATERIAL (Canceled)
+                // Jika sudah dipotong tapi dibatalkan, kembalikan stok
+                if (
+                    in_array($oldStatus, ['pending', 'printing']) &&
+                    $newStatus === 'canceled' &&
+                    $print->material_deducted &&
+                    $print->material_type_id &&
+                    $print->material_source === 'lab'
+                ) {
+                    $material = MaterialType::find($print->material_type_id);
+                    if ($material) {
+                        $material->increment('stock_balance', $print->material_amount);
+                    }
+                    $print->material_deducted = false;
+                }
+
+                // Update Status
+                $print->status = $newStatus;
+                
+                // Update data lain jika ada di request (opsional, untuk edit detail)
+                $print->fill($request->except(['status', '_token', '_method']));
+                
+                $print->save();
+            });
+        } catch (\Exception $e) {
+            return back()->with('error', 'Gagal update: ' . $e->getMessage());
         }
 
-        // =============================
-        // REFUND MATERIAL (CANCELED)
-        // =============================
-        if (
-            in_array($oldStatus, ['pending', 'printing']) &&
-            $newStatus === 'canceled' &&
-            $print->material_deducted &&
-            $print->material_type_id
-        ) {
-            $material = MaterialType::find($print->material_type_id);
-
-            if ($material) {
-                $material->increment('stock_balance', $print->material_amount);
-            }
-
-            $print->material_deducted = false;
+        // Redirect cerdas: Jika status jadi 'done'/'canceled', lempar ke history
+        if (in_array($request->status, ['done', 'canceled'])) {
+            return redirect()->route('prints.history')->with('success', 'Print selesai/dibatalkan. Data dipindahkan ke Riwayat.');
         }
 
-        // =============================
-        // UPDATE STATUS
-        // =============================
-        $print->status = $newStatus;
-        $print->save();
-    });
-
-    return redirect()->route('prints.index')
-        ->with('success', 'Status print berhasil diperbarui.');
-}
-
-
-
+        return redirect()->route('prints.index')->with('success', 'Status print berhasil diperbarui.');
+    }
 
     // =============================
     // DELETE
@@ -221,34 +269,33 @@ public function update(Request $request, Print3D $print)
     {
         $print = Print3D::findOrFail($id);
 
-        if ($print->file_path) {
+        // Hapus file fisik
+        if ($print->file_path && Storage::disk('public')->exists($print->file_path)) {
             Storage::disk('public')->delete($print->file_path);
         }
 
         $print->delete();
 
-        return redirect()->route('prints.index')
-                         ->with('success', 'Data berhasil dihapus.');
+        return back()->with('success', 'Data berhasil dihapus.');
     }
 
-
+    // =============================
+    // SHOW & DOWNLOAD
+    // =============================
     public function show($id)
-{
-    $print = Print3D::findOrFail($id);
-
-    return view('prints.show', compact('print'));
-}
-
-public function downloadFile($id)
-{
-    $print = Print3D::findOrFail($id);
-
-    if (!$print->file_path || !Storage::disk('public')->exists($print->file_path)) {
-        abort(404);
+    {
+        $print = Print3D::with(['user', 'materialType', 'printer'])->findOrFail($id);
+        return view('prints.show', compact('print'));
     }
 
-    return Storage::disk('public')->download($print->file_path);
-}
+    public function downloadFile($id)
+    {
+        $print = Print3D::findOrFail($id);
 
+        if (!$print->file_path || !Storage::disk('public')->exists($print->file_path)) {
+            abort(404, 'File tidak ditemukan');
+        }
 
+        return Storage::disk('public')->download($print->file_path, $print->file_name);
+    }
 }

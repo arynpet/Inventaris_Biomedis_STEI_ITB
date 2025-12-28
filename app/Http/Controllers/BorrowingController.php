@@ -13,20 +13,91 @@ use Barryvdh\DomPDF\Facade\Pdf;
 class BorrowingController extends Controller
 {
     // ==========================================
-    // INDEX
+    // INDEX (REVISI: Ditambahkan Search, Filter, Sort)
     // ==========================================
-    public function index()
+    public function index(Request $request)
     {
+        // 1. Ambil Input Filter
+        $search = $request->input('search');
+        $sort = $request->input('direction', 'desc'); // Default desc (Terbaru)
+        $status_filter = $request->input('status_filter'); // 'late' atau null
+
+        // 2. Query Builder
         $borrowings = Borrowing::with(['item', 'borrower']) 
-            ->where('status', 'borrowed') 
-            ->latest()
-            ->paginate(10);
+            ->where('status', 'borrowed') // Hanya ambil yang SEDANG dipinjam
+            
+            // Logika Pencarian (Nama Peminjam ATAU Nama Barang)
+            ->when($search, function ($query, $search) {
+                return $query->where(function($q) use ($search) {
+                    $q->whereHas('borrower', function($b) use ($search) {
+                        $b->where('name', 'like', "%{$search}%");
+                    })
+                    ->orWhereHas('item', function($i) use ($search) {
+                        $i->where('name', 'like', "%{$search}%");
+                    });
+                });
+            })
+            
+            // Logika Filter Terlambat
+            ->when($status_filter === 'late', function ($query) {
+                return $query->whereDate('return_date', '<', now());
+            })
+            
+            // Logika Sorting (Berdasarkan tanggal pinjam)
+            ->orderBy('borrow_date', $sort)
+            ->paginate(10)
+            ->withQueryString(); // Agar filter tidak hilang saat pindah halaman
 
         return view('borrowings.index', compact('borrowings'));
     }
 
     // ==========================================
-    // CREATE FORM
+    // BULK RETURN (FITUR BARU)
+    // ==========================================
+    public function bulkReturn(Request $request)
+    {
+        $ids = $request->input('selected_ids', []);
+        $condition = $request->input('condition', 'good'); // good, damaged, broken
+
+        if (empty($ids)) {
+            return back()->with('error', 'Tidak ada peminjaman yang dipilih.');
+        }
+
+        // Gunakan Transaksi DB agar aman
+        DB::transaction(function () use ($ids, $condition) {
+            // Ambil data borrowing yang dipilih dan masih status borrowed
+            $borrowings = Borrowing::whereIn('id', $ids)
+                                   ->where('status', 'borrowed')
+                                   ->with('item')
+                                   ->get();
+
+            foreach ($borrowings as $borrow) {
+                // 1. Update Peminjaman
+                $borrow->update([
+                    'status'           => 'returned',
+                    'return_date'      => now(),
+                    'return_condition' => $condition
+                ]);
+
+                // 2. Update Status Item
+                // Logika ini MENGIKUTI logika returnItem() yang sudah ada:
+                // Jika good -> available, Jika rusak -> maintenance
+                $newItemStatus = ($condition === 'good') ? 'available' : 'maintenance';
+                
+                if ($borrow->item) {
+                    $borrow->item->update([
+                        'status'    => $newItemStatus,
+                        'condition' => $condition
+                    ]);
+                }
+            }
+        });
+
+        return back()->with('success', count($ids) . ' barang berhasil dikembalikan masal (Kondisi: ' . ucfirst($condition) . ').');
+    }
+
+    // ==========================================
+    // CREATE FORM (TETAP SAMA)
     // ==========================================
     public function create()
     {
@@ -37,7 +108,7 @@ class BorrowingController extends Controller
     }
 
     // ==========================================
-    // STORE (Proses Pinjam)
+    // STORE (Proses Pinjam) (TETAP SAMA)
     // ==========================================
     public function store(Request $request)
     {
@@ -74,7 +145,7 @@ class BorrowingController extends Controller
     }
 
     // ==========================================
-    // EDIT & UPDATE (Admin Correction)
+    // EDIT & UPDATE (Admin Correction) (TETAP SAMA)
     // ==========================================
     public function edit(Borrowing $borrowing)
     {
@@ -102,7 +173,7 @@ class BorrowingController extends Controller
     }
 
     // ==========================================
-    // DESTROY
+    // DESTROY (TETAP SAMA)
     // ==========================================
     public function destroy(Borrowing $borrowing)
     {
@@ -124,9 +195,8 @@ class BorrowingController extends Controller
     }
 
     // ==========================================
-    // RETURN (PENGEMBALIAN BARANG) - REVISI
+    // RETURN (SINGLE) (TETAP SAMA)
     // ==========================================
-    // Method ini sekarang menerima Request untuk menangkap input kondisi
     public function returnItem(Request $request, $id)
     {
         $validated = $request->validate([
@@ -161,7 +231,7 @@ class BorrowingController extends Controller
     }
 
     // ==========================================
-    // HISTORY & REPORT
+    // HISTORY & REPORT (TETAP SAMA)
     // ==========================================
     public function history(Request $request)
     {
@@ -216,7 +286,7 @@ class BorrowingController extends Controller
     }
 
     // ==========================================
-    // API / AJAX SCANNER
+    // API / AJAX SCANNER (TETAP SAMA)
     // ==========================================
     public function findItemByQr(Request $request)
     {

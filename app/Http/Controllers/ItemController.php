@@ -209,12 +209,14 @@ class ItemController extends Controller
     // =========================
     public function destroy(Item $item)
     {
-        if ($item->qr_code && Storage::disk('public')->exists($item->qr_code)) {
-            Storage::disk('public')->delete($item->qr_code);
-        }
-        $item->delete();
-        return redirect()->route('items.index')->with('success', 'Item deleted successfully.');
+$item->delete(); // Ini sekarang menjadi Soft Delete (database only)
+
+        // Kirim session 'action_undo' ke View untuk memunculkan tombol
+        return redirect()->route('items.index')
+            ->with('success', 'Item berhasil dihapus.')
+            ->with('action_undo', route('items.restore', $item->id)); 
     }
+    
 
     // =========================
     // SHOW & PDF
@@ -296,35 +298,52 @@ class ItemController extends Controller
     // =========================
     // BULK ACTION (Fitur Local)
     // =========================
+// =========================
+    // BULK ACTION (DENGAN UNDO)
+    // =========================
     public function bulkAction(Request $request)
     {
         $request->validate([
-            'selected_ids' => 'required|array',
+            'selected_ids'   => 'required|array',
             'selected_ids.*' => 'exists:items,id',
-            'action_type' => 'required|in:delete,copy',
+            'action_type'    => 'required|in:delete,copy',
         ]);
 
         $ids = $request->selected_ids;
         $action = $request->action_type;
         $count = 0;
 
+        // --- AKSI DELETE ---
         if ($action === 'delete') {
             $items = Item::whereIn('id', $ids)->get();
+            $deletedIds = []; // Array untuk menampung ID yang dihapus
+
             foreach ($items as $item) {
-                if ($item->qr_code && Storage::disk('public')->exists($item->qr_code)) {
-                    Storage::disk('public')->delete($item->qr_code);
-                }
-                $item->delete();
+                // HAPUS bagian Storage::delete agar file QR tidak hilang fisik
+                // if ($item->qr_code && Storage::disk('public')->exists($item->qr_code)) { ... }
+                
+                $item->delete(); // Ini melakukan Soft Delete
+                $deletedIds[] = $item->id; // Simpan ID untuk keperluan undo
                 $count++;
             }
-            return redirect()->route('items.index')->with('success', "$count item berhasil dihapus.");
+            
+            // Buat URL Undo dengan mengirim ID yang dipisahkan koma (misal: 1,2,5)
+            // Kita implode array jadi string agar mudah dikirim lewat URL
+            $idsString = implode(',', $deletedIds);
+            $undoUrl = route('items.bulk_restore', ['ids' => $idsString]);
+
+            return redirect()->route('items.index')
+                ->with('success', "$count item berhasil dihapus.")
+                ->with('action_undo', $undoUrl); // Kirim Link Undo ke View
         }
 
+        // --- AKSI COPY ---
         if ($action === 'copy') {
             $items = Item::whereIn('id', $ids)->orderBy('id')->get();
             foreach ($items as $item) {
                 $newItem = $item->replicate();
                 $newItem->name = $this->generateIncrementedName($item->name);
+                // Serial number unik
                 $newItem->serial_number = $item->serial_number . '-CPY-' . Str::upper(Str::random(3));
                 $newItem->qr_code = null;
                 $newItem->push();
@@ -339,6 +358,7 @@ class ItemController extends Controller
             }
             return redirect()->route('items.index')->with('success', "$count item berhasil diduplikasi.");
         }
+        
         return redirect()->back();
     }
 
@@ -394,4 +414,77 @@ class ItemController extends Controller
 
         return $newName;
     }
+
+    // =========================
+    // RESTORE (FITUR URUNGKAN)
+    // =========================
+    public function restore($id)
+    {
+        // Cari item yang sudah dihapus (withTrashed)
+        $item = Item::withTrashed()->find($id);
+
+        if ($item && $item->trashed()) {
+            $item->restore(); // Kembalikan data
+            return redirect()->route('items.index')->with('success', 'Penghapusan berhasil dibatalkan (Data dikembalikan).');
+        }
+
+        return redirect()->route('items.index')->with('error', 'Data tidak ditemukan atau tidak dalam status terhapus.');
+    }
+
+    // =========================
+    // BULK RESTORE (LOGIC TOMBOL UNDO MASAL)
+    // =========================
+    public function bulkRestore(Request $request)
+    {
+        // Ambil list ID dari URL (contoh: ?ids=1,2,3)
+        $idsString = $request->query('ids');
+
+        if ($idsString) {
+            $ids = explode(',', $idsString);
+            
+            // Restore semua item yang ID-nya ada di list tersebut
+            // whereIn + withTrashed (karena statusnya sudah terhapus)
+            Item::withTrashed()->whereIn('id', $ids)->restore();
+
+            return redirect()->route('items.index')
+                ->with('success', 'Penghapusan masal berhasil dibatalkan.');
+        }
+
+        return redirect()->route('items.index')->with('error', 'Gagal mengembalikan data.');
+    }
+
+public function trash(Request $request)
+{
+    // 1. Ambil Data untuk Dropdown Filter
+    $categories = Category::all();
+    $rooms = Room::all();
+
+    // 2. Ambil Input Filter, Search, Sort
+    $search = $request->input('search');
+    $category_id = $request->input('category_id');
+    $room_id = $request->input('room_id');
+    $sort = $request->input('sort', 'deleted_at'); 
+    $direction = $request->input('direction', 'desc');
+
+    // 3. Query Data Sampah dengan Filter
+    $deletedItems = Item::onlyTrashed()
+        ->when($search, function ($query, $search) {
+            return $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('serial_number', 'like', "%{$search}%")
+                  ->orWhere('asset_number', 'like', "%{$search}%");
+            });
+        })
+        ->when($category_id, function ($query, $catId) {
+            return $query->where('category_id', $catId);
+        })
+        ->when($room_id, function ($query, $roomId) {
+            return $query->where('room_id', $roomId);
+        })
+        ->orderBy($sort, $direction)
+        ->paginate(10)
+        ->withQueryString(); // Penting: agar filter tidak hilang saat ganti halaman
+
+    return view('items.trash', compact('deletedItems', 'categories', 'rooms'));
+}
 }

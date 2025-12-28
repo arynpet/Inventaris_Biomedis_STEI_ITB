@@ -103,6 +103,21 @@
                       class="text-sm font-medium truncate">Data Material</span>
             </a>
 
+                        <!-- 3D Print -->
+            <a href="/printers" 
+               :class="sidebarOpen ? 'justify-start' : 'justify-center'"
+               class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group {{ activeLink('printers') }}">
+                <div class="relative flex-shrink-0">
+                    <i data-lucide="printer" class="w-5 h-5"></i>
+                    @if (request()->is('printers*'))
+                        <span class="absolute -top-0.5 -right-0.5 w-2 h-2 bg-blue-600 rounded-full"></span>
+                    @endif
+                </div>
+                <span x-show="sidebarOpen" 
+                      x-transition
+                      class="text-sm font-medium truncate">Mesin 3D</span>
+            </a>
+
             <!-- Section Divider -->
             <div x-show="sidebarOpen" 
                  x-transition

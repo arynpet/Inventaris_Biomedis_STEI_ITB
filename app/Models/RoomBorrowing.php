@@ -16,6 +16,7 @@ class RoomBorrowing extends Model
         'purpose',
         'status',
         'notes',
+        'surat_peminjaman' // <--- Tambahkan ini
     ];
 
     protected $casts = [

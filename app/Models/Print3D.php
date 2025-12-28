@@ -14,6 +14,7 @@ class Print3D extends Model
     
     protected $fillable = [
         'user_id',
+        'project_name', // <--- TAMBAHKAN INI
         'printer_id',
         'date',
         'start_time',

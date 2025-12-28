@@ -5,16 +5,74 @@ namespace App\Http\Controllers;
 use App\Models\Room;
 use App\Models\Item;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str; // Tambahkan ini untuk generate random string saat duplikat
 
 class RoomController extends Controller
 {
     /**
-     * Tampilkan daftar ruangan
+     * Tampilkan daftar ruangan dengan Filter, Search, dan Sort
      */
-    public function index()
+    public function index(Request $request)
     {
-        $rooms = Room::orderBy('code')->get();
+        // 1. Ambil input filter
+        $search = $request->input('search');
+        $status = $request->input('status');
+        
+        // 2. Query Builder
+        $rooms = Room::query()
+            ->when($search, function ($query, $search) {
+                // Cari berdasarkan Nama atau Kode Ruangan
+                return $query->where(function ($q) use ($search) {
+                    $q->where('name', 'like', "%{$search}%")
+                      ->orWhere('code', 'like', "%{$search}%");
+                });
+            })
+            ->when($status, function ($query, $status) {
+                return $query->where('status', $status);
+            })
+            // Default sort by Code ascending, tapi bisa diubah jika nanti mau fitur sort header
+            ->orderBy('code', 'asc') 
+            ->paginate(10) // Pagination 10 baris per halaman
+            ->withQueryString(); // Agar filter tidak hilang saat ganti halaman
+
         return view('rooms.index', compact('rooms'));
+    }
+
+    /**
+     * Fitur Baru: Bulk Action (Hapus Banyak / Duplikat Banyak)
+     */
+    public function bulkAction(Request $request)
+    {
+        $action = $request->input('action_type'); // 'delete' atau 'copy'
+        $ids = $request->input('selected_ids', []);
+
+        if (empty($ids)) {
+            return redirect()->back()->with('error', 'Tidak ada ruangan yang dipilih.');
+        }
+
+        if ($action === 'delete') {
+            // Hapus Masal
+            Room::whereIn('id', $ids)->delete();
+            return redirect()->back()->with('success', count($ids) . ' ruangan berhasil dihapus.');
+        
+        } elseif ($action === 'copy') {
+            // Duplikat Masal
+            $count = 0;
+            foreach ($ids as $id) {
+                $original = Room::find($id);
+                if ($original) {
+                    $newRoom = $original->replicate();
+                    // Kode harus unik, jadi kita tambahkan suffix random
+                    $newRoom->code = $original->code . '-CPY-' . strtoupper(Str::random(3));
+                    $newRoom->name = $original->name . ' (Copy)';
+                    $newRoom->save();
+                    $count++;
+                }
+            }
+            return redirect()->back()->with('success', $count . ' ruangan berhasil diduplikasi.');
+        }
+
+        return redirect()->back()->with('error', 'Aksi tidak dikenali.');
     }
 
     /**
@@ -31,8 +89,8 @@ class RoomController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'code' => 'required|string|unique:rooms',
-            'name' => 'required|string',
+            'code' => 'required|string|unique:rooms,code|max:20', // Tambah max validation
+            'name' => 'required|string|max:255',
             'description' => 'nullable|string',
             'status' => 'required|in:sedia,dipinjam',
         ]);
@@ -58,8 +116,8 @@ class RoomController extends Controller
     public function update(Request $request, Room $room)
     {
         $validated = $request->validate([
-            'code' => "required|string|unique:rooms,code,$room->id",
-            'name' => 'required|string',
+            'code' => "required|string|max:20|unique:rooms,code,$room->id",
+            'name' => 'required|string|max:255',
             'description' => 'nullable|string',
             'status' => 'required|in:sedia,dipinjam',
         ]);
@@ -72,7 +130,7 @@ class RoomController extends Controller
     }
 
     /**
-     * Delete ruangan
+     * Delete ruangan (Single)
      */
     public function destroy(Room $room)
     {
@@ -83,30 +141,34 @@ class RoomController extends Controller
             ->with('success', 'Ruangan berhasil dihapus!');
     }
 
+    /**
+     * Detail Ruangan
+     */
     public function show(Room $room)
-{
-    $room->load('items'); // Ambil barang di ruangan ini
+    {
+        $room->load('items'); // Ambil barang di ruangan ini
 
-    // Ambil daftar semua ruangan untuk dropdown pemindahan
-    $rooms = Room::orderBy('name')->get();
+        // Ambil daftar semua ruangan lain untuk dropdown pemindahan (kecuali ruangan ini sendiri)
+        $rooms = Room::where('id', '!=', $room->id)->orderBy('name')->get();
 
-    return view('rooms.show', compact('room', 'rooms'));
-}
+        return view('rooms.show', compact('room', 'rooms'));
+    }
 
-public function moveItem(Request $request)
-{
-    $request->validate([
-        'item_id' => 'required|exists:items,id',
-        'new_room_id' => 'required|exists:rooms,id',
-    ]);
+    /**
+     * Pindahkan Item antar ruangan
+     */
+    public function moveItem(Request $request)
+    {
+        $request->validate([
+            'item_id' => 'required|exists:items,id',
+            'new_room_id' => 'required|exists:rooms,id',
+        ]);
 
-    $item = Item::findOrFail($request->item_id);
+        $item = Item::findOrFail($request->item_id);
 
-    $item->room_id = $request->new_room_id;
-    $item->save();
+        $item->room_id = $request->new_room_id;
+        $item->save();
 
-    return back()->with('success', 'Barang berhasil dipindahkan.');
-}
-
-
+        return back()->with('success', 'Barang berhasil dipindahkan.');
+    }
 }

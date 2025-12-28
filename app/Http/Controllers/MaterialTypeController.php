@@ -7,10 +7,47 @@ use Illuminate\Http\Request;
 
 class MaterialTypeController extends Controller
 {
-    public function index()
+    /**
+     * Tampilkan daftar material dengan Filter & Search
+     */
+    public function index(Request $request)
     {
-        $materials = MaterialType::orderBy('category')->orderBy('name')->get();
+        // 1. Ambil input filter
+        $search = $request->input('search');
+        $category = $request->input('category');
+
+        // 2. Query Builder
+        $materials = MaterialType::query()
+            ->when($search, function ($query, $search) {
+                return $query->where('name', 'like', "%{$search}%");
+            })
+            ->when($category, function ($query, $category) {
+                return $query->where('category', $category);
+            })
+            ->orderBy('category', 'asc')
+            ->orderBy('name', 'asc')
+            ->paginate(10) // Pagination
+            ->withQueryString();
+
         return view('materials.index', compact('materials'));
+    }
+
+    /**
+     * Bulk Action (Hapus Banyak)
+     */
+    public function bulkAction(Request $request)
+    {
+        $action = $request->input('action_type');
+        $ids = $request->input('selected_ids', []);
+
+        if (empty($ids)) return back()->with('error', 'Tidak ada item dipilih.');
+
+        if ($action === 'delete') {
+            MaterialType::whereIn('id', $ids)->delete();
+            return back()->with('success', count($ids) . ' material berhasil dihapus.');
+        }
+
+        return back()->with('error', 'Aksi tidak valid.');
     }
 
     public function create()
@@ -20,20 +57,14 @@ class MaterialTypeController extends Controller
 
     public function store(Request $request)
     {
-$request->validate([
-    'category'       => 'required|in:filament,resin',
-    'name'           => 'required|string|max:255',
-    'stock_balance'  => 'required|numeric|min:0',
-    'unit'           => 'required|in:gram,mililiter',
-]);
+        $request->validate([
+            'category'      => 'required|in:filament,resin',
+            'name'          => 'required|string|max:255',
+            'stock_balance' => 'required|numeric|min:0',
+            'unit'          => 'required|in:gram,mililiter',
+        ]);
 
-
-MaterialType::create([
-    'category'      => $request->category,
-    'name'          => $request->name,
-    'stock_balance' => $request->stock_balance,
-    'unit'          => $request->unit,
-]);
+        MaterialType::create($request->all());
 
         return redirect()->route('materials.index')
             ->with('success', 'Material type berhasil ditambahkan!');
@@ -56,7 +87,7 @@ MaterialType::create([
         $material->update($request->only('category', 'name'));
 
         return redirect()->route('materials.index')
-            ->with('success', 'Material type berhasil diupdate!');
+            ->with('success', 'Material type berhasil diperbarui!');
     }
 
     public function destroy($id)
@@ -68,16 +99,20 @@ MaterialType::create([
             ->with('success', 'Material type berhasil dihapus!');
     }
 
+    /**
+     * Fitur Tambah Stok Cepat
+     */
     public function addStock(Request $request, $id)
-{
-    $request->validate([
-        'amount' => 'required|numeric|min:0.01',
-    ]);
+    {
+        $request->validate([
+            'amount' => 'required|numeric|min:0.01',
+        ]);
 
-    $material = MaterialType::findOrFail($id);
-    $material->increment('stock_balance', $request->amount);
+        $material = MaterialType::findOrFail($id);
+        
+        // Menambah stok
+        $material->increment('stock_balance', $request->amount);
 
-    return back()->with('success', 'Stock berhasil ditambahkan.');
-}
-
+        return back()->with('success', "Berhasil menambah stok {$request->amount} {$material->unit} ke {$material->name}.");
+    }
 }

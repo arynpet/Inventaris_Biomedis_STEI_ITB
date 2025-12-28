@@ -4,10 +4,12 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes; // Tambahkan ini
 
 class Item extends Model
 {
     use HasFactory;
+    use SoftDeletes; // Gunakan ini
 
     protected $fillable = [
         'asset_number',

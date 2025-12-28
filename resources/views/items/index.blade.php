@@ -24,6 +24,8 @@
                 <span class="font-medium text-sm">{{ session('success') }}</span>
             </div>
         </div>
+
+        
     @endif
 
     {{-- ERROR ALERT --}}
@@ -36,12 +38,27 @@
         </div>
     @endif
 
+    @if (session('success'))
+    <div class="alert alert-success alert-dismissible fade show fixed-bottom m-3" role="alert" style="z-index: 1050; max-width: 500px;">
+        {{ session('success') }}
+        
+        {{-- Jika ada session undo, tampilkan tombol --}}
+        @if (session('action_undo'))
+            <a href="{{ session('action_undo') }}" class="btn btn-sm btn-dark ms-3">
+                <i class="fas fa-undo"></i> Urungkan
+            </a>
+        @endif
+
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+@endif
+
     {{-- MAIN CONTENT --}}
     {{-- Kita passing ID item ke Alpine untuk fitur Shift-Click --}}
     <div class="py-12" x-data="itemPage({{ json_encode($items->pluck('id')) }})">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
 
-            {{-- HEADER SECTION --}}
+{{-- HEADER SECTION --}}
             <div class="flex flex-col xl:flex-row justify-between items-start xl:items-center mb-8 gap-4">
                 <div>
                     <h3 class="text-3xl font-bold text-gray-900 tracking-tight">Data Induk Barang</h3>
@@ -61,7 +78,16 @@
                         </button>
                     </form>
 
-                    {{-- 2. Tombol Riwayat --}}
+                    {{-- 2. Tombol TRASH / SAMPAH (BARU) --}}
+                    <a href="{{ route('items.trash') }}" 
+                       class="inline-flex items-center px-4 py-2.5 bg-white border border-red-200 rounded-lg font-semibold text-xs text-red-600 uppercase tracking-widest shadow-sm hover:bg-red-50 focus:outline-none transition ease-in-out duration-150">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                        </svg>
+                        Sampah
+                    </a>
+
+                    {{-- 3. Tombol Riwayat --}}
                     <a href="{{ route('items.out.index') }}" 
                        class="inline-flex items-center px-4 py-2.5 bg-white border border-gray-300 rounded-lg font-semibold text-xs text-gray-700 uppercase tracking-widest shadow-sm hover:bg-gray-50 focus:outline-none transition ease-in-out duration-150">
                         <svg class="w-4 h-4 mr-2 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -70,7 +96,7 @@
                         Riwayat Keluar
                     </a>
 
-                    {{-- 3. Tombol Grouping --}}
+                    {{-- 4. Tombol Grouping --}}
                     <a href="{{ route('items.index', array_merge(request()->all(), ['group_by_asset' => '1'])) }}" 
                        class="inline-flex items-center px-4 py-2.5 bg-purple-600 border border-transparent rounded-lg font-semibold text-xs text-white uppercase tracking-widest hover:bg-purple-700 shadow-sm transition ease-in-out duration-150">
                         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -79,7 +105,7 @@
                         Group By Asset
                     </a>
 
-                    {{-- 4. Tombol Tambah --}}
+                    {{-- 5. Tombol Tambah --}}
                     <a href="{{ route('items.create') }}" 
                        class="inline-flex items-center px-4 py-2.5 bg-blue-600 border border-transparent rounded-lg font-semibold text-xs text-white uppercase tracking-widest hover:bg-blue-700 shadow-sm transition ease-in-out duration-150">
                         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
