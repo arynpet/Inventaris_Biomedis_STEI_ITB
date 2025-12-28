@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Validation\ValidationException;
 
 class BorrowingController extends Controller
 {
@@ -113,35 +114,38 @@ class BorrowingController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'user_id'       => 'required|exists:peminjam_users,id',
-            'item_id'       => 'required|exists:items,id',
-            'borrow_date'   => 'required|date',
-            'return_date'   => 'nullable|date|after_or_equal:borrow_date',
-            'notes'         => 'nullable|string',
+            'user_id'     => 'required|exists:peminjam_users,id',
+            'item_id'     => 'required|exists:items,id',
+            'borrow_date' => 'required|date',
+            'return_date' => 'nullable|date|after_or_equal:borrow_date',
+            'notes'       => 'nullable|string',
         ]);
 
-        $item = Item::findOrFail($validated['item_id']);
-  
-        // Double check status barang
-        if ($item->status !== 'available') {
-            return back()->withErrors(['item_id' => 'Item sedang dipinjam atau dalam perbaikan.']);
-        }
+        DB::transaction(function () use ($validated) {
+            $item = Item::where('id', $validated['item_id'])
+                ->lockForUpdate()
+                ->first();
+            
+            if ($item->status !== 'available') {
+                throw ValidationException::withMessages([
+                    'item_id' => 'Item sedang dipinjam atau dalam perbaikan.'
+                ]);
+            }
 
-        // Buat Peminjaman
-        Borrowing::create([
-            'item_id'     => $validated['item_id'],
-            'user_id'     => $validated['user_id'],
-            'borrow_date' => $validated['borrow_date'],
-            'return_date' => $validated['return_date'],
-            'notes'       => $validated['notes'],
-            'status'      => 'borrowed',
-        ]);
-  
-        // Update Status Item
-        $item->update(['status' => 'borrowed']);
-  
+            Borrowing::create([
+                'item_id'     => $validated['item_id'],
+                'user_id'     => $validated['user_id'],
+                'borrow_date' => $validated['borrow_date'],
+                'return_date' => $validated['return_date'],
+                'notes'       => $validated['notes'],
+                'status'      => 'borrowed',
+            ]);
+
+            $item->update(['status' => 'borrowed']);
+        });
+
         return redirect()->route('borrowings.index')
-                         ->with('success', 'Peminjaman berhasil dibuat!');
+                        ->with('success', 'Peminjaman berhasil dibuat!');
     }
 
     // ==========================================

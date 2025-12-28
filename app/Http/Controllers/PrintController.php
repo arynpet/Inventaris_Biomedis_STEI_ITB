@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class PrintController extends Controller
 {
@@ -265,7 +266,7 @@ class PrintController extends Controller
     // =============================
     // DELETE
     // =============================
-    public function destroy($id)
+   public function destroy($id)
     {
         $print = Print3D::findOrFail($id);
 
@@ -274,7 +275,8 @@ class PrintController extends Controller
             Storage::disk('public')->delete($print->file_path);
         }
 
-        $print->delete();
+            $print->delete();
+        });
 
         return back()->with('success', 'Data berhasil dihapus.');
     }
