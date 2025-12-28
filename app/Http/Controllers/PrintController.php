@@ -105,7 +105,7 @@ class PrintController extends Controller
     {
         $request->validate([
             'user_id'           => 'required|exists:peminjam_users,id',
-            'project_name'      => 'required|string|max:255', // <--- Validasi Baru
+            'project_name'      => 'required|string|max:255', 
             'printer_id'        => 'required|exists:printers,id',
             'date'              => ['required', 'date', function($attribute, $value, $fail) {
                 // Aturan: Minimal booking H+2 dari hari ini
@@ -152,7 +152,7 @@ class PrintController extends Controller
 
         Print3D::create([
             'user_id'           => $request->user_id,
-            'project_name'      => $request->project_name, // <--- Simpan Nama File
+            'project_name'      => $request->project_name,
             'printer_id'        => $request->printer_id,
             'date'              => $request->date,
             'start_time'        => $request->start_time,
@@ -266,7 +266,7 @@ class PrintController extends Controller
     // =============================
     // DELETE
     // =============================
-   public function destroy($id)
+    public function destroy($id)
     {
         $print = Print3D::findOrFail($id);
 
@@ -275,8 +275,7 @@ class PrintController extends Controller
             Storage::disk('public')->delete($print->file_path);
         }
 
-            $print->delete();
-        });
+        $print->delete();
 
         return back()->with('success', 'Data berhasil dihapus.');
     }
