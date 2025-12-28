@@ -188,20 +188,29 @@ class ItemController extends Controller
         // Gunakan Arr::except (Fitur Remote)
         $itemData = Arr::except($validated, ['categories']);
 
+        $message = 'Item updated successfully.';
+        $alertType = 'success';
+        
         if ($qrFieldsChanged) {
-            // Logic Hapus QR Lama (Fitur Local)
-            if ($item->qr_code && Storage::disk('public')->exists($item->qr_code)) {
-                Storage::disk('public')->delete($item->qr_code);
+            if (in_array($item->status, ['available', 'maintenance'])) {
+                if ($item->qr_code && Storage::disk('public')->exists($item->qr_code)) {
+                    Storage::disk('public')->delete($item->qr_code);
+                }
+                $item->update($itemData);
+                $this->generateAndSaveQr($item);
             }
+            else {
             $item->update($itemData);
-            $this->generateAndSaveQr($item);
+            $message = 'Data berhasil diupdate, tetapi QR Code tidak diperbarui karena barang sedang dipinjam.';
+            $alertType = 'warning';
+            }
         } else {
             $item->update($itemData);
         }
 
         $item->categories()->sync($request->categories ?? []);
 
-        return redirect()->route('items.index')->with('success', 'Item updated successfully.');
+        return redirect()->route('items.index')->with($alertType, $message);
     }
 
     // =========================
