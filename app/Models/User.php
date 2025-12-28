@@ -21,7 +21,14 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'role', // <--- Tambahkan ini
     ];
+
+    // Helper untuk cek apakah dia superadmin (Opsional, biar kodingan rapi)
+public function isSuperAdmin()
+{
+    return $this->role === 'superadmin';
+}
 
     /**
      * The attributes that should be hidden for serialization.

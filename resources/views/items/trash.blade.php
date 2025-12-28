@@ -163,6 +163,7 @@
                                     </a>
 
                                     {{-- TERMINATE (DELETE METHOD) --}}
+                                    @if(auth()->user()->role === 'superadmin')
                                     <form action="{{ route('items.terminate', $item->id) }}" method="POST" class="inline-block" onsubmit="return confirm('PERINGATAN KERAS:\nData ini akan dihapus PERMANEN dari database dan TIDAK BISA kembali.\n\nLanjutkan?');">
                                         @csrf
                                         @method('DELETE')
@@ -170,6 +171,7 @@
                                             HAPUS
                                         </button>
                                     </form>
+                                    @endif
                                 </td>
                             </tr>
                             @empty

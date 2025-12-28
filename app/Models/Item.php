@@ -5,9 +5,11 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes; // Tambahkan ini
+use App\Traits\LogsActivity; // <--- Import Trait
 
 class Item extends Model
 {
+    use LogsActivity; // <--- Pasang CCTV disini
     use HasFactory;
     use SoftDeletes; // Gunakan ini
 

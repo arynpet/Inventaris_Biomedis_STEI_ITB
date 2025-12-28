@@ -1,338 +1,212 @@
-<!-- Sidebar Container with Alpine.js toggle -->
 <div x-data="{ sidebarOpen: true }" class="fixed left-0 top-0 h-screen z-50 p-4">
     
-    <!-- Floating Sidebar -->
     <div :class="sidebarOpen ? 'w-64' : 'w-20'" 
-         class="h-full bg-white rounded-2xl shadow-md border border-gray-200 flex flex-col transition-all duration-300 ease-in-out">
+         class="h-full bg-white rounded-2xl shadow-xl border border-gray-200 flex flex-col transition-all duration-300 ease-in-out font-sans">
 
-        <!-- Header Section -->
-        <div class="flex items-center justify-between px-4 py-5 border-b border-gray-100">
+        <div class="flex items-center justify-between px-4 py-6 border-b border-gray-100">
             <div class="flex items-center gap-3 overflow-hidden">
-                <div class="w-10 h-10 bg-blue-600 text-white rounded-xl flex items-center justify-center font-semibold text-lg flex-shrink-0">
+                <div class="w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-600 text-white rounded-xl flex items-center justify-center font-bold text-lg flex-shrink-0 shadow-md">
                     S
                 </div>
                 <div x-show="sidebarOpen" x-transition class="min-w-0">
-                    <h1 class="text-base font-bold text-gray-900 truncate">STEIKA</h1>
-                    <p class="text-xs text-gray-500 truncate">Biomedis Inventory</p>
+                    <h1 class="text-base font-bold text-gray-900 truncate tracking-tight">STEIKA</h1>
+                    <p class="text-[10px] text-gray-500 uppercase tracking-wider font-semibold truncate">Biomedis Inventory</p>
                 </div>
             </div>
             
-            <!-- Toggle Button -->
-            <button @click="sidebarOpen = !sidebarOpen" class="w-7 h-7 rounded-lg hover:bg-gray-100 flex items-center justify-center">
+            <button @click="sidebarOpen = !sidebarOpen" class="w-8 h-8 rounded-lg hover:bg-gray-100 flex items-center justify-center transition-colors">
                 <i :data-lucide="sidebarOpen ? 'chevron-left' : 'chevron-right'" class="w-4 h-4 text-gray-500"></i>
             </button>
         </div>
 
-        <!-- Navigation -->
-        <nav class="flex-1 overflow-y-auto px-3 py-4 space-y-1">
+        <nav class="flex-1 overflow-y-auto px-3 py-4 space-y-1 custom-scrollbar">
 
            @php
                 if (!function_exists('activeLink')) {
                     function activeLink($route) {
                         return request()->is($route.'*') ? 
-                            'bg-blue-50 text-blue-600' : 
-                            'text-gray-700 hover:bg-gray-50';
+                            'bg-blue-50 text-blue-700 shadow-sm ring-1 ring-blue-100' : 
+                            'text-gray-600 hover:bg-gray-50 hover:text-gray-900';
                     }
                 }
             @endphp
 
-            <!-- Dashboard -->
             <a href="/dashboard" :class="sidebarOpen ? 'justify-start' : 'justify-center'"
-               class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all {{ activeLink('dashboard') }}">
-                <i data-lucide="home" class="w-5 h-5"></i>
-                <span x-show="sidebarOpen" class="text-sm font-medium">Dashboard</span>
+               class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 mb-4 {{ activeLink('dashboard') }}">
+                <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
+                <span x-show="sidebarOpen" class="text-sm font-semibold">Dashboard</span>
             </a>
 
-            <!-- Items -->
-            <a href="/items" 
-               :class="sidebarOpen ? 'justify-start' : 'justify-center'"
-               class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group {{ activeLink('items') }}">
+            <div x-show="sidebarOpen" x-transition class="px-3 pt-2 pb-2">
+                <p class="text-[10px] text-gray-400 uppercase tracking-widest font-bold">Inventory</p>
+            </div>
+            <div x-show="!sidebarOpen" class="h-px bg-gray-100 mx-2 my-2"></div>
+
+            <a href="/items" :class="sidebarOpen ? 'justify-start' : 'justify-center'"
+               class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group {{ activeLink('items') }}">
                 <div class="relative flex-shrink-0">
                     <i data-lucide="package" class="w-5 h-5"></i>
-                    @if (request()->is('items*'))
-                        <span class="absolute -top-0.5 -right-0.5 w-2 h-2 bg-blue-600 rounded-full"></span>
-                    @endif
+                    @if (request()->is('items*')) <span class="absolute -top-0.5 -right-0.5 w-2 h-2 bg-blue-600 rounded-full"></span> @endif
                 </div>
-                <span x-show="sidebarOpen" 
-                      x-transition
-                      class="text-sm font-medium truncate">Data Induk Barang</span>
+                <span x-show="sidebarOpen" x-transition class="text-sm font-medium truncate">Data Barang</span>
             </a>
 
-            <!-- Rooms -->
-            <a href="/rooms" 
-               :class="sidebarOpen ? 'justify-start' : 'justify-center'"
-               class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group {{ activeLink('rooms') }}">
+            <a href="/rooms" :class="sidebarOpen ? 'justify-start' : 'justify-center'"
+               class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group {{ activeLink('rooms') }}">
                 <div class="relative flex-shrink-0">
                     <i data-lucide="door-open" class="w-5 h-5"></i>
-                    @if (request()->is('rooms*'))
-                        <span class="absolute -top-0.5 -right-0.5 w-2 h-2 bg-blue-600 rounded-full"></span>
-                    @endif
+                    @if (request()->is('rooms*')) <span class="absolute -top-0.5 -right-0.5 w-2 h-2 bg-blue-600 rounded-full"></span> @endif
                 </div>
-                <span x-show="sidebarOpen" 
-                      x-transition
-                      class="text-sm font-medium truncate">Data Ruangan</span>
+                <span x-show="sidebarOpen" x-transition class="text-sm font-medium truncate">Ruangan</span>
             </a>
 
-            <!-- Users -->
-            <a href="/peminjam-users" 
-               :class="sidebarOpen ? 'justify-start' : 'justify-center'"
-               class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group {{ activeLink('peminjam-users') }}">
+            <a href="/materials" :class="sidebarOpen ? 'justify-start' : 'justify-center'"
+               class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group {{ activeLink('materials') }}">
                 <div class="relative flex-shrink-0">
-                    <i data-lucide="users" class="w-5 h-5"></i>
-                    @if (request()->is('peminjam-users*'))
-                        <span class="absolute -top-0.5 -right-0.5 w-2 h-2 bg-blue-600 rounded-full"></span>
-                    @endif
+                    <i data-lucide="container" class="w-5 h-5"></i>
+                    @if (request()->is('materials*')) <span class="absolute -top-0.5 -right-0.5 w-2 h-2 bg-blue-600 rounded-full"></span> @endif
                 </div>
-                <span x-show="sidebarOpen" 
-                      x-transition
-                      class="text-sm font-medium truncate">Data Peminjam</span>
+                <span x-show="sidebarOpen" x-transition class="text-sm font-medium truncate">Stok Material</span>
             </a>
 
-            <!-- Materials -->
-            <a href="/materials" 
-               :class="sidebarOpen ? 'justify-start' : 'justify-center'"
-               class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group {{ activeLink('materials') }}">
-                <div class="relative flex-shrink-0">
-                    <i data-lucide="box" class="w-5 h-5"></i>
-                    @if (request()->is('materials*'))
-                        <span class="absolute -top-0.5 -right-0.5 w-2 h-2 bg-blue-600 rounded-full"></span>
-                    @endif
-                </div>
-                <span x-show="sidebarOpen" 
-                      x-transition
-                      class="text-sm font-medium truncate">Data Material</span>
-            </a>
-
-                        <!-- 3D Print -->
-            <a href="/printers" 
-               :class="sidebarOpen ? 'justify-start' : 'justify-center'"
-               class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group {{ activeLink('printers') }}">
+            <a href="/printers" :class="sidebarOpen ? 'justify-start' : 'justify-center'"
+               class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group {{ activeLink('printers') }}">
                 <div class="relative flex-shrink-0">
                     <i data-lucide="printer" class="w-5 h-5"></i>
-                    @if (request()->is('printers*'))
-                        <span class="absolute -top-0.5 -right-0.5 w-2 h-2 bg-blue-600 rounded-full"></span>
-                    @endif
+                    @if (request()->is('printers*')) <span class="absolute -top-0.5 -right-0.5 w-2 h-2 bg-blue-600 rounded-full"></span> @endif
                 </div>
-                <span x-show="sidebarOpen" 
-                      x-transition
-                      class="text-sm font-medium truncate">Mesin 3D</span>
+                <span x-show="sidebarOpen" x-transition class="text-sm font-medium truncate">Mesin 3D</span>
             </a>
 
-            <!-- Section Divider -->
-            <div x-show="sidebarOpen" 
-                 x-transition
-                 class="pt-4 pb-2">
-                <div class="flex items-center gap-2 px-3">
-                    <div class="h-px flex-1 bg-gray-200"></div>
-                    <p class="text-xs text-gray-400 uppercase tracking-wide font-medium">Peminjaman</p>
-                    <div class="h-px flex-1 bg-gray-200"></div>
-                </div>
-            </div>
 
-            <!-- Divider when collapsed -->
-            <div x-show="!sidebarOpen" 
-                 x-transition
-                 class="py-2">
-                <div class="h-px bg-gray-200 mx-2"></div>
+            <div x-show="sidebarOpen" x-transition class="px-3 pt-4 pb-2">
+                <p class="text-[10px] text-gray-400 uppercase tracking-widest font-bold">Layanan</p>
             </div>
+            <div x-show="!sidebarOpen" class="h-px bg-gray-100 mx-2 my-2"></div>
 
-            <!-- Borrowings -->
-            <a href="/borrowings" 
-               :class="sidebarOpen ? 'justify-start' : 'justify-center'"
-               class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group {{ activeLink('borrowings') }}">
+            <a href="/borrowings" :class="sidebarOpen ? 'justify-start' : 'justify-center'"
+               class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group {{ activeLink('borrowings') }}">
                 <div class="relative flex-shrink-0">
                     <i data-lucide="zap" class="w-5 h-5"></i>
-                    @if (request()->is('borrowings*'))
-                        <span class="absolute -top-0.5 -right-0.5 w-2 h-2 bg-blue-600 rounded-full"></span>
-                    @endif
+                    @if (request()->is('borrowings*')) <span class="absolute -top-0.5 -right-0.5 w-2 h-2 bg-blue-600 rounded-full"></span> @endif
                 </div>
-                <span x-show="sidebarOpen" 
-                      x-transition
-                      class="text-sm font-medium truncate">Peminjaman Cepat</span>
+                <span x-show="sidebarOpen" x-transition class="text-sm font-medium truncate">Pinjam Alat</span>
             </a>
 
-            <!-- Room Borrowings -->
-            <a href="/room_borrowings" 
-               :class="sidebarOpen ? 'justify-start' : 'justify-center'"
-               class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group {{ activeLink('room_borrowings') }}">
+            <a href="/room_borrowings" :class="sidebarOpen ? 'justify-start' : 'justify-center'"
+               class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group {{ activeLink('room_borrowings') }}">
                 <div class="relative flex-shrink-0">
-                    <i data-lucide="calendar" class="w-5 h-5"></i>
-                    @if (request()->is('room_borrowings*'))
-                        <span class="absolute -top-0.5 -right-0.5 w-2 h-2 bg-blue-600 rounded-full"></span>
-                    @endif
+                    <i data-lucide="calendar-clock" class="w-5 h-5"></i>
+                    @if (request()->is('room_borrowings*')) <span class="absolute -top-0.5 -right-0.5 w-2 h-2 bg-blue-600 rounded-full"></span> @endif
                 </div>
-                <span x-show="sidebarOpen" 
-                      x-transition
-                      class="text-sm font-medium truncate">Peminjaman Ruangan</span>
+                <span x-show="sidebarOpen" x-transition class="text-sm font-medium truncate">Booking Ruangan</span>
             </a>
 
-            <!-- 3D Print -->
-            <a href="/prints" 
-               :class="sidebarOpen ? 'justify-start' : 'justify-center'"
-               class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group {{ activeLink('prints') }}">
+            <a href="/prints" :class="sidebarOpen ? 'justify-start' : 'justify-center'"
+               class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group {{ activeLink('prints') }}">
                 <div class="relative flex-shrink-0">
-                    <i data-lucide="printer" class="w-5 h-5"></i>
-                    @if (request()->is('prints*'))
-                        <span class="absolute -top-0.5 -right-0.5 w-2 h-2 bg-blue-600 rounded-full"></span>
-                    @endif
+                    <i data-lucide="layers" class="w-5 h-5"></i>
+                    @if (request()->is('prints*')) <span class="absolute -top-0.5 -right-0.5 w-2 h-2 bg-blue-600 rounded-full"></span> @endif
                 </div>
-                <span x-show="sidebarOpen" 
-                      x-transition
-                      class="text-sm font-medium truncate">3D Print</span>
+                <span x-show="sidebarOpen" x-transition class="text-sm font-medium truncate">Request Print</span>
             </a>
 
-            <!-- Section Divider -->
-            <div x-show="sidebarOpen" 
-                 x-transition
-                 class="pt-4 pb-2">
-                <div class="flex items-center gap-2 px-3">
-                    <div class="h-px flex-1 bg-gray-200"></div>
-                    <p class="text-xs text-gray-400 uppercase tracking-wide font-medium">Manajemen</p>
-                    <div class="h-px flex-1 bg-gray-200"></div>
+
+            <div x-show="sidebarOpen" x-transition class="px-3 pt-4 pb-2">
+                <p class="text-[10px] text-gray-400 uppercase tracking-widest font-bold">Admin Area</p>
+            </div>
+            <div x-show="!sidebarOpen" class="h-px bg-gray-100 mx-2 my-2"></div>
+
+            {{-- MENU KHUSUS SUPER ADMIN --}}
+            @if(auth()->check() && auth()->user()->role === 'superadmin')
+                
+                {{-- Kelola Users --}}
+                <a href="{{ route('superadmin.users.index') }}" 
+                   :class="sidebarOpen ? 'justify-start' : 'justify-center'"
+                   class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group {{ activeLink('superadmin/users') }}">
+                    <div class="relative flex-shrink-0">
+                        <i data-lucide="shield-check" class="w-5 h-5 text-indigo-600"></i>
+                        @if (request()->is('superadmin/users*')) <span class="absolute -top-0.5 -right-0.5 w-2 h-2 bg-indigo-600 rounded-full"></span> @endif
+                    </div>
+                    <span x-show="sidebarOpen" x-transition class="text-sm font-medium truncate">Kelola Admin</span>
+                </a>
+
+                {{-- AUDIT LOGS (YANG DIMINTA) --}}
+                <a href="{{ route('superadmin.logs.index') }}" 
+                   :class="sidebarOpen ? 'justify-start' : 'justify-center'"
+                   class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group {{ activeLink('superadmin/logs') }}">
+                    <div class="relative flex-shrink-0">
+                        <i data-lucide="file-clock" class="w-5 h-5 text-rose-600"></i>
+                        @if (request()->is('superadmin/logs*')) <span class="absolute -top-0.5 -right-0.5 w-2 h-2 bg-rose-600 rounded-full"></span> @endif
+                    </div>
+                    <span x-show="sidebarOpen" x-transition class="text-sm font-medium truncate">Audit Log</span>
+                </a>
+
+            @endif
+
+            <a href="/peminjam-users" :class="sidebarOpen ? 'justify-start' : 'justify-center'"
+               class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group {{ activeLink('peminjam-users') }}">
+                <div class="relative flex-shrink-0">
+                    <i data-lucide="users" class="w-5 h-5"></i>
+                </div>
+                <span x-show="sidebarOpen" x-transition class="text-sm font-medium truncate">Data Peminjam</span>
+            </a>
+
+            <div x-data="{ expanded: false }">
+                <button @click="expanded = !expanded" 
+                        x-show="sidebarOpen"
+                        class="flex items-center justify-between w-full gap-3 px-3 py-2.5 text-gray-600 hover:bg-gray-50 rounded-xl transition-all duration-200">
+                    <div class="flex items-center gap-3">
+                        <i data-lucide="database" class="w-5 h-5"></i>
+                        <span class="text-sm font-medium">Master Data</span>
+                    </div>
+                    <i :data-lucide="expanded ? 'chevron-down' : 'chevron-right'" class="w-4 h-4"></i>
+                </button>
+
+                <a href="#" x-show="!sidebarOpen" class="flex justify-center px-3 py-2.5 text-gray-600 hover:bg-gray-50 rounded-xl">
+                    <i data-lucide="database" class="w-5 h-5"></i>
+                </a>
+
+                <div x-show="expanded && sidebarOpen" x-collapse class="pl-4 space-y-1 mt-1">
+                    <a href="/suppliers" class="flex items-center gap-2 px-3 py-2 text-sm text-gray-500 hover:text-blue-600 rounded-lg">
+                        <span class="w-1.5 h-1.5 bg-gray-300 rounded-full"></span> Supplier
+                    </a>
+                    <a href="/categories" class="flex items-center gap-2 px-3 py-2 text-sm text-gray-500 hover:text-blue-600 rounded-lg">
+                        <span class="w-1.5 h-1.5 bg-gray-300 rounded-full"></span> Kategori
+                    </a>
+                    <a href="/locations" class="flex items-center gap-2 px-3 py-2 text-sm text-gray-500 hover:text-blue-600 rounded-lg">
+                        <span class="w-1.5 h-1.5 bg-gray-300 rounded-full"></span> Lokasi
+                    </a>
+                    <a href="/fundings" class="flex items-center gap-2 px-3 py-2 text-sm text-gray-500 hover:text-blue-600 rounded-lg">
+                        <span class="w-1.5 h-1.5 bg-gray-300 rounded-full"></span> Sumber Dana
+                    </a>
                 </div>
             </div>
-
-            <div x-show="!sidebarOpen" 
-                 x-transition
-                 class="py-2">
-                <div class="h-px bg-gray-200 mx-2"></div>
-            </div>
-
-            <!-- Suppliers -->
-            <a href="/suppliers" 
-               :class="sidebarOpen ? 'justify-start' : 'justify-center'"
-               class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group {{ activeLink('suppliers') }}">
-                <div class="relative flex-shrink-0">
-                    <i data-lucide="truck" class="w-5 h-5"></i>
-                    @if (request()->is('suppliers*'))
-                        <span class="absolute -top-0.5 -right-0.5 w-2 h-2 bg-blue-600 rounded-full"></span>
-                    @endif
-                </div>
-                <span x-show="sidebarOpen" 
-                      x-transition
-                      class="text-sm font-medium truncate">Supplier</span>
-            </a>
-
-            <!-- Categories -->
-            <a href="/categories" 
-               :class="sidebarOpen ? 'justify-start' : 'justify-center'"
-               class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group {{ activeLink('categories') }}">
-                <div class="relative flex-shrink-0">
-                    <i data-lucide="tags" class="w-5 h-5"></i>
-                    @if (request()->is('categories*'))
-                        <span class="absolute -top-0.5 -right-0.5 w-2 h-2 bg-blue-600 rounded-full"></span>
-                    @endif
-                </div>
-                <span x-show="sidebarOpen" 
-                      x-transition
-                      class="text-sm font-medium truncate">Kategori</span>
-            </a>
-
-            <!-- Locations -->
-            <a href="/locations" 
-               :class="sidebarOpen ? 'justify-start' : 'justify-center'"
-               class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group {{ activeLink('locations') }}">
-                <div class="relative flex-shrink-0">
-                    <i data-lucide="map-pin" class="w-5 h-5"></i>
-                    @if (request()->is('locations*'))
-                        <span class="absolute -top-0.5 -right-0.5 w-2 h-2 bg-blue-600 rounded-full"></span>
-                    @endif
-                </div>
-                <span x-show="sidebarOpen" 
-                      x-transition
-                      class="text-sm font-medium truncate">Lokasi Barang</span>
-            </a>
-
-            <!-- Fundings -->
-            <a href="/fundings" 
-               :class="sidebarOpen ? 'justify-start' : 'justify-center'"
-               class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group {{ activeLink('fundings') }}">
-                <div class="relative flex-shrink-0">
-                    <i data-lucide="wallet" class="w-5 h-5"></i>
-                    @if (request()->is('fundings*'))
-                        <span class="absolute -top-0.5 -right-0.5 w-2 h-2 bg-blue-600 rounded-full"></span>
-                    @endif
-                </div>
-                <span x-show="sidebarOpen" 
-                      x-transition
-                      class="text-sm font-medium truncate">Sumber Dana</span>
-            </a>
-
-            <!-- Section Divider -->
-            <div x-show="sidebarOpen" 
-                 x-transition
-                 class="pt-4 pb-2">
-                <div class="flex items-center gap-2 px-3">
-                    <div class="h-px flex-1 bg-gray-200"></div>
-                    <p class="text-xs text-gray-400 uppercase tracking-wide font-medium">Pengaturan</p>
-                    <div class="h-px flex-1 bg-gray-200"></div>
-                </div>
-            </div>
-
-            <div x-show="!sidebarOpen" 
-                 x-transition
-                 class="py-2">
-                <div class="h-px bg-gray-200 mx-2"></div>
-            </div>
-
-            <!-- Settings -->
-            <a href="/settings" 
-               :class="sidebarOpen ? 'justify-start' : 'justify-center'"
-               class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group {{ activeLink('settings') }}">
-                <div class="relative flex-shrink-0">
-                    <i data-lucide="settings" class="w-5 h-5"></i>
-                    @if (request()->is('settings*'))
-                        <span class="absolute -top-0.5 -right-0.5 w-2 h-2 bg-blue-600 rounded-full"></span>
-                    @endif
-                </div>
-                <span x-show="sidebarOpen" 
-                      x-transition
-                      class="text-sm font-medium truncate">Settings</span>
-            </a>
-
-            <!-- Profile -->
-            <a href="/profile" 
-               :class="sidebarOpen ? 'justify-start' : 'justify-center'"
-               class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group {{ activeLink('profile') }}">
-                <div class="relative flex-shrink-0">
-                    <i data-lucide="user" class="w-5 h-5"></i>
-                    @if (request()->is('profile*'))
-                        <span class="absolute -top-0.5 -right-0.5 w-2 h-2 bg-blue-600 rounded-full"></span>
-                    @endif
-                </div>
-                <span x-show="sidebarOpen" 
-                      x-transition
-                      class="text-sm font-medium truncate">Profile</span>
-            </a>
 
         </nav>
 
-        <!-- Footer User Info -->
         <div class="px-3 py-4 border-t border-gray-100">
             <div :class="sidebarOpen ? 'justify-between' : 'justify-center'"
-                 class="flex items-center gap-3 px-3 py-2.5 bg-gray-50 rounded-lg">
+                 class="flex items-center gap-3 px-3 py-2.5 bg-gray-50 rounded-xl border border-gray-100">
+                
                 <div class="flex items-center gap-3 min-w-0">
-                    <div class="w-8 h-8 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center flex-shrink-0">
-                        <i data-lucide="user" class="w-4 h-4"></i>
+                    <div class="w-9 h-9 bg-gradient-to-br from-blue-500 to-indigo-600 text-white rounded-lg flex items-center justify-center flex-shrink-0 shadow-sm font-bold">
+                        {{ substr(auth()->user()->name, 0, 1) }}
                     </div>
-                    <div x-show="sidebarOpen" 
-                         x-transition
-                         class="min-w-0 flex-1">
-                        <p class="text-xs font-semibold text-gray-900 truncate">Admin User</p>
-                        <p class="text-xs text-gray-500">Online</p>
+                    <div x-show="sidebarOpen" x-transition class="min-w-0 flex-1">
+                        <p class="text-xs font-bold text-gray-900 truncate">{{ auth()->user()->name }}</p>
+                        <p class="text-[10px] text-gray-500 uppercase tracking-wide font-medium">{{ auth()->user()->role }}</p>
                     </div>
                 </div>
-                <div x-show="sidebarOpen" 
-                     x-transition
-                     class="w-2 h-2 bg-green-500 rounded-full flex-shrink-0"></div>
+
+                {{-- Logout / Settings Button Small --}}
+                <div x-show="sidebarOpen" x-transition class="flex-shrink-0">
+                    <a href="/profile" class="text-gray-400 hover:text-blue-600 transition">
+                        <i data-lucide="settings" class="w-4 h-4"></i>
+                    </a>
+                </div>
             </div>
         </div>
 
     </div>
 </div>
-
-<!-- Main Content Wrapper (adjust margin based on sidebar state) -->
-<!-- Add this to your main content container: -->
-<!-- <div :class="sidebarOpen ? 'ml-72' : 'ml-28'" class="transition-all duration-300"> -->
-<!--     Your main content here -->
-<!-- </div> -->

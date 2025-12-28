@@ -13,6 +13,7 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Str; // Dari Local (Penting untuk serial number)
 use Illuminate\Support\Arr; // Dari Remote (Penting untuk array manipulation)
 
+
 class ItemController extends Controller
 {
     // =========================
@@ -496,4 +497,22 @@ public function trash(Request $request)
 
     return view('items.trash', compact('deletedItems', 'categories', 'rooms'));
 }
+
+public function terminate($id)
+    {
+
+        // Cek Hak Akses
+    if (auth()->user()->role !== 'superadmin') {
+        return back()->with('error', 'Hanya Super Admin yang boleh menghapus data ini (Terminate).');
+    }
+        // Cari data di tong sampah berdasarkan ID
+        $item = Item::onlyTrashed()->where('id', $id)->first();
+
+        if ($item) {
+            $item->forceDelete(); // PERINTAH INI MENGHAPUS PERMANEN DARI DB
+            return redirect()->route('items.trash')->with('success', 'Data berhasil di-terminate (dihapus selamanya).');
+        }
+
+        return redirect()->route('items.trash')->with('error', 'Data tidak ditemukan.');
+    }
 }
