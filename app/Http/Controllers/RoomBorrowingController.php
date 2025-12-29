@@ -44,7 +44,7 @@ public function index()
             'notes'            => 'nullable|string',
         ]);
 
-        $data = $request->all();
+        $data = $request->only(['room_id', 'user_id', 'start_time', 'end_time', 'purpose', 'notes']);
 
         // 2. SET DEFAULT STATUS
         // Karena di form create biasanya tidak ada input status, kita set default 'pending'

@@ -67,8 +67,10 @@ class BorrowingController extends Controller
         // Gunakan Transaksi DB agar aman
         DB::transaction(function () use ($ids, $condition) {
             // Ambil data borrowing yang dipilih dan masih status borrowed
+            // ✅ FIXED: Added lockForUpdate() to prevent race condition
             $borrowings = Borrowing::whereIn('id', $ids)
                                    ->where('status', 'borrowed')
+                                   ->lockForUpdate()
                                    ->with('item')
                                    ->get();
 
@@ -170,7 +172,7 @@ class BorrowingController extends Controller
             'notes' => 'nullable|string',
         ]);
 
-        $borrowing->update($request->all());
+        $borrowing->update($request->only(['item_id', 'user_id', 'borrow_date', 'return_date', 'status', 'notes']));
 
         return redirect()->route('borrowings.index')
             ->with('success', 'Peminjaman berhasil diperbarui.');
