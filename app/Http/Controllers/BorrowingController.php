@@ -172,6 +172,23 @@ class BorrowingController extends Controller
             'notes' => 'nullable|string',
         ]);
 
+        // ✅ H2 FIX: Check if item changed and validate availability
+        if ($request->item_id != $borrowing->item_id) {
+            $newItem = Item::find($request->item_id);
+            
+            if ($newItem->status !== 'available') {
+                return back()->withErrors(['item_id' => 'Item yang dipilih sedang tidak tersedia (Status: ' . $newItem->status . ').']);
+            }
+            
+            // Kembalikan status item lama ke available
+            if ($borrowing->status === 'borrowed') {
+                $borrowing->item->update(['status' => 'available']);
+            }
+            
+            // Update item baru ke borrowed
+            $newItem->update(['status' => 'borrowed']);
+        }
+
         $borrowing->update($request->only(['item_id', 'user_id', 'borrow_date', 'return_date', 'status', 'notes']));
 
         return redirect()->route('borrowings.index')
