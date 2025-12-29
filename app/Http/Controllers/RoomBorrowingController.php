@@ -32,17 +32,41 @@ public function index()
     public function store(Request $request)
     {
         // 1. VALIDASI DIPERLENGKAP
+        // ✅ H5 FIX: Enhanced file validation with actual MIME type check
         $request->validate([
             'room_id'          => 'required|exists:rooms,id',
             'user_id'          => 'required|exists:peminjam_users,id',
             'start_time'       => 'required|date',
             'end_time'         => 'required|date|after:start_time',
-            'surat_peminjaman' => 'required|file|mimes:pdf|max:2048',
+            'surat_peminjaman' => [
+                'required',
+                'file',
+                'mimes:pdf',
+                'max:2048',
+                function($attribute, $value, $fail) {
+                    if ($value->getMimeType() !== 'application/pdf') {
+                        $fail('File harus PDF valid (bukan hanya extension .pdf).');
+                    }
+                }
+            ],
             
             // Tambahan Validasi agar data tidak kosong/error
             'purpose'          => 'required|string|max:255', 
             'notes'            => 'nullable|string',
         ]);
+
+        // ✅ H1 FIX: Check for room booking conflicts
+        $overlap = RoomBorrowing::where('room_id', $request->room_id)
+            ->where(function($q) use ($request) {
+                $q->where('start_time', '<', $request->end_time)
+                  ->where('end_time', '>', $request->start_time);
+            })
+            ->whereNotIn('status', ['finished', 'rejected'])
+            ->exists();
+
+        if ($overlap) {
+            return back()->withErrors(['start_time' => 'Ruangan sudah dipesan di waktu tersebut! Silakan pilih waktu lain.']);
+        }
 
         $data = $request->only(['room_id', 'user_id', 'start_time', 'end_time', 'purpose', 'notes']);
 
