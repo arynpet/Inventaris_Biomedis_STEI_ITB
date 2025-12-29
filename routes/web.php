@@ -101,7 +101,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/borrowings/history', [BorrowingController::class, 'history'])->name('borrowings.history');
     Route::get('/borrowings/history/pdf', [BorrowingController::class, 'historyPdf'])->name('borrowings.historyPdf');
     Route::put('/borrowings/{id}/return', [BorrowingController::class, 'returnItem'])->name('borrowings.return');
-    Route::post('/borrowings/scan-qr', [BorrowingController::class, 'findItemByQr'])->name('borrowings.scan');
+    Route::post('/borrowings/scan-qr', [BorrowingController::class, 'findItemByQr'])
+        ->name('borrowings.scan')
+        ->middleware('throttle:60,1');
     Route::get('/borrowings/{id}/pdf', [BorrowingController::class, 'pdf'])->name('borrowings.pdf');
     Route::resource('borrowings', BorrowingController::class);
 
@@ -124,10 +126,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::resource('printers', PrinterController::class);
 
 
+
     // ====================================================
     // 6. MANAJEMEN USER (PEMINJAM BIASA)
     // ====================================================
     Route::resource('peminjam-users', PeminjamUserController::class);
+
 
 
     // ====================================================
