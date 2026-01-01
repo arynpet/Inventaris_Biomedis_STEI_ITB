@@ -16,6 +16,9 @@ class RoomBorrowingFactory extends Factory
             'user_id' => PeminjamUser::factory(),
             'start_time' => $start,
             'end_time' => $start->copy()->addHours(2),
+            'status' => 'pending',
+            'purpose' => $this->faker->sentence(),
+            'surat_peminjaman' => null, // Optional di factory
         ];
     }
 }

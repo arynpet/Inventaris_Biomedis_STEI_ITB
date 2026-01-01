@@ -66,7 +66,7 @@ class ItemFactory extends Factory
                     Storage::disk('public')->makeDirectory('qr/items');
                 }
 
-                $qrPath = 'qr/items/' . $item->id . '.svg';
+                $qrPath = 'qr/items/' . $item->id . '-' . time() . '.svg';
                 
                 // Load relasi yang dibutuhkan
                 $item->load('room');

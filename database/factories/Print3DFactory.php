@@ -25,7 +25,7 @@ class Print3DFactory extends Factory
             'material_type_id' => MaterialType::factory(),
             'material_amount' => $this->faker->numberBetween(10, 500),
             'material_unit' => 'gram',
-            'material_source' => $this->faker->randomElement(['lab', 'penelitian', 'dosen', 'pribadi']),
+            'material_source' => 'lab',  // Default lab agar test deduction bekerja
             'material_deducted' => false,
             'notes' => $this->faker->optional(0.4)->sentence(),
             'file_name' => null,
