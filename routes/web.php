@@ -89,7 +89,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::resource('categories', CategoryController::class);
 
     // Materials (Stok 3D Print)
-    Route::post('/materials/{id}/add-stock', [MaterialTypeController::class, 'addStock'])->name('materials.add_stock');
+    Route::post('/materials/{id}/add-stock', [MaterialTypeController::class, 'addStock'])->name('materials.addStock');
     Route::post('/materials/bulk-action', [MaterialTypeController::class, 'bulkAction'])->name('materials.bulk_action');
     Route::resource('materials', MaterialTypeController::class);
 
@@ -101,7 +101,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/borrowings/history', [BorrowingController::class, 'history'])->name('borrowings.history');
     Route::get('/borrowings/history/pdf', [BorrowingController::class, 'historyPdf'])->name('borrowings.historyPdf');
     Route::put('/borrowings/{id}/return', [BorrowingController::class, 'returnItem'])->name('borrowings.return');
-    Route::post('/borrowings/scan-qr', [BorrowingController::class, 'findItemByQr'])
+    Route::post('/borrowings/scan-qr', [BorrowingController::class, 'scan'])
         ->name('borrowings.scan')
         ->middleware('throttle:60,1');
     Route::get('/borrowings/{id}/pdf', [BorrowingController::class, 'pdf'])->name('borrowings.pdf');

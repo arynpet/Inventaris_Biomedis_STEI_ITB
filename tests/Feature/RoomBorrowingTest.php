@@ -8,6 +8,8 @@ use App\Models\Room;
 use App\Models\PeminjamUser;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use PHPUnit\Framework\Attributes\Test;
 
 class RoomBorrowingTest extends TestCase
@@ -17,6 +19,7 @@ class RoomBorrowingTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+        Storage::fake('public');
         $this->actingAs(User::factory()->create());
     }
 
@@ -49,6 +52,8 @@ class RoomBorrowingTest extends TestCase
             'user_id' => $user->id,
             'start_time' => now()->addHour()->format('Y-m-d H:i:s'),
             'end_time' => now()->addHours(3)->format('Y-m-d H:i:s'),
+            'purpose' => 'Testing room borrowing',
+            'surat_peminjaman' => UploadedFile::fake()->create('surat.pdf', 100, 'application/pdf'),
         ];
 
         $response = $this->post(route('room_borrowings.store'), $borrowData);
@@ -80,6 +85,8 @@ class RoomBorrowingTest extends TestCase
             'user_id' => $borrowing->user_id,
             'start_time' => $borrowing->start_time->format('Y-m-d H:i:s'),
             'end_time' => $newEnd,
+            'purpose' => 'Updated purpose',
+            'status' => $borrowing->status,
         ];
 
         $response = $this->put(route('room_borrowings.update', $borrowing), $updateData);

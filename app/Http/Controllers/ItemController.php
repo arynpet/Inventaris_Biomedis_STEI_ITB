@@ -8,6 +8,7 @@ use App\Models\Category;
 use App\Models\ItemOutLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\DB;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Str; // Dari Local (Penting untuk serial number)
@@ -405,7 +406,15 @@ $item->delete(); // Ini sekarang menjadi Soft Delete (database only)
     // =========================
     private function generateAndSaveQr(Item $item)
     {
-        $qrPath = 'qr/items/' . $item->id . '.svg';
+        // Generate unique path dengan microtime agar QR path selalu berubah
+        $timestamp = (int)(microtime(true) * 10000); // Mikrodetik untuk uniqueness
+        $qrPath = 'qr/items/' . $item->id . '-' . $timestamp . '.svg';
+        
+        // Hapus QR lama jika ada
+        if ($item->qr_code && Storage::disk('public')->exists($item->qr_code)) {
+            Storage::disk('public')->delete($item->qr_code);
+        }
+        
         $item->load('room');
         $roomName = $item->room ? $item->room->name : 'N/A';
 

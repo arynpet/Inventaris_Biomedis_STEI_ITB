@@ -49,8 +49,6 @@ public function index()
                     }
                 }
             ],
-            
-            // Tambahan Validasi agar data tidak kosong/error
             'purpose'          => 'required|string|max:255', 
             'notes'            => 'nullable|string',
         ]);
@@ -107,10 +105,8 @@ public function index()
             'start_time'       => 'required|date',
             'end_time'         => 'required|date|after:start_time',
             'surat_peminjaman' => 'nullable|file|mimes:pdf|max:2048',
-            
-            // Tambahan Validasi Update
             'purpose'          => 'required|string|max:255',
-            'status'           => 'required|in:pending,approved,rejected,finished', // Status bisa diubah saat edit
+            'status'           => 'required|in:pending,approved,rejected,finished',
             'notes'            => 'nullable|string',
         ]);
 

@@ -138,8 +138,8 @@ class BorrowingController extends Controller
                 'item_id'     => $validated['item_id'],
                 'user_id'     => $validated['user_id'],
                 'borrow_date' => $validated['borrow_date'],
-                'return_date' => $validated['return_date'],
-                'notes'       => $validated['notes'],
+                'return_date' => $validated['return_date'] ?? null,
+                'notes'       => $validated['notes'] ?? null,
                 'status'      => 'borrowed',
             ]);
 
@@ -344,11 +344,11 @@ class BorrowingController extends Controller
             ->first();
 
         if (!$item) {
-            return response()->json(['success' => false, 'message' => 'Item tidak ditemukan']);
+            return response()->json(['success' => false, 'message' => 'Item tidak ditemukan'], 200);
         }
 
         if ($item->status === 'borrowed') {
-            return response()->json(['success' => false, 'message' => 'Item sedang dipinjam']);
+            return response()->json(['success' => false, 'message' => 'Item sedang dipinjam'], 200);
         }
 
         return response()->json([
@@ -357,6 +357,6 @@ class BorrowingController extends Controller
                 'id'   => $item->id,
                 'name' => $item->name
             ]
-        ]);
+        ], 200);
     }
 }

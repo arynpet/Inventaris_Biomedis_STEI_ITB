@@ -94,8 +94,10 @@ class ItemQRCodeTest extends TestCase
 
         $this->assertNotNull($item->qr_code);
         
-        $expectedPath = 'qr/items/' . $item->id . '.svg';
-        $this->assertEquals($expectedPath, $item->qr_code);
+        // QR code path sekarang include timestamp untuk uniqueness
+        // Format: qr/items/{id}-{timestamp}.svg
+        $this->assertStringStartsWith('qr/items/' . $item->id . '-', $item->qr_code);
+        $this->assertStringEndsWith('.svg', $item->qr_code);
     }
 
     #[Test]

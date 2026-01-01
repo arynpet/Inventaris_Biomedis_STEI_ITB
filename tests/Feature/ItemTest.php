@@ -95,14 +95,19 @@ class ItemTest extends TestCase
     }
 
     #[Test]
-    public function it_can_delete_an_item()
+    public function it_can_soft_delete_an_item()
     {
         $item = Item::factory()->create();
 
         $response = $this->delete(route('items.destroy', $item));
 
         $response->assertRedirect(route('items.index'));
-        $this->assertDatabaseMissing('items', ['id' => $item->id]);
+        
+        // Check soft delete - item masih ada tapi dengan deleted_at terisi
+        $this->assertSoftDeleted('items', ['id' => $item->id]);
+        
+        // Verify item bisa di-restore (cek undo feature)
+        $response->assertSessionHas('action_undo');
     }
 
     #[Test]
