@@ -406,9 +406,10 @@ $item->delete(); // Ini sekarang menjadi Soft Delete (database only)
     // =========================
     private function generateAndSaveQr(Item $item)
     {
-        // Generate unique path dengan microtime agar QR path selalu berubah
+        // Generate unique path dengan microtime + random string untuk menjamin uniqueness
         $timestamp = (int)(microtime(true) * 10000); // Mikrodetik untuk uniqueness
-        $qrPath = 'qr/items/' . $item->id . '-' . $timestamp . '.svg';
+        $randomSuffix = Str::random(6); // Tambahkan random string untuk mencegah collision
+        $qrPath = 'qr/items/' . $item->id . '-' . $timestamp . '-' . $randomSuffix . '.svg';
         
         // Hapus QR lama jika ada
         if ($item->qr_code && Storage::disk('public')->exists($item->qr_code)) {
