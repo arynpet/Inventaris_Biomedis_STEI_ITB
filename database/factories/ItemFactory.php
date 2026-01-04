@@ -66,7 +66,9 @@ class ItemFactory extends Factory
                     Storage::disk('public')->makeDirectory('qr/items');
                 }
 
-                $qrPath = 'qr/items/' . $item->id . '-' . time() . '.svg';
+                $timestamp = (int)(microtime(true) * 10000); // Mikrodetik untuk uniqueness
+                $randomSuffix = \Illuminate\Support\Str::random(6); // Random string untuk mencegah collision
+                $qrPath = 'qr/items/' . $item->id . '-' . $timestamp . '-' . $randomSuffix . '.svg';
                 
                 // Load relasi yang dibutuhkan
                 $item->load('room');
