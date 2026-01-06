@@ -523,19 +523,17 @@ public function trash(Request $request)
 
 public function terminate($id)
     {
-
-        // Cek Hak Akses
-    if (auth()->user()->role !== 'superadmin') {
-        return back()->with('error', 'Hanya Super Admin yang boleh menghapus data ini (Terminate).');
-    }
-        // Cari data di tong sampah berdasarkan ID
         $item = Item::onlyTrashed()->where('id', $id)->first();
 
-        if ($item) {
-            $item->forceDelete(); // PERINTAH INI MENGHAPUS PERMANEN DARI DB
-            return redirect()->route('items.trash')->with('success', 'Data berhasil di-terminate (dihapus selamanya).');
+        if (!$item) {
+            return redirect()->route('items.trash')->with('error', 'Data tidak ditemukan.');
         }
 
-        return redirect()->route('items.trash')->with('error', 'Data tidak ditemukan.');
+        $this->authorize('terminate', $item);
+
+        $item->forceDelete();
+        
+        return redirect()->route('items.trash')
+            ->with('success', 'Data berhasil di-terminate (dihapus selamanya).');
     }
 }
