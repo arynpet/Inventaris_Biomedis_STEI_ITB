@@ -110,6 +110,19 @@ public function index()
             'notes'            => 'nullable|string',
         ]);
 
+        $isOverlap = RoomBorrowing::where('room_id', $request->room_id)
+        ->where('id', '!=', $roomBorrowing->id) 
+        ->whereNotIn('status', ['finished', 'rejected']) 
+        ->where(function ($query) use ($request) {
+            $query->where('start_time', '<', $request->end_time)
+                  ->where('end_time', '>', $request->start_time);
+        })
+        ->exists();
+
+        if ($isOverlap) {
+            return back()->withErrors(['start_time' => 'Jadwal bentrok dengan peminjaman lain!'])->withInput();
+        }
+        
         $data = $request->except('surat_peminjaman');
 
         // LOGIKA GANTI FILE
