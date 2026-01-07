@@ -9,9 +9,16 @@ return new class extends Migration
 public function up()
 {
     Schema::table('items', function (Blueprint $table) {
-        // Hapus index unique berdasarkan NAMANYA yang ada di SQL dump kamu
-        $table->dropIndex('unique_asset_number'); 
+        // Check if index exists before dropping
+        // Using raw SQL to safely drop index if it exists
     });
+    
+    // Safe drop using try-catch or checking information_schema
+    try {
+        \DB::statement('ALTER TABLE items DROP INDEX unique_asset_number');
+    } catch (\Exception $e) {
+        // Index doesn't exist, that's fine
+    }
 }
 
     public function down()

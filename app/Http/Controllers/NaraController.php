@@ -4,7 +4,9 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Session;
+use SimpleSoftwareIO\QrCode\Facades\QrCode;
 use App\Models\Item; 
 use App\Models\Room; // Pastikan Model Room di-import
 
@@ -138,7 +140,8 @@ class NaraController extends Controller
                 foreach ($rawItems as &$item) {
                     // 1. Cari Room ID berdasarkan nama ruangan yang diberi AI
                     if (isset($item['room_name'])) {
-                        $room = Room::where('name', 'LIKE', '%' . $item['room_name'] . '%')->first();
+                        $safeName = $this->escapeLikeWildcards($item['room_name']);
+                        $room = Room::where('name', 'LIKE', '%' . $safeName . '%')->first();
                         $item['room_id'] = $room ? $room->id : 1; // Default ID 1 jika tidak ketemu
                         // Simpan nama ruangan asli untuk display di tabel konfirmasi
                         $item['display_room'] = $room ? $room->name : 'Gudang Utama (Default)';
@@ -171,10 +174,14 @@ class NaraController extends Controller
                           ->orWhere('qr_code', $f['identifier']);
                     });
                 } elseif (!empty($f['keyword'])) {
-                    $query->where('name', 'LIKE', '%'.$f['keyword'].'%');
+                    $safeKeyword = $this->escapeLikeWildcards($f['keyword']);
+                    $query->where('name', 'LIKE', '%'.$safeKeyword.'%');
                 }
 
-                if (!empty($f['room'])) $query->whereHas('room', fn($q) => $q->where('name', 'LIKE', '%'.$f['room'].'%'));
+                if (!empty($f['room'])) {
+                    $safeRoom = $this->escapeLikeWildcards($f['room']);
+                    $query->whereHas('room', fn($q) => $q->where('name', 'LIKE', '%'.$safeRoom.'%'));
+                }
                 if (!empty($f['status'])) $query->where('status', $f['status']);
                 if (!empty($f['condition'])) $query->where('condition', $f['condition']);
                 
@@ -196,12 +203,14 @@ class NaraController extends Controller
                     });
                     $filterApplied = true;
                 } elseif (!empty($filters['keyword'])) {
-                    $query->where('name', 'LIKE', '%' . $filters['keyword'] . '%');
+                    $safeKeyword = $this->escapeLikeWildcards($filters['keyword']);
+                    $query->where('name', 'LIKE', '%' . $safeKeyword . '%');
                     $filterApplied = true;
                 }
 
                 if (!empty($filters['room'])) {
-                    $query->whereHas('room', fn($q) => $q->where('name', 'LIKE', '%' . $filters['room'] . '%'));
+                    $safeRoom = $this->escapeLikeWildcards($filters['room']);
+                    $query->whereHas('room', fn($q) => $q->where('name', 'LIKE', '%' . $safeRoom . '%'));
                     $filterApplied = true;
                 }
                 if (!empty($filters['condition'])) {
@@ -237,16 +246,61 @@ class NaraController extends Controller
     }
 
     /**
-     * 1. FUNGSI HAPUS (Batch)
+     * 1. FUNGSI HAPUS (Batch) - With Transaction
      */
     public function destroyAsset(Request $request)
     {
-        $serials = $request->input('serial_numbers'); 
-        if (empty($serials) || !is_array($serials)) return response()->json(['success' => false, 'message' => "Data tidak valid."], 400);
+        // Validate request
+        $validated = $request->validate([
+            'serial_numbers' => 'required|array|max:50',  // Max 50 items per batch
+            'serial_numbers.*' => 'required|string|max:100',
+        ]);
 
-        $deleted = Item::whereIn('serial_number', $serials)->delete();
-        if ($deleted > 0) return response()->json(['success' => true, 'message' => "$deleted aset dihapus."]);
-        return response()->json(['success' => false, 'message' => "Gagal menghapus."], 404);
+        try {
+            $result = DB::transaction(function () use ($validated) {
+                $serials = $validated['serial_numbers'];
+                
+                // Check if any items are currently borrowed
+                $borrowedCount = \App\Models\Borrowing::whereHas('item', function($q) use ($serials) {
+                        $q->whereIn('serial_number', $serials)
+                          ->where('status', 'borrowed');
+                    })->count();
+                
+                if ($borrowedCount > 0) {
+                    throw \Illuminate\Validation\ValidationException::withMessages([
+                        'serial_numbers' => "Tidak dapat menghapus $borrowedCount item yang sedang dipinjam."
+                    ]);
+                }
+                
+                // Soft delete items
+                $deleted = Item::whereIn('serial_number', $serials)->delete();
+                
+                return $deleted;
+            });
+            
+            if ($result > 0) {
+                return response()->json([
+                    'success' => true, 
+                    'message' => "$result aset berhasil dihapus."
+                ]);
+            }
+            
+            return response()->json([
+                'success' => false, 
+                'message' => 'Tidak ada item yang ditemukan untuk dihapus.'
+            ], 404);
+            
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 422);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal menghapus item: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     /**
@@ -259,11 +313,23 @@ class NaraController extends Controller
      */
     public function storeBatch(Request $request)
     {
-        $items = $request->input('items'); 
+        // Comprehensive validation
+        $validated = $request->validate([
+            'items' => 'required|array|max:50|min:1',  // Limit to 50 items per batch
+            'items.*.name' => 'required|string|max:255',
+            'items.*.serial_number' => 'required|string|max:100',
+            'items.*.asset_number' => 'nullable|string|max:100',
+            'items.*.room_id' => 'required|integer|exists:rooms,id',
+            'items.*.quantity' => 'nullable|integer|min:1|max:1000',
+            'items.*.source' => 'nullable|string|max:100',
+            'items.*.acquisition_year' => 'nullable|integer|min:1900|max:2100',
+            'items.*.placed_in_service_at' => 'nullable|date',
+            'items.*.fiscal_group' => 'nullable|string|max:100',
+            'items.*.status' => 'nullable|in:available,borrowed,maintenance',
+            'items.*.condition' => 'nullable|in:good,damaged,broken',
+        ]);
 
-        if (empty($items) || !is_array($items)) {
-            return response()->json(['success' => false, 'message' => "Data tidak valid."], 400);
-        }
+        $items = $validated['items'];
 
         $count = 0;
         
@@ -319,5 +385,13 @@ class NaraController extends Controller
         }
         
         return response()->json(['success' => false, 'message' => "Gagal menyimpan data."], 400);
+    }
+
+    /**
+     * Helper: Escape LIKE wildcards to prevent SQL injection
+     */
+    private function escapeLikeWildcards($value)
+    {
+        return str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $value);
     }
 }
