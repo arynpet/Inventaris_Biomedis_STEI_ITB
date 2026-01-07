@@ -311,11 +311,23 @@ class NaraController extends Controller
      */
     public function storeBatch(Request $request)
     {
-        $items = $request->input('items'); 
+        // Comprehensive validation
+        $validated = $request->validate([
+            'items' => 'required|array|max:50|min:1',  // Limit to 50 items per batch
+            'items.*.name' => 'required|string|max:255',
+            'items.*.serial_number' => 'required|string|max:100',
+            'items.*.asset_number' => 'nullable|string|max:100',
+            'items.*.room_id' => 'required|integer|exists:rooms,id',
+            'items.*.quantity' => 'nullable|integer|min:1|max:1000',
+            'items.*.source' => 'nullable|string|max:100',
+            'items.*.acquisition_year' => 'nullable|integer|min:1900|max:2100',
+            'items.*.placed_in_service_at' => 'nullable|date',
+            'items.*.fiscal_group' => 'nullable|string|max:100',
+            'items.*.status' => 'nullable|in:available,borrowed,maintenance',
+            'items.*.condition' => 'nullable|in:good,damaged,broken',
+        ]);
 
-        if (empty($items) || !is_array($items)) {
-            return response()->json(['success' => false, 'message' => "Data tidak valid."], 400);
-        }
+        $items = $validated['items'];
 
         $count = 0;
         
