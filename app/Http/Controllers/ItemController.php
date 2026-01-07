@@ -389,16 +389,43 @@ $item->delete(); // Ini sekarang menjadi Soft Delete (database only)
     // =========================
     // REGENERATE QR (Fitur Local)
     // =========================
-    public function regenerateAllQr()
+    public function regenerateAllQr(Request $request)
     {
+        // TODO: For production with thousands of items, move to Laravel Queue
+        // Example: RegenerateQrJob::dispatch();
+        
+        // Batch size limit to prevent timeout (max 100 items per request)
+        $limit = $request->input('limit', 100);
+        $offset = $request->input('offset', 0);
+        
         $count = 0;
-        Item::chunk(100, function ($items) use (&$count) {
-            foreach ($items as $item) {
-                $this->generateAndSaveQr($item);
-                $count++;
-            }
-        });
-        return redirect()->route('items.index')->with('success', "Berhasil refresh $count QR Code.");
+        $totalItems = Item::count();
+        $remaining = max(0, $totalItems - $offset);
+        
+        // Process limited batch
+        Item::skip($offset)
+            ->take(min($limit, $remaining))
+            ->chunk(50, function ($items) use (&$count) {
+                foreach ($items as $item) {
+                    $this->generateAndSaveQr($item);
+                    $count++;
+                }
+            });
+        
+        $newOffset = $offset + $count;
+        $stillRemaining = $totalItems - $newOffset;
+        
+        // If there are still items remaining, show continue button
+        if ($stillRemaining > 0) {
+            $continueUrl = route('items.regenerate-qr') . '?offset=' . $newOffset . '&limit=' . $limit;
+            return redirect()->route('items.index')
+                ->with('warning', "Diproses $count QR code. Masih tersisa $stillRemaining item.")
+                ->with('continue_url', $continueUrl)
+                ->with('continue_text', 'Lanjutkan Regenerasi QR');
+        }
+        
+        return redirect()->route('items.index')
+            ->with('success', "Berhasil regenerasi total $newOffset QR code!");
     }
 
     // =========================
