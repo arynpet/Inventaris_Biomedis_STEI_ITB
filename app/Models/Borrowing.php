@@ -29,7 +29,7 @@ class Borrowing extends Model
     // Relasi ke Item
     public function item()
     {
-        return $this->belongsTo(Item::class);
+        return $this->belongsTo(Item::class)->withTrashed();
     }
 
     // Relasi ke Peminjam (peminjam_users)

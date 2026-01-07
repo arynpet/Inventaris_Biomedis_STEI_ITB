@@ -419,13 +419,16 @@ $item->delete(); // Ini sekarang menjadi Soft Delete (database only)
         $item->load('room');
         $roomName = $item->room ? $item->room->name : 'N/A';
 
-        $qrPayload = "Item Name: " . $item->name . "\r\n" .
-                     "Asset No: " . ($item->asset_number ?? 'N/A') . "\r\n" .
-                     "Serial No: " . $item->serial_number . "\r\n" .
-                     "Room Name: " . $roomName . "\r\n" .
-                     "Condition: " . $item->condition;
+$qrPayload = $item->name . "\n" . $item->serial_number;
 
-        $qrContent = QrCode::format('svg')->size(300)->margin(2)->errorCorrection('H')->generate($qrPayload);
+        // Generate QR Code
+        // Size tetap 300, tapi karena payload lebih pendek, "kotak-kotak" akan otomatis lebih besar/renggang
+        $qrContent = QrCode::format('svg')
+                        ->size(300)
+                        ->margin(2)
+                        ->errorCorrection('M') // Turunkan level koreksi ke 'M' (Medium) atau 'L' (Low) agar lebih renggang
+                        ->generate($qrPayload);
+
         Storage::disk('public')->put($qrPath, $qrContent);
         $item->update(['qr_code' => $qrPath]);
     }

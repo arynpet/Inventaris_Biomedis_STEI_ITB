@@ -100,13 +100,18 @@
                                             </span>
                                         </td>
                                         
-                                        {{-- BARANG --}}
-                                        <td class="px-4 py-4">
-                                            <div class="flex flex-col">
-                                                <span class="font-semibold text-gray-900">{{ $borrow->item->name }}</span>
-                                                <span class="text-xs text-gray-500">{{ $borrow->item->serial_number ?? '-' }}</span>
-                                            </div>
-                                        </td>
+{{-- BARANG --}}
+<td class="px-4 py-4">
+    <div class="flex flex-col">
+        {{-- Tambahkan tanda tanya (?) sebelum tanda panah (->) --}}
+        <span class="font-semibold text-gray-900">
+            {{ $borrow->item?->name ?? 'Item Terhapus' }}
+        </span>
+        <span class="text-xs text-gray-500">
+            {{ $borrow->item?->serial_number ?? '-' }}
+        </span>
+    </div>
+</td>
                                         
                                         {{-- PEMINJAM --}}
                                         <td class="px-4 py-4">
