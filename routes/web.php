@@ -17,7 +17,6 @@ use App\Http\Controllers\SuperAdmin\ActivityLogController;
 use App\Http\Controllers\SuperAdmin\UserController;
 use App\Http\Controllers\NaraController;
 
-
 /*
 |--------------------------------------------------------------------------
 | Public Routes
@@ -34,20 +33,24 @@ Route::redirect('/', '/login');
 
 Route::middleware(['auth', 'verified'])->group(function () {
 
-    Route::post('/nara/chat', [NaraController::class, 'ask'])->name('nara.chat');
-Route::post('/nara/destroy', [NaraController::class, 'destroyAsset'])->name('nara.destroy');
-Route::post('/nara/store-batch', [App\Http\Controllers\NaraController::class, 'storeBatch'])->name('nara.store_batch');
+    // ====================================================
+    // 0. AI ASSISTANT (N.A.R.A)
+    // ====================================================
+    Route::prefix('nara')->name('nara.')->group(function () {
+        Route::post('/chat', [NaraController::class, 'ask'])->name('chat');
+        Route::post('/destroy', [NaraController::class, 'destroyAsset'])->name('destroy');
+        Route::post('/store-batch', [NaraController::class, 'storeBatch'])->name('store_batch');
+    });
 
     // ====================================================
-    // DASHBOARD
+    // 1. DASHBOARD
     // ====================================================
     Route::get('/dashboard', function () {
         return view('dashboard');
     })->name('dashboard');
 
-
     // ====================================================
-    // PROFILE
+    // 2. PROFILE MANAGEMENT
     // ====================================================
     Route::prefix('profile')->group(function () {
         Route::get('/', [ProfileController::class, 'edit'])->name('profile.edit');
@@ -55,9 +58,8 @@ Route::post('/nara/store-batch', [App\Http\Controllers\NaraController::class, 's
         Route::delete('/', [ProfileController::class, 'destroy'])->name('profile.destroy');
     });
 
-
     // ====================================================
-    // 1. INVENTORY MANAGEMENT (ITEMS)
+    // 3. INVENTORY MANAGEMENT (ITEMS)
     // ====================================================
     // Trash & Restore
     Route::get('/items/trash', [ItemController::class, 'trash'])->name('items.trash');
@@ -69,7 +71,7 @@ Route::post('/nara/store-batch', [App\Http\Controllers\NaraController::class, 's
     Route::post('items/regenerate-qr', [ItemController::class, 'regenerateAllQr'])->name('items.regenerate_qr');
     Route::post('items/bulk-action', [ItemController::class, 'bulkAction'])->name('items.bulk_action');
     Route::get('/items/{item}/qr-pdf', [ItemController::class, 'qrPdf'])->name('items.qr.pdf');
-    Route::get('/api/items/by-qr/{qr}', [ItemController::class, 'findByQr']);
+    Route::get('/api/items/by-qr/{qr}', [ItemController::class, 'findByQr']); // API internal
 
     // Barang Keluar (Logs)
     Route::prefix('items-management')->group(function () {
@@ -79,12 +81,11 @@ Route::post('/nara/store-batch', [App\Http\Controllers\NaraController::class, 's
         Route::get('out/{item}/pdf', [ItemController::class, 'outPdf'])->name('items.out.pdf');
     });
 
-    // Resource Utama (Wajib paling bawah di blok items)
+    // Resource Items (Harus di bawah route custom items)
     Route::resource('items', ItemController::class);
 
-
     // ====================================================
-    // 2. MASTER DATA (ROOMS, CATEGORIES, MATERIALS)
+    // 4. MASTER DATA
     // ====================================================
     // Rooms
     Route::post('rooms/bulk-action', [RoomController::class, 'bulkAction'])->name('rooms.bulk_action');
@@ -99,69 +100,58 @@ Route::post('/nara/store-batch', [App\Http\Controllers\NaraController::class, 's
     Route::post('/materials/bulk-action', [MaterialTypeController::class, 'bulkAction'])->name('materials.bulk_action');
     Route::resource('materials', MaterialTypeController::class);
 
-
     // ====================================================
-    // 3. PEMINJAMAN ALAT (BORROWINGS)
+    // 5. PEMINJAMAN ALAT (BORROWINGS)
     // ====================================================
     Route::post('/borrowings/bulk-return', [BorrowingController::class, 'bulkReturn'])->name('borrowings.bulk_return');
     Route::get('/borrowings/history', [BorrowingController::class, 'history'])->name('borrowings.history');
     Route::get('/borrowings/history/pdf', [BorrowingController::class, 'historyPdf'])->name('borrowings.historyPdf');
     Route::put('/borrowings/{id}/return', [BorrowingController::class, 'returnItem'])->name('borrowings.return');
-    Route::post('/borrowings/scan-qr', [BorrowingController::class, 'scan'])
-        ->name('borrowings.scan')
-        ->middleware('throttle:60,1');
+    Route::post('/borrowings/scan-qr', [BorrowingController::class, 'scan'])->name('borrowings.scan')->middleware('throttle:60,1');
     Route::get('/borrowings/{id}/pdf', [BorrowingController::class, 'pdf'])->name('borrowings.pdf');
     Route::resource('borrowings', BorrowingController::class);
 
-
     // ====================================================
-    // 4. PEMINJAMAN RUANGAN (ROOM BORROWINGS)
+    // 6. PEMINJAMAN RUANGAN
     // ====================================================
     Route::get('/room_borrowings/history', [RoomBorrowingController::class, 'history'])->name('room_borrowings.history');
     Route::put('/room_borrowings/{id}/approve', [RoomBorrowingController::class, 'approveRoom'])->name('room_borrowings.approve');
     Route::put('/room_borrowings/{id}/return', [RoomBorrowingController::class, 'returnRoom'])->name('room_borrowings.return');
     Route::resource('room_borrowings', RoomBorrowingController::class);
 
-
     // ====================================================
-    // 5. 3D PRINTING SERVICE
+    // 7. 3D PRINTING SERVICE
     // ====================================================
     Route::get('/prints/history', [PrintController::class, 'history'])->name('prints.history');
     Route::get('/prints/{id}/file', [PrintController::class, 'downloadFile'])->name('prints.file');
     Route::resource('prints', PrintController::class);
     Route::resource('printers', PrinterController::class);
 
-
-
     // ====================================================
-    // 6. MANAJEMEN USER (PEMINJAM BIASA)
+    // 8. MANAJEMEN USER (PEMINJAM)
     // ====================================================
     Route::resource('peminjam-users', PeminjamUserController::class);
 
-
-
     // ====================================================
-    // 7. SUPER ADMIN AREA (USERS & LOGS)
+    // 9. SUPER ADMIN AREA (LOGS & USERS)
     // ====================================================
     
-    // A. Log Activity View (Bisa dilihat Admin Biasa, tapi logic hapus di controller diatur)
+    // A. LOG ACTIVITY (READ ONLY - Bisa diakses Admin Biasa)
+    // Saya taruh di luar middleware superadmin agar admin biasa bisa lihat (kalau kebijakanmu begitu)
     Route::get('/superadmin/logs', [ActivityLogController::class, 'index'])->name('superadmin.logs.index');
+    Route::get('/superadmin/logs/history/{model}/{id}', [ActivityLogController::class, 'history'])->name('superadmin.logs.history');
 
-    // B. Group Khusus Super Admin (Hanya Role Superadmin)
-    Route::middleware(['superadmin']) // Pastikan middleware 'superadmin' terdaftar di bootstrap/app.php
+    // B. LOG ACTIVITY & USER MANAGEMENT (FULL ACCESS - Hanya Superadmin)
+    Route::middleware(['superadmin']) // Pastikan middleware ini terdaftar di kernel
         ->prefix('superadmin')
         ->name('superadmin.')
         ->group(function () {
-            
-            // CRUD Admin (Tambah/Hapus Akun Admin lain)
+            // CRUD Admin Users
             Route::resource('users', UserController::class);
-            
-            // ✅ FIXED: Delete routes dipindahkan ke dalam middleware superadmin
-            Route::delete('logs/{id}', [ActivityLogController::class, 'destroy'])->name('logs.destroy');
+
+            // Delete Logs Actions
             Route::delete('logs/clear-all', [ActivityLogController::class, 'destroyAll'])->name('logs.clear');
-            
-            // Jika mau Log HANYA bisa dilihat superadmin, pindahkan route logs ke dalam sini.
-            // Tapi karena requestmu "admin biasa bisa lihat", maka saya taruh di luar group ini (di poin A).
+            Route::delete('logs/{id}', [ActivityLogController::class, 'destroy'])->name('logs.destroy');
         });
 
 });
