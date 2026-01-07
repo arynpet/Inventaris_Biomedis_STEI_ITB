@@ -237,16 +237,61 @@ class NaraController extends Controller
     }
 
     /**
-     * 1. FUNGSI HAPUS (Batch)
+     * 1. FUNGSI HAPUS (Batch) - With Transaction
      */
     public function destroyAsset(Request $request)
     {
-        $serials = $request->input('serial_numbers'); 
-        if (empty($serials) || !is_array($serials)) return response()->json(['success' => false, 'message' => "Data tidak valid."], 400);
+        // Validate request
+        $validated = $request->validate([
+            'serial_numbers' => 'required|array|max:50',  // Max 50 items per batch
+            'serial_numbers.*' => 'required|string|max:100',
+        ]);
 
-        $deleted = Item::whereIn('serial_number', $serials)->delete();
-        if ($deleted > 0) return response()->json(['success' => true, 'message' => "$deleted aset dihapus."]);
-        return response()->json(['success' => false, 'message' => "Gagal menghapus."], 404);
+        try {
+            $result = DB::transaction(function () use ($validated) {
+                $serials = $validated['serial_numbers'];
+                
+                // Check if any items are currently borrowed
+                $borrowedCount = \App\Models\Borrowing::whereHas('item', function($q) use ($serials) {
+                        $q->whereIn('serial_number', $serials)
+                          ->where('status', 'borrowed');
+                    })->count();
+                
+                if ($borrowedCount > 0) {
+                    throw \Illuminate\Validation\ValidationException::withMessages([
+                        'serial_numbers' => "Tidak dapat menghapus $borrowedCount item yang sedang dipinjam."
+                    ]);
+                }
+                
+                // Soft delete items
+                $deleted = Item::whereIn('serial_number', $serials)->delete();
+                
+                return $deleted;
+            });
+            
+            if ($result > 0) {
+                return response()->json([
+                    'success' => true, 
+                    'message' => "$result aset berhasil dihapus."
+                ]);
+            }
+            
+            return response()->json([
+                'success' => false, 
+                'message' => 'Tidak ada item yang ditemukan untuk dihapus.'
+            ], 404);
+            
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 422);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal menghapus item: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     /**
