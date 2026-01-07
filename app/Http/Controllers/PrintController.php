@@ -223,7 +223,15 @@ class PrintController extends Controller
                     $print->material_type_id &&
                     $print->material_source === 'lab'
                 ) {
-                    $material = MaterialType::findOrFail($print->material_type_id);
+                    $material = MaterialType::where('id', $print->material_type_id)
+                        ->lockForUpdate()
+                        ->first();
+
+                    if (!$material) {
+                        throw ValidationException::withMessages([
+                            'material' => 'Material tidak ditemukan.'
+                        ]);
+                    }
 
                     if ($material->stock_balance < $print->material_amount) {
                         throw ValidationException::withMessages([
@@ -244,7 +252,10 @@ class PrintController extends Controller
                     $print->material_type_id &&
                     $print->material_source === 'lab'
                 ) {
-                    $material = MaterialType::find($print->material_type_id);
+                    $material = MaterialType::where('id', $print->material_type_id)
+                        ->lockForUpdate()
+                        ->first();
+                    
                     if ($material) {
                         $material->increment('stock_balance', $print->material_amount);
                     }
