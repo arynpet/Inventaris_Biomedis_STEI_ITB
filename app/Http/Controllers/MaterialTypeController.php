@@ -57,17 +57,23 @@ class MaterialTypeController extends Controller
 
     public function store(Request $request)
     {
-        $request->validate([
-            'category'      => 'required|in:filament,resin',
-            'name'          => 'required|string|max:255',
-            'stock_balance' => 'required|numeric|min:0',
-            'unit'          => 'required|in:gram,mililiter',
-        ]);
+        try {
+            $request->validate([
+                'category'      => 'required|in:filament,resin',
+                'name'          => 'required|string|max:255',
+                'stock_balance' => 'required|numeric|min:0',
+                'unit'          => 'required|in:gram,mililiter',
+            ]);
 
-        MaterialType::create($request->only(['category', 'name', 'stock_balance', 'unit']));
+            MaterialType::create($request->only(['category', 'name', 'stock_balance', 'unit']));
 
-        return redirect()->route('materials.index')
-            ->with('success', 'Material type berhasil ditambahkan!');
+            return redirect()->route('materials.index')
+                ->with('success', 'Material type berhasil ditambahkan!');
+        } catch (\Exception $e) {
+            return redirect()->back()
+                ->with('error', 'Gagal menambah material: ' . $e->getMessage())
+                ->withInput();
+        }
     }
 
     public function edit($id)
@@ -78,21 +84,39 @@ class MaterialTypeController extends Controller
 
     public function update(Request $request, $id)
     {
-        $request->validate([
-            'category' => 'required|in:filament,resin',
-            'name'     => 'required|string|max:255',
-        ]);
+        try {
+            $request->validate([
+                'category' => 'required|in:filament,resin',
+                'name'     => 'required|string|max:255',
+            ]);
 
-        $material = MaterialType::findOrFail($id);
-        $material->update($request->only('category', 'name'));
+            $material = MaterialType::findOrFail($id);
+            $material->update($request->only('category', 'name'));
 
-        return redirect()->route('materials.index')
-            ->with('success', 'Material type berhasil diperbarui!');
+            return redirect()->route('materials.index')
+                ->with('success', 'Material type berhasil diperbarui!');
+        } catch (\Exception $e) {
+            return redirect()->back()
+                ->with('error', 'Gagal update material: ' . $e->getMessage())
+                ->withInput();
+        }
     }
 
     public function destroy($id)
     {
         $material = MaterialType::findOrFail($id);
+        
+        // Check if material is being used in active prints
+        $activePrints = \App\Models\Print3D::where('material_type_id', $id)
+            ->whereIn('status', ['pending', 'printing'])
+            ->count();
+        
+        if ($activePrints > 0) {
+            return redirect()
+                ->back()
+                ->with('error', 'Tidak dapat menghapus material yang sedang digunakan dalam print job aktif.');
+        }
+
         $material->delete();
 
         return redirect()->route('materials.index')
@@ -104,15 +128,20 @@ class MaterialTypeController extends Controller
      */
     public function addStock(Request $request, $id)
     {
-        $request->validate([
-            'amount' => 'required|numeric|min:0.01',
-        ]);
+        try {
+            $request->validate([
+                'amount' => 'required|numeric|min:0.01',
+            ]);
 
-        $material = MaterialType::findOrFail($id);
-        
-        // Menambah stok
-        $material->increment('stock_balance', $request->amount);
+            $material = MaterialType::findOrFail($id);
+            
+            // Menambah stok
+            $material->increment('stock_balance', $request->amount);
 
-        return back()->with('success', "Berhasil menambah stok {$request->amount} {$material->unit} ke {$material->name}.");
+            return back()->with('success', "Berhasil menambah stok {$request->amount} {$material->unit} ke {$material->name}.");
+        } catch (\Exception $e) {
+            return redirect()->back()
+                ->with('error', 'Gagal menambah stok: ' . $e->getMessage());
+        }
     }
 }

@@ -146,7 +146,10 @@ class PrintController extends Controller
         $filePath = null;
         $fileName = null;
         if ($request->hasFile('file_upload')) {
-            $fileName = time() . '_' . $request->file_upload->getClientOriginalName();
+            $originalName = $request->file_upload->getClientOriginalName();
+            $extension = $request->file_upload->extension();
+            $safeName = \Illuminate\Support\Str::slug(pathinfo($originalName, PATHINFO_FILENAME));
+            $fileName = time() . '_' . $safeName . '.' . $extension;
             $filePath = $request->file_upload->storeAs('prints', $fileName, 'public');
         }
 

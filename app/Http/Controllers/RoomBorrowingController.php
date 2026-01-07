@@ -104,7 +104,17 @@ public function index()
             'user_id'          => 'required|exists:peminjam_users,id',
             'start_time'       => 'required|date',
             'end_time'         => 'required|date|after:start_time',
-            'surat_peminjaman' => 'nullable|file|mimes:pdf|max:2048',
+            'surat_peminjaman' => [
+                'nullable',
+                'file',
+                'mimes:pdf',
+                'max:2048',
+                function($attribute, $value, $fail) {
+                    if ($value && $value->getMimeType() !== 'application/pdf') {
+                        $fail('File harus PDF valid (bukan hanya extension .pdf).');
+                    }
+                }
+            ],
             'purpose'          => 'required|string|max:255',
             'status'           => 'required|in:pending,approved,rejected,finished',
             'notes'            => 'nullable|string',
