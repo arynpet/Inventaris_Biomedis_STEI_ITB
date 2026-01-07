@@ -200,13 +200,19 @@ class PrintController extends Controller
             'status' => 'required|in:pending,printing,done,canceled',
         ]);
 
+        $oldStatus = $print->status;
+        $newStatus = $request->status;
+
+        // Validasi: Cegah invalid status transitions
+        // Contoh: done/canceled tidak bisa kembali ke pending
+        if (in_array($oldStatus, ['done', 'canceled']) && in_array($newStatus, ['pending', 'printing'])) {
+            return back()->withErrors(['status' => 'Status ' . $oldStatus . ' tidak dapat diubah ke ' . $newStatus]);
+        }
+
         try {
-            DB::transaction(function () use ($request, $print) {
+            DB::transaction(function () use ($request, $print, $oldStatus, $newStatus) {
                 // Lock row untuk mencegah race condition
                 $print = Print3D::where('id', $print->id)->lockForUpdate()->first();
-
-                $oldStatus = $print->status;
-                $newStatus = $request->status;
 
                 // LOGIC 1: POTONG MATERIAL (Pending -> Printing)
                 // Hanya jika material dari LAB
@@ -217,10 +223,20 @@ class PrintController extends Controller
                     $print->material_type_id &&
                     $print->material_source === 'lab'
                 ) {
-                    $material = MaterialType::findOrFail($print->material_type_id);
+                    $material = MaterialType::where('id', $print->material_type_id)
+                        ->lockForUpdate()
+                        ->first();
+
+                    if (!$material) {
+                        throw ValidationException::withMessages([
+                            'material' => 'Material tidak ditemukan.'
+                        ]);
+                    }
 
                     if ($material->stock_balance < $print->material_amount) {
-                        throw new \Exception("Stok material '{$material->name}' tidak mencukupi (Sisa: {$material->stock_balance}).");
+                        throw ValidationException::withMessages([
+                            'stock' => "Stok material '{$material->name}' tidak mencukupi (Sisa: {$material->stock_balance})."
+                        ]);
                     }
 
                     $material->decrement('stock_balance', $print->material_amount);
@@ -236,7 +252,10 @@ class PrintController extends Controller
                     $print->material_type_id &&
                     $print->material_source === 'lab'
                 ) {
-                    $material = MaterialType::find($print->material_type_id);
+                    $material = MaterialType::where('id', $print->material_type_id)
+                        ->lockForUpdate()
+                        ->first();
+                    
                     if ($material) {
                         $material->increment('stock_balance', $print->material_amount);
                     }
@@ -251,6 +270,8 @@ class PrintController extends Controller
                 
                 $print->save();
             });
+        } catch (ValidationException $e) {
+            throw $e;
         } catch (\Exception $e) {
             return back()->with('error', 'Gagal update: ' . $e->getMessage());
         }

@@ -64,7 +64,7 @@ class MaterialTypeController extends Controller
             'unit'          => 'required|in:gram,mililiter',
         ]);
 
-        MaterialType::create($request->all());
+        MaterialType::create($request->only(['category', 'name', 'stock_balance', 'unit']));
 
         return redirect()->route('materials.index')
             ->with('success', 'Material type berhasil ditambahkan!');

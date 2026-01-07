@@ -67,8 +67,10 @@ class BorrowingController extends Controller
         // Gunakan Transaksi DB agar aman
         DB::transaction(function () use ($ids, $condition) {
             // Ambil data borrowing yang dipilih dan masih status borrowed
+            // ✅ FIXED: Added lockForUpdate() to prevent race condition
             $borrowings = Borrowing::whereIn('id', $ids)
                                    ->where('status', 'borrowed')
+                                   ->lockForUpdate()
                                    ->with('item')
                                    ->get();
 
@@ -136,8 +138,8 @@ class BorrowingController extends Controller
                 'item_id'     => $validated['item_id'],
                 'user_id'     => $validated['user_id'],
                 'borrow_date' => $validated['borrow_date'],
-                'return_date' => $validated['return_date'],
-                'notes'       => $validated['notes'],
+                'return_date' => $validated['return_date'] ?? null,
+                'notes'       => $validated['notes'] ?? null,
                 'status'      => 'borrowed',
             ]);
 
@@ -170,7 +172,24 @@ class BorrowingController extends Controller
             'notes' => 'nullable|string',
         ]);
 
-        $borrowing->update($request->all());
+        // ✅ H2 FIX: Check if item changed and validate availability
+        if ($request->item_id != $borrowing->item_id) {
+            $newItem = Item::find($request->item_id);
+            
+            if ($newItem->status !== 'available') {
+                return back()->withErrors(['item_id' => 'Item yang dipilih sedang tidak tersedia (Status: ' . $newItem->status . ').']);
+            }
+            
+            // Kembalikan status item lama ke available
+            if ($borrowing->status === 'borrowed') {
+                $borrowing->item->update(['status' => 'available']);
+            }
+            
+            // Update item baru ke borrowed
+            $newItem->update(['status' => 'borrowed']);
+        }
+
+        $borrowing->update($request->only(['item_id', 'user_id', 'borrow_date', 'return_date', 'status', 'notes']));
 
         return redirect()->route('borrowings.index')
             ->with('success', 'Peminjaman berhasil diperbarui.');
@@ -325,11 +344,11 @@ class BorrowingController extends Controller
             ->first();
 
         if (!$item) {
-            return response()->json(['success' => false, 'message' => 'Item tidak ditemukan']);
+            return response()->json(['success' => false, 'message' => 'Item tidak ditemukan'], 200);
         }
 
         if ($item->status === 'borrowed') {
-            return response()->json(['success' => false, 'message' => 'Item sedang dipinjam']);
+            return response()->json(['success' => false, 'message' => 'Item sedang dipinjam'], 200);
         }
 
         return response()->json([
@@ -338,6 +357,6 @@ class BorrowingController extends Controller
                 'id'   => $item->id,
                 'name' => $item->name
             ]
-        ]);
+        ], 200);
     }
 }

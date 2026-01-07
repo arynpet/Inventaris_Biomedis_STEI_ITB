@@ -8,6 +8,7 @@ use App\Models\Category;
 use App\Models\ItemOutLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\DB;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Str; // Dari Local (Penting untuk serial number)
@@ -323,49 +324,62 @@ $item->delete(); // Ini sekarang menjadi Soft Delete (database only)
         $action = $request->action_type;
         $count = 0;
 
-        // --- AKSI DELETE ---
-        if ($action === 'delete') {
-            $items = Item::whereIn('id', $ids)->get();
-            $deletedIds = []; // Array untuk menampung ID yang dihapus
+        // ✅ H3 FIX: Wrap in DB transaction for atomicity
+        try {
+            DB::transaction(function () use ($ids, $action, &$count) {
+                // --- AKSI DELETE ---
+                if ($action === 'delete') {
+                    $items = Item::whereIn('id', $ids)->get();
+                    $deletedIds = []; // Array untuk menampung ID yang dihapus
 
-            foreach ($items as $item) {
-                // HAPUS bagian Storage::delete agar file QR tidak hilang fisik
-                // if ($item->qr_code && Storage::disk('public')->exists($item->qr_code)) { ... }
-                
-                $item->delete(); // Ini melakukan Soft Delete
-                $deletedIds[] = $item->id; // Simpan ID untuk keperluan undo
-                $count++;
-            }
-            
-            // Buat URL Undo dengan mengirim ID yang dipisahkan koma (misal: 1,2,5)
-            // Kita implode array jadi string agar mudah dikirim lewat URL
-            $idsString = implode(',', $deletedIds);
-            $undoUrl = route('items.bulk_restore', ['ids' => $idsString]);
+                    foreach ($items as $item) {
+                        // HAPUS bagian Storage::delete agar file QR tidak hilang fisik
+                        // if ($item->qr_code && Storage::disk('public')->exists($item->qr_code)) { ... }
+                        
+                        $item->delete(); // Ini melakukan Soft Delete
+                        $deletedIds[] = $item->id; // Simpan ID untuk keperluan undo
+                        $count++;
+                    }
+                    
+                    // Buat URL Undo dengan mengirim ID yang dipisahkan koma (misal: 1,2,5)
+                    // Kita implode array jadi string agar mudah dikirim lewat URL
+                    $idsString = implode(',', $deletedIds);
+                    $undoUrl = route('items.bulk_restore', ['ids' => $idsString]);
+                    
+                    session()->flash('action_undo', $undoUrl);
+                }
 
-            return redirect()->route('items.index')
-                ->with('success', "$count item berhasil dihapus.")
-                ->with('action_undo', $undoUrl); // Kirim Link Undo ke View
+                // --- AKSI COPY ---
+                if ($action === 'copy') {
+                    $items = Item::whereIn('id', $ids)->orderBy('id')->get();
+                    foreach ($items as $item) {
+                        $newItem = $item->replicate();
+                        $newItem->name = $this->generateIncrementedName($item->name);
+                        // Serial number unik
+                        $newItem->serial_number = $item->serial_number . '-CPY-' . Str::upper(Str::random(3));
+                        $newItem->qr_code = null;
+                        $newItem->push();
+                        
+                        $this->generateAndSaveQr($newItem);
+                        
+                        $categoryIds = $item->categories->pluck('id')->toArray();
+                        if (!empty($categoryIds)) {
+                            $newItem->categories()->sync($categoryIds);
+                        }
+                        $count++;
+                    }
+                }
+            });
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Gagal melakukan aksi: ' . $e->getMessage());
         }
 
-        // --- AKSI COPY ---
+        if ($action === 'delete') {
+            return redirect()->route('items.index')
+                ->with('success', "$count item berhasil dihapus.");
+        }
+        
         if ($action === 'copy') {
-            $items = Item::whereIn('id', $ids)->orderBy('id')->get();
-            foreach ($items as $item) {
-                $newItem = $item->replicate();
-                $newItem->name = $this->generateIncrementedName($item->name);
-                // Serial number unik
-                $newItem->serial_number = $item->serial_number . '-CPY-' . Str::upper(Str::random(3));
-                $newItem->qr_code = null;
-                $newItem->push();
-                
-                $this->generateAndSaveQr($newItem);
-                
-                $categoryIds = $item->categories->pluck('id')->toArray();
-                if (!empty($categoryIds)) {
-                    $newItem->categories()->sync($categoryIds);
-                }
-                $count++;
-            }
             return redirect()->route('items.index')->with('success', "$count item berhasil diduplikasi.");
         }
         
@@ -392,7 +406,16 @@ $item->delete(); // Ini sekarang menjadi Soft Delete (database only)
     // =========================
     private function generateAndSaveQr(Item $item)
     {
-        $qrPath = 'qr/items/' . $item->id . '.svg';
+        // Generate unique path dengan microtime + random string untuk menjamin uniqueness
+        $timestamp = (int)(microtime(true) * 10000); // Mikrodetik untuk uniqueness
+        $randomSuffix = Str::random(6); // Tambahkan random string untuk mencegah collision
+        $qrPath = 'qr/items/' . $item->id . '-' . $timestamp . '-' . $randomSuffix . '.svg';
+        
+        // Hapus QR lama jika ada
+        if ($item->qr_code && Storage::disk('public')->exists($item->qr_code)) {
+            Storage::disk('public')->delete($item->qr_code);
+        }
+        
         $item->load('room');
         $roomName = $item->room ? $item->room->name : 'N/A';
 
@@ -500,19 +523,17 @@ public function trash(Request $request)
 
 public function terminate($id)
     {
-
-        // Cek Hak Akses
-    if (auth()->user()->role !== 'superadmin') {
-        return back()->with('error', 'Hanya Super Admin yang boleh menghapus data ini (Terminate).');
-    }
-        // Cari data di tong sampah berdasarkan ID
         $item = Item::onlyTrashed()->where('id', $id)->first();
 
-        if ($item) {
-            $item->forceDelete(); // PERINTAH INI MENGHAPUS PERMANEN DARI DB
-            return redirect()->route('items.trash')->with('success', 'Data berhasil di-terminate (dihapus selamanya).');
+        if (!$item) {
+            return redirect()->route('items.trash')->with('error', 'Data tidak ditemukan.');
         }
 
-        return redirect()->route('items.trash')->with('error', 'Data tidak ditemukan.');
+        $this->authorize('terminate', $item);
+
+        $item->forceDelete();
+        
+        return redirect()->route('items.trash')
+            ->with('success', 'Data berhasil di-terminate (dihapus selamanya).');
     }
 }

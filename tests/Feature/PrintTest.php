@@ -44,6 +44,7 @@ class PrintTest extends TestCase
 
         $printData = [
             'user_id' => $user->id,
+            'project_name' => 'Test Project',
             'printer_id' => $printer->id,
             'date' => now()->addDays(3)->format('Y-m-d'),
             'start_time' => '09:00',
@@ -75,6 +76,7 @@ class PrintTest extends TestCase
 
         $printData = [
             'user_id' => $user->id,
+            'project_name' => 'Test Minimum Date',
             'printer_id' => $printer->id,
             'date' => now()->format('Y-m-d'),
             'start_time' => '09:00',
@@ -147,6 +149,7 @@ class PrintTest extends TestCase
 
         $printData = [
             'user_id' => $user->id,
+            'project_name' => 'Untrained Test',
             'printer_id' => $printer->id,
             'date' => now()->addDays(3)->format('Y-m-d'),
             'start_time' => '09:00',
@@ -169,6 +172,7 @@ class PrintTest extends TestCase
 
         $printData = [
             'user_id' => $user->id,
+            'project_name' => 'File Upload Test',
             'printer_id' => $printer->id,
             'date' => now()->addDays(3)->format('Y-m-d'),
             'start_time' => '09:00',
