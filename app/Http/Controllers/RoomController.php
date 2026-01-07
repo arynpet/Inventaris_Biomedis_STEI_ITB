@@ -150,6 +150,13 @@ class RoomController extends Controller
      */
     public function destroy(Room $room)
     {
+        // Check if room has items
+        if ($room->items()->count() > 0) {
+            return redirect()
+                ->back()
+                ->with('error', 'Tidak dapat menghapus ruangan yang masih berisi barang. Silakan pindahkan barang terlebih dahulu.');
+        }
+
         $room->delete();
 
         return redirect()
