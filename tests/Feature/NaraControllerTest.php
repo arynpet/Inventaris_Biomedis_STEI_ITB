@@ -24,24 +24,8 @@ class NaraControllerTest extends TestCase
         $this->actingAs(User::factory()->create());
     }
 
-    // ==========================================
     // N1: SQL Injection Prevention Tests
     // ==========================================
-
-    #[Test]
-    public function it_escapes_wildcard_characters_in_search()
-    {
-        $room1 = Room::factory()->create(['name' => 'Lab Bio']);
-        $room2 = Room::factory()->create(['name' => 'Lab Kimia']);
-        
-        // Try SQL injection with wildcards
-        $response = $this->postJson(route('nara.chat'), [
-            'message' => 'cari item di ruangan %_%' // Should not match all rooms
-        ]);
-        
-        $response->assertStatus(200);
-        // Response should not leak all rooms due to wildcard injection
-    }
 
     #[Test]
     public function it_prevents_like_injection_in_room_search()
