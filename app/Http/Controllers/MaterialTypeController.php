@@ -93,6 +93,18 @@ class MaterialTypeController extends Controller
     public function destroy($id)
     {
         $material = MaterialType::findOrFail($id);
+        
+        // Check if material is being used in active prints
+        $activePrints = \App\Models\Print3D::where('material_type_id', $id)
+            ->whereIn('status', ['pending', 'printing'])
+            ->count();
+        
+        if ($activePrints > 0) {
+            return redirect()
+                ->back()
+                ->with('error', 'Tidak dapat menghapus material yang sedang digunakan dalam print job aktif.');
+        }
+
         $material->delete();
 
         return redirect()->route('materials.index')
