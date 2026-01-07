@@ -138,7 +138,8 @@ class NaraController extends Controller
                 foreach ($rawItems as &$item) {
                     // 1. Cari Room ID berdasarkan nama ruangan yang diberi AI
                     if (isset($item['room_name'])) {
-                        $room = Room::where('name', 'LIKE', '%' . $item['room_name'] . '%')->first();
+                        $safeName = $this->escapeLikeWildcards($item['room_name']);
+                        $room = Room::where('name', 'LIKE', '%' . $safeName . '%')->first();
                         $item['room_id'] = $room ? $room->id : 1; // Default ID 1 jika tidak ketemu
                         // Simpan nama ruangan asli untuk display di tabel konfirmasi
                         $item['display_room'] = $room ? $room->name : 'Gudang Utama (Default)';
@@ -171,10 +172,14 @@ class NaraController extends Controller
                           ->orWhere('qr_code', $f['identifier']);
                     });
                 } elseif (!empty($f['keyword'])) {
-                    $query->where('name', 'LIKE', '%'.$f['keyword'].'%');
+                    $safeKeyword = $this->escapeLikeWildcards($f['keyword']);
+                    $query->where('name', 'LIKE', '%'.$safeKeyword.'%');
                 }
 
-                if (!empty($f['room'])) $query->whereHas('room', fn($q) => $q->where('name', 'LIKE', '%'.$f['room'].'%'));
+                if (!empty($f['room'])) {
+                    $safeRoom = $this->escapeLikeWildcards($f['room']);
+                    $query->whereHas('room', fn($q) => $q->where('name', 'LIKE', '%'.$safeRoom.'%'));
+                }
                 if (!empty($f['status'])) $query->where('status', $f['status']);
                 if (!empty($f['condition'])) $query->where('condition', $f['condition']);
                 
@@ -196,12 +201,14 @@ class NaraController extends Controller
                     });
                     $filterApplied = true;
                 } elseif (!empty($filters['keyword'])) {
-                    $query->where('name', 'LIKE', '%' . $filters['keyword'] . '%');
+                    $safeKeyword = $this->escapeLikeWildcards($filters['keyword']);
+                    $query->where('name', 'LIKE', '%' . $safeKeyword . '%');
                     $filterApplied = true;
                 }
 
                 if (!empty($filters['room'])) {
-                    $query->whereHas('room', fn($q) => $q->where('name', 'LIKE', '%' . $filters['room'] . '%'));
+                    $safeRoom = $this->escapeLikeWildcards($filters['room']);
+                    $query->whereHas('room', fn($q) => $q->where('name', 'LIKE', '%' . $safeRoom . '%'));
                     $filterApplied = true;
                 }
                 if (!empty($filters['condition'])) {
@@ -319,5 +326,13 @@ class NaraController extends Controller
         }
         
         return response()->json(['success' => false, 'message' => "Gagal menyimpan data."], 400);
+    }
+
+    /**
+     * Helper: Escape LIKE wildcards to prevent SQL injection
+     */
+    private function escapeLikeWildcards($value)
+    {
+        return str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $value);
     }
 }
