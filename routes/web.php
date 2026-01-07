@@ -15,6 +15,8 @@ use App\Http\Controllers\PrintController;
 use App\Http\Controllers\PrinterController;
 use App\Http\Controllers\SuperAdmin\ActivityLogController; 
 use App\Http\Controllers\SuperAdmin\UserController;
+use App\Http\Controllers\NaraController;
+
 
 /*
 |--------------------------------------------------------------------------
@@ -31,6 +33,10 @@ Route::redirect('/', '/login');
 */
 
 Route::middleware(['auth', 'verified'])->group(function () {
+
+    Route::post('/nara/chat', [NaraController::class, 'ask'])->name('nara.chat');
+Route::post('/nara/destroy', [NaraController::class, 'destroyAsset'])->name('nara.destroy');
+Route::post('/nara/store-batch', [App\Http\Controllers\NaraController::class, 'storeBatch'])->name('nara.store_batch');
 
     // ====================================================
     // DASHBOARD

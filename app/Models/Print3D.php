@@ -5,9 +5,11 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use App\Traits\LogsActivity; // <--- Import Trait
 
 class Print3D extends Model
 {
+        use LogsActivity; // <--- Pasang CCTV disini
     protected $table = 'prints';
 
     use HasFactory;

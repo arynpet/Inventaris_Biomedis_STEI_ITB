@@ -24,8 +24,8 @@ class Item extends Model
         'acquisition_year',
         'placed_in_service_at',
         'fiscal_group',
-        'status',      // Status ketersediaan (available, borrowed, maintenance)
-        'condition',   // Status fisik barang (good, damaged, broken) -> BARU
+        'status',     
+        'condition',   
     ];
 
     // Konversi otomatis tipe data
