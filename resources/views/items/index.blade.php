@@ -236,10 +236,12 @@
                                         {{-- QR Code --}}
                                         <td class="px-3 py-3 whitespace-nowrap text-center">
                                             @if ($item->qr_code)
-                                                <div class="group relative inline-block">
+                                                <div class="flex justify-center items-center cursor-zoom-in relative w-8 h-8"
+                                                     @mouseenter="activeQr = '{{ asset('storage/'.$item->qr_code) }}'"
+                                                     @mouseleave="activeQr = null">
                                                     <img src="{{ asset('storage/'.$item->qr_code) }}" 
                                                          alt="QR" 
-                                                         class="h-8 w-8 rounded border border-gray-200 bg-white p-0.5 transition-transform hover:scale-[4] hover:absolute hover:z-20 hover:shadow-xl cursor-zoom-in origin-center">
+                                                         class="h-8 w-8 rounded border border-gray-200 bg-white p-0.5 object-cover shadow-sm transition-transform">
                                                 </div>
                                             @else
                                                 <span class="text-[10px] text-gray-400 italic">No QR</span>
@@ -436,6 +438,22 @@
             </div>
         </div>
 
+    {{-- FIXED QR ZOOM OVERLAY --}}
+        <div x-show="activeQr" 
+             style="display: none; pointer-events: none;"
+             class="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-[100]"
+             x-transition:enter="transition ease-out duration-200"
+             x-transition:enter-start="opacity-0 scale-90"
+             x-transition:enter-end="opacity-100 scale-100"
+             x-transition:leave="transition ease-in duration-150"
+             x-transition:leave-start="opacity-100 scale-100"
+             x-transition:leave-end="opacity-0 scale-90">
+            <div class="bg-white p-3 rounded-2xl shadow-2xl border-4 border-white ring-1 ring-gray-200">
+                <img :src="activeQr" class="w-64 h-64 object-contain rounded-xl bg-gray-50">
+                <p class="text-center text-xs font-bold text-gray-400 mt-2 tracking-widest uppercase">Scan Me</p>
+            </div>
+        </div>
+
     </div>
 
     {{-- ALPINE SCRIPT --}}
@@ -448,6 +466,7 @@
                 selectedItems: [],
                 pageIds: pageIds,
                 lastCheckedIndex: null,
+                activeQr: null, // New state for QR Zoom
 
                 confirmDelete(id, name) {
                     this.showModal = true;

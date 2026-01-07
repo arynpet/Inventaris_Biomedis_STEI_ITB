@@ -13,7 +13,7 @@ use App\Http\Controllers\RoomBorrowingController;
 use App\Http\Controllers\MaterialTypeController;
 use App\Http\Controllers\PrintController;
 use App\Http\Controllers\PrinterController;
-use App\Http\Controllers\SuperAdmin\ActivityLogController; 
+use App\Http\Controllers\SuperAdmin\ActivityLogController;
 use App\Http\Controllers\SuperAdmin\UserController;
 use App\Http\Controllers\NaraController;
 
@@ -135,7 +135,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // ====================================================
     // 9. SUPER ADMIN AREA (LOGS & USERS)
     // ====================================================
-    
+
     // A. LOG ACTIVITY (READ ONLY - Bisa diakses Admin Biasa)
     // Saya taruh di luar middleware superadmin agar admin biasa bisa lihat (kalau kebijakanmu begitu)
     Route::get('/superadmin/logs', [ActivityLogController::class, 'index'])->name('superadmin.logs.index');
@@ -152,6 +152,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
             // Delete Logs Actions
             Route::delete('logs/clear-all', [ActivityLogController::class, 'destroyAll'])->name('logs.clear');
             Route::delete('logs/{id}', [ActivityLogController::class, 'destroy'])->name('logs.destroy');
+
+            // Backup & Restore
+            Route::get('/backup', [App\Http\Controllers\SuperAdmin\BackupController::class, 'index'])->name('backup.index');
+            Route::post('/backup/download', [App\Http\Controllers\SuperAdmin\BackupController::class, 'download'])->name('backup.download');
         });
 
 });

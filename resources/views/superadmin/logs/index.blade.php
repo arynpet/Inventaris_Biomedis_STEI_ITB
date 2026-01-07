@@ -124,22 +124,24 @@
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         <div class="flex items-center gap-2">
-                                            <div>
-                                                <span class="font-semibold text-gray-800">{{ class_basename($log->model) }}</span>
-                                                <span class="text-gray-500 text-xs">#{{ $log->model_id }}</span>
+                                            <div class="flex flex-col">
+                                                <div class="flex items-center gap-1.5">
+                                                    <span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-gray-100 text-gray-500 border border-gray-200 uppercase">{{ class_basename($log->model) }}</span>
+                                                    <span class="text-gray-400 text-[10px] font-mono">#{{ $log->model_id }}</span>
+                                                </div>
+                                                {{-- 3. TOMBOL HISTORY SPESIFIK --}}
+                                                @if($log->model && $log->model_id)
+                                                    <a href="{{ route('superadmin.logs.history', ['model' => $log->model, 'id' => $log->model_id]) }}" 
+                                                       class="text-indigo-600 hover:text-indigo-900 font-semibold text-xs mt-1 flex items-center gap-1 group">
+                                                        <span>Timeline</span>
+                                                        <svg class="w-3 h-3 transform group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path></svg>
+                                                    </a>
+                                                @endif
                                             </div>
-                                            {{-- 3. TOMBOL HISTORY SPESIFIK --}}
-                                            @if($log->model && $log->model_id)
-                                                <a href="{{ route('superadmin.logs.history', ['model' => $log->model, 'id' => $log->model_id]) }}" 
-                                                   class="text-indigo-600 hover:text-indigo-900 bg-indigo-50 hover:bg-indigo-100 p-1.5 rounded-full" 
-                                                   title="Lihat Timeline Data Ini">
-                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                                </a>
-                                            @endif
                                         </div>
                                     </td>
-                                    <td class="px-6 py-4 text-gray-600 max-w-xs break-words text-xs font-mono">
-                                        {{ Str::limit($log->description, 50) }}
+                                    <td class="px-6 py-4 text-gray-600 max-w-md break-words text-[11px] leading-relaxed">
+                                        {!! $log->description !!}
                                     </td>
                                     @if(auth()->user()->role === 'superadmin')
                                         <td class="px-6 py-4 text-right">

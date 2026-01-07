@@ -179,9 +179,19 @@
                 <a href="{{ route('superadmin.logs.index') }}" :class="sidebarOpen ? 'justify-start' : 'justify-center'"
                     class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group {{ dynamicActive('superadmin/logs', $isDash) }}">
                     <div class="relative flex-shrink-0">
-                        <i data-lucide="file-clock" class="w-5 h-5 {{ $isDash ? 'text-rose-400' : 'text-rose-600' }}"></i>
+                        <i data-lucide="activity"
+                            class="w-5 h-5 {{ $isDash ? 'text-amber-400' : 'text-amber-600' }}"></i>
                     </div>
-                    <span x-show="sidebarOpen" x-transition class="text-sm font-medium truncate">Audit Log</span>
+                    <span x-show="sidebarOpen" x-transition class="text-sm font-medium truncate">Activity Logs</span>
+                </a>
+
+                <a href="{{ route('superadmin.backup.index') }}" :class="sidebarOpen ? 'justify-start' : 'justify-center'"
+                    class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group {{ dynamicActive('superadmin/backup', $isDash) }}">
+                    <div class="relative flex-shrink-0">
+                        <i data-lucide="database"
+                            class="w-5 h-5 {{ $isDash ? 'text-emerald-400' : 'text-emerald-600' }}"></i>
+                    </div>
+                    <span x-show="sidebarOpen" x-transition class="text-sm font-medium truncate">Backup Data</span>
                 </a>
             @endif
 

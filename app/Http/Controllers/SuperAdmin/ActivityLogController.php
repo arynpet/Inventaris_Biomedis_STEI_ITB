@@ -17,10 +17,10 @@ class ActivityLogController extends Controller
         // 2. Filter: Search (Deskripsi atau Model ID)
         if ($request->filled('search')) {
             $search = $request->search;
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('description', 'like', "%$search%")
-                  ->orWhere('model_id', 'like', "%$search%")
-                  ->orWhere('model', 'like', "%$search%");
+                    ->orWhere('model_id', 'like', "%$search%")
+                    ->orWhere('model', 'like', "%$search%");
             });
         }
 
@@ -37,7 +37,7 @@ class ActivityLogController extends Controller
         // 5. Sorting (Default: Created At Descending)
         $sortColumn = $request->input('sort', 'created_at');
         $sortDirection = $request->input('direction', 'desc');
-        
+
         // Validasi kolom agar tidak error jika user ubah URL manual
         $allowedSorts = ['created_at', 'action', 'model'];
         if (in_array($sortColumn, $allowedSorts)) {
@@ -56,31 +56,38 @@ class ActivityLogController extends Controller
         return view('superadmin.logs.index', compact('logs', 'users', 'actions'));
     }
 
-    // --- FITUR BARU: HISTORY SPESIFIK ---
     public function history($model, $id)
     {
+        // Cari objek aslinya untuk info header (opsional)
+        $fullModelPath = "App\\Models\\" . $model;
+        $targetObject = null;
+        if (class_exists($fullModelPath)) {
+            $targetObject = $fullModelPath::find($id);
+        }
+
         // Ambil semua log yang terkait dengan Model dan ID tertentu
-        // Contoh: Mencari semua perubahan pada Item dengan ID 5
         $logs = ActivityLog::with('user')
             ->where('model', $model)
             ->where('model_id', $id)
-            ->orderBy('created_at', 'desc') // Yang terbaru diatas
+            ->orderBy('created_at', 'desc')
             ->get();
 
-        return view('superadmin.logs.history', compact('logs', 'model', 'id'));
+        return view('superadmin.logs.history', compact('logs', 'model', 'id', 'targetObject'));
     }
 
     // ... (Fungsi destroy dan destroyAll tetap sama seperti kode kamu) ...
     public function destroy($id)
     {
-        if (auth()->user()->role !== 'superadmin') return back()->with('error', 'Akses ditolak.');
+        if (auth()->user()->role !== 'superadmin')
+            return back()->with('error', 'Akses ditolak.');
         ActivityLog::findOrFail($id)->delete();
         return back()->with('success', 'Log berhasil dihapus.');
     }
 
     public function destroyAll()
     {
-        if (auth()->user()->role !== 'superadmin') return back()->with('error', 'Akses ditolak.');
+        if (auth()->user()->role !== 'superadmin')
+            return back()->with('error', 'Akses ditolak.');
         ActivityLog::truncate();
         return back()->with('success', 'Seluruh riwayat log berhasil dibersihkan.');
     }
