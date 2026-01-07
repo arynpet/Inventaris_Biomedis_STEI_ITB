@@ -104,18 +104,24 @@ class RoomController extends Controller
      */
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'code' => 'required|string|unique:rooms,code|max:20', // Tambah max validation
-            'name' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'status' => 'required|in:sedia,dipinjam',
-        ]);
+        try {
+            $validated = $request->validate([
+                'code' => 'required|string|unique:rooms,code|max:20',
+                'name' => 'required|string|max:255',
+                'description' => 'nullable|string',
+                'status' => 'required|in:sedia,dipinjam',
+            ]);
 
-        Room::create($validated);
+            Room::create($validated);
 
-        return redirect()
-            ->route('rooms.index')
-            ->with('success', 'Ruangan berhasil ditambahkan!');
+            return redirect()
+                ->route('rooms.index')
+                ->with('success', 'Ruangan berhasil ditambahkan!');
+        } catch (\Exception $e) {
+            return redirect()->back()
+                ->with('error', 'Gagal menambah ruangan: ' . $e->getMessage())
+                ->withInput();
+        }
     }
 
     /**
@@ -131,18 +137,24 @@ class RoomController extends Controller
      */
     public function update(Request $request, Room $room)
     {
-        $validated = $request->validate([
-            'code' => "required|string|max:20|unique:rooms,code,$room->id",
-            'name' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'status' => 'required|in:sedia,dipinjam',
-        ]);
+        try {
+            $validated = $request->validate([
+                'code' => "required|string|max:20|unique:rooms,code,$room->id",
+                'name' => 'required|string|max:255',
+                'description' => 'nullable|string',
+                'status' => 'required|in:sedia,dipinjam',
+            ]);
 
-        $room->update($validated);
+            $room->update($validated);
 
-        return redirect()
-            ->route('rooms.index')
-            ->with('success', 'Ruangan berhasil diperbarui!');
+            return redirect()
+                ->route('rooms.index')
+                ->with('success', 'Ruangan berhasil diperbarui!');
+        } catch (\Exception $e) {
+            return redirect()->back()
+                ->with('error', 'Gagal update ruangan: ' . $e->getMessage())
+                ->withInput();
+        }
     }
 
     /**
