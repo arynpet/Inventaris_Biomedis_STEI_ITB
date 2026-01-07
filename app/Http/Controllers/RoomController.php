@@ -50,26 +50,42 @@ class RoomController extends Controller
             return redirect()->back()->with('error', 'Tidak ada ruangan yang dipilih.');
         }
 
-        if ($action === 'delete') {
-            // Hapus Masal
-            Room::whereIn('id', $ids)->delete();
-            return redirect()->back()->with('success', count($ids) . ' ruangan berhasil dihapus.');
-        
-        } elseif ($action === 'copy') {
-            // Duplikat Masal
-            $count = 0;
-            foreach ($ids as $id) {
-                $original = Room::find($id);
-                if ($original) {
-                    $newRoom = $original->replicate();
-                    // Kode harus unik, jadi kita tambahkan suffix random
-                    $newRoom->code = $original->code . '-CPY-' . strtoupper(Str::random(3));
-                    $newRoom->name = $original->name . ' (Copy)';
-                    $newRoom->save();
-                    $count++;
+        try {
+            $result = DB::transaction(function () use ($ids, $action) {
+                if ($action === 'delete') {
+                    // Hapus Masal
+                    Room::whereIn('id', $ids)->delete();
+                    return ['success' => true, 'count' => count($ids), 'action' => 'delete'];
+                
+                } elseif ($action === 'copy') {
+                    // Duplikat Masal
+                    $count = 0;
+                    foreach ($ids as $id) {
+                        $original = Room::find($id);
+                        if ($original) {
+                            $newRoom = $original->replicate();
+                            // Kode harus unik, jadi kita tambahkan suffix random
+                            $newRoom->code = $original->code . '-CPY-' . strtoupper(Str::random(3));
+                            $newRoom->name = $original->name . ' (Copy)';
+                            $newRoom->save();
+                            $count++;
+                        }
+                    }
+                    return ['success' => true, 'count' => $count, 'action' => 'copy'];
+                }
+                
+                return ['success' => false];
+            });
+
+            if ($result['success']) {
+                if ($result['action'] === 'delete') {
+                    return redirect()->back()->with('success', $result['count'] . ' ruangan berhasil dihapus.');
+                } elseif ($result['action'] === 'copy') {
+                    return redirect()->back()->with('success', $result['count'] . ' ruangan berhasil diduplikasi.');
                 }
             }
-            return redirect()->back()->with('success', $count . ' ruangan berhasil diduplikasi.');
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Gagal melakukan aksi: ' . $e->getMessage());
         }
 
         return redirect()->back()->with('error', 'Aksi tidak dikenali.');
