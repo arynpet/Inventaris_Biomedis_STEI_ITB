@@ -177,15 +177,21 @@
                             <thead class="bg-gray-50">
                                 <tr>
                                     {{-- CHECKBOX HEADER (Select All) --}}
-                                    <th scope="col" class="px-4 py-4 text-center w-10">
+                                    <th scope="col" class="px-3 py-3 text-center w-8">
                                         <input type="checkbox" @click="toggleAll" x-ref="selectAllCheckbox"
                                                class="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50 cursor-pointer w-4 h-4">
                                     </th>
-                                    @foreach (['ID', 'Nama Barang', 'No Asset', 'Serial Number', 'QR', 'Ruangan', 'Qty', 'Status', 'Kondisi', 'Kategori', 'Aksi'] as $header)
-                                        <th scope="col" class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap">
-                                            {{ $header }}
-                                        </th>
-                                    @endforeach
+                                    <th scope="col" class="px-3 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">ID</th>
+                                    <th scope="col" class="px-3 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider min-w-[200px]">Barang</th>
+                                    <th scope="col" class="px-3 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider hidden lg:table-cell">No Asset</th>
+                                    <th scope="col" class="px-3 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap hidden xl:table-cell">S/N</th>
+                                    <th scope="col" class="px-3 py-3 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">QR</th>
+                                    <th scope="col" class="px-3 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider hidden sm:table-cell">Ruangan</th>
+                                    <th scope="col" class="px-3 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Qty</th>
+                                    <th scope="col" class="px-3 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Status</th>
+                                    <th scope="col" class="px-3 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider hidden md:table-cell">Kondisi</th>
+                                    <th scope="col" class="px-3 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider hidden xl:table-cell">Kategori</th>
+                                    <th scope="col" class="px-3 py-3 text-right text-xs font-bold text-gray-500 uppercase tracking-wider">Aksi</th>
                                 </tr>
                             </thead>
                             <tbody class="bg-white divide-y divide-gray-200">
@@ -193,9 +199,8 @@
                                     <tr class="hover:bg-blue-50/50 transition-colors duration-150" 
                                         :class="{'bg-blue-50': selectedItems.includes({{ $item->id }})}">
                                         
-                                        {{-- CHECKBOX ROW (PENTING!) --}}
-                                        <td class="px-4 py-4 text-center">
-                                            {{-- Passing loop index dan event untuk Shift-Click --}}
+                                        {{-- CHECKBOX ROW --}}
+                                        <td class="px-3 py-3 text-center">
                                             <input type="checkbox" name="selected_ids[]" value="{{ $item->id }}" 
                                                    @click="toggleItem({{ $item->id }}, {{ $loop->index }}, $event)"
                                                    :checked="selectedItems.includes({{ $item->id }})"
@@ -203,70 +208,76 @@
                                         </td>
 
                                         {{-- ID --}}
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        <td class="px-3 py-3 whitespace-nowrap text-xs text-gray-500">
                                             #{{ $item->id }}
                                         </td>
 
                                         {{-- Name --}}
-                                        <td class="px-6 py-4">
-                                            <div class="text-sm font-semibold text-gray-900 line-clamp-2 max-w-xs" title="{{ $item->name }}">
+                                        <td class="px-3 py-3">
+                                            <div class="text-sm font-semibold text-gray-900 leading-tight">
                                                 {{ $item->name }}
+                                            </div>
+                                            {{-- Mobile Only Metadata --}}
+                                            <div class="lg:hidden mt-1 text-xs text-gray-500">
+                                                {{ $item->asset_number }}
                                             </div>
                                         </td>
 
                                         {{-- Asset Number --}}
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600 font-mono">
+                                        <td class="px-3 py-3 whitespace-nowrap text-xs text-gray-600 font-mono hidden lg:table-cell">
                                             {{ $item->asset_number ?? '-' }}
                                         </td>
 
                                         {{-- Serial Number --}}
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-mono font-medium text-gray-800">
+                                        <td class="px-3 py-3 whitespace-nowrap text-xs font-mono text-gray-800 hidden xl:table-cell">
                                             {{ $item->serial_number ?? '-' }}
                                         </td>
 
                                         {{-- QR Code --}}
-                                        <td class="px-6 py-4 whitespace-nowrap">
+                                        <td class="px-3 py-3 whitespace-nowrap text-center">
                                             @if ($item->qr_code)
-                                                <div class="group relative">
+                                                <div class="group relative inline-block">
                                                     <img src="{{ asset('storage/'.$item->qr_code) }}" 
                                                          alt="QR" 
-                                                         class="h-10 w-10 rounded border border-gray-200 bg-white p-0.5 transition-transform group-hover:scale-[3] group-hover:absolute group-hover:z-10 group-hover:shadow-xl cursor-zoom-in">
+                                                         class="h-8 w-8 rounded border border-gray-200 bg-white p-0.5 transition-transform hover:scale-[4] hover:absolute hover:z-20 hover:shadow-xl cursor-zoom-in origin-center">
                                                 </div>
                                             @else
-                                                <span class="text-xs text-gray-400 italic">No QR</span>
+                                                <span class="text-[10px] text-gray-400 italic">No QR</span>
                                             @endif
                                         </td>
 
                                         {{-- Room --}}
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                                            <div class="flex items-center gap-2">
-                                                <svg class="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <td class="px-3 py-3 whitespace-nowrap text-xs text-gray-600 hidden sm:table-cell">
+                                            <div class="flex items-center gap-1.5">
+                                                <svg class="w-3.5 h-3.5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                                                 </svg>
-                                                {{ $item->room->name ?? 'Unassigned' }}
+                                                <span class="truncate max-w-[120px]" title="{{ $item->room->name ?? 'Unassigned' }}">
+                                                    {{ $item->room->name ?? '-' }}
+                                                </span>
                                             </div>
                                         </td>
 
                                         {{-- Quantity --}}
-                                        <td class="px-6 py-4 whitespace-nowrap">
-                                            <span class="px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 border border-gray-200">
+                                        <td class="px-3 py-3 whitespace-nowrap">
+                                            <span class="px-2 py-0.5 rounded text-[11px] font-bold bg-gray-100 text-gray-800 border border-gray-200">
                                                 {{ $item->quantity }}
                                             </span>
                                         </td>
 
                                         {{-- Status --}}
-                                        <td class="px-6 py-4 whitespace-nowrap">
-                                            <x-status-badge :status="$item->status" />
+                                        <td class="px-3 py-3 whitespace-nowrap">
+                                            <x-status-badge :status="$item->status" class="scale-90 origin-left" />
                                         </td>
 
                                         {{-- Condition --}}
-                                        <td class="px-6 py-4 whitespace-nowrap">
+                                        <td class="px-3 py-3 whitespace-nowrap hidden md:table-cell">
                                             @php
                                                 $condClass = match($item->condition) {
-                                                    'good'    => 'bg-emerald-100 text-emerald-700 border-emerald-200',
-                                                    'damaged' => 'bg-orange-100 text-orange-700 border-orange-200',
-                                                    'broken'  => 'bg-red-100 text-red-700 border-red-200',
-                                                    default   => 'bg-gray-100 text-gray-600 border-gray-200',
+                                                    'good'    => 'bg-emerald-50 text-emerald-700 border-emerald-100',
+                                                    'damaged' => 'bg-orange-50 text-orange-700 border-orange-100',
+                                                    'broken'  => 'bg-red-50 text-red-700 border-red-100',
+                                                    default   => 'bg-gray-50 text-gray-600 border-gray-100',
                                                 };
                                                 $condLabel = match($item->condition) {
                                                     'good'    => 'Baik',
@@ -275,63 +286,63 @@
                                                     default   => $item->condition,
                                                 };
                                             @endphp
-                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border {{ $condClass }}">
+                                            <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium border {{ $condClass }}">
                                                 {{ $condLabel }}
                                             </span>
                                         </td>
 
                                         {{-- Categories --}}
-                                        <td class="px-6 py-4">
-                                            <div class="flex flex-wrap gap-1 max-w-[150px]">
-                                                @forelse ($item->categories as $cat)
-                                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-blue-50 text-blue-700 border border-blue-100">
+                                        <td class="px-3 py-3 hidden xl:table-cell">
+                                            <div class="flex flex-wrap gap-1 max-w-[120px]">
+                                                @forelse ($item->categories->take(2) as $cat)
+                                                    <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-medium bg-blue-50 text-blue-700 border border-blue-100 truncate max-w-[80px]">
                                                         {{ $cat->name }}
                                                     </span>
                                                 @empty
-                                                    <span class="text-xs text-gray-400">-</span>
+                                                    <span class="text-[10px] text-gray-300">-</span>
                                                 @endforelse
+                                                @if($item->categories->count() > 2)
+                                                    <span class="text-[9px] text-gray-400">+{{ $item->categories->count() - 2 }}</span>
+                                                @endif
                                             </div>
                                         </td>
 
                                         {{-- Actions --}}
-                                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                            <div class="flex items-center justify-end gap-2">
+                                        <td class="px-3 py-3 whitespace-nowrap text-right text-sm font-medium">
+                                            <div class="flex items-center justify-end gap-1">
                                                 <a href="{{ route('items.show', $item->id) }}" 
-                                                   class="text-sky-600 hover:text-sky-900 bg-sky-50 hover:bg-sky-100 p-2 rounded-lg transition-colors" 
+                                                   class="text-sky-600 hover:text-sky-900 bg-sky-50 hover:bg-sky-100 p-1.5 rounded transition-colors" 
                                                    title="Detail">
-                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
                                                 </a>
                                                 
                                                 <a href="{{ route('items.edit', $item->id) }}" 
-                                                   class="text-amber-600 hover:text-amber-900 bg-amber-50 hover:bg-amber-100 p-2 rounded-lg transition-colors" 
+                                                   class="text-amber-600 hover:text-amber-900 bg-amber-50 hover:bg-amber-100 p-1.5 rounded transition-colors" 
                                                    title="Edit">
-                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
                                                 </a>
                                                 
                                                 @if($item->status !== 'dikeluarkan')
                                                     <a href="{{ route('items.out.create', $item->id) }}" 
-                                                       class="text-orange-600 hover:text-orange-900 bg-orange-50 hover:bg-orange-100 p-2 rounded-lg transition-colors" 
+                                                       class="text-orange-600 hover:text-orange-900 bg-orange-50 hover:bg-orange-100 p-1.5 rounded transition-colors" 
                                                        title="Keluarkan Barang">
-                                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
                                                     </a>
                                                 @endif
                                                 
-                                                {{-- Tombol Hapus Single --}}
                                                 <button type="button" @click="confirmDelete({{ $item->id }}, '{{ $item->name }}')" 
-                                                        class="text-red-600 hover:text-red-900 bg-red-50 hover:bg-red-100 p-2 rounded-lg transition-colors" 
+                                                        class="text-red-600 hover:text-red-900 bg-red-50 hover:bg-red-100 p-1.5 rounded transition-colors" 
                                                         title="Hapus">
-                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                                                 </button>
                                             </div>
                                         </td>
                                     </tr>
                                 @empty
-                                    <tr><td colspan="11" class="px-6 py-12 text-center text-gray-500 bg-gray-50">
+                                    <tr><td colspan="12" class="px-6 py-12 text-center text-gray-500 bg-gray-50">
                                         <div class="flex flex-col items-center justify-center">
                                             <svg class="w-12 h-12 text-gray-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path></svg>
                                             <p class="text-base font-medium text-gray-900">Tidak ada item ditemukan</p>
-                                            <p class="mt-1 text-sm text-gray-500">Coba ubah filter pencarian atau tambahkan item baru.</p>
-                                            <a href="{{ route('items.create') }}" class="mt-4 inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700">Tambah Item Baru</a>
                                         </div>
                                     </td></tr>
                                 @endforelse
