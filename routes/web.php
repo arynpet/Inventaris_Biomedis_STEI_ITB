@@ -34,9 +34,14 @@ Route::redirect('/', '/login');
 
 Route::middleware(['auth', 'verified'])->group(function () {
 
+    // ======================================
+    // AUTHENTICATED Routes (Login Required)
+    // ======================================
+
+    // ✅ Nara AI Assistant (Requires Authentication)
     Route::post('/nara/chat', [NaraController::class, 'ask'])->name('nara.chat');
-Route::post('/nara/destroy', [NaraController::class, 'destroyAsset'])->name('nara.destroy');
-Route::post('/nara/store-batch', [App\Http\Controllers\NaraController::class, 'storeBatch'])->name('nara.store_batch');
+    Route::post('/nara/destroy', [NaraController::class, 'destroyAsset'])->name('nara.destroy');
+    Route::post('/nara/store-batch', [NaraController::class, 'storeBatch'])->name('nara.store_batch');
 
     // ====================================================
     // DASHBOARD
