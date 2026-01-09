@@ -35,4 +35,8 @@ return [
         ],
     ],
 
+    'print3d' => [
+        'min_booking_days' => env('PRINTING_MIN_BOOKING_DAYS', 2),
+    ],
+
 ];
