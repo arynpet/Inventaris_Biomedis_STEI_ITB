@@ -109,9 +109,10 @@ class PrintController extends Controller
             'printer_id'        => 'required|exists:printers,id',
             'date'              => ['required', 'date', function($attribute, $value, $fail) {
                 // Aturan: Minimal booking H+2 dari hari ini
-                $minDate = Carbon::now()->addDays(2)->startOfDay();
+                $days = config('services.print3d.min_booking_days'); 
+                $minDate = Carbon::now()->addDays($days)->startOfDay();
                 if (Carbon::parse($value)->lt($minDate)) {
-                    $fail('Tanggal minimal harus 2 hari dari hari ini.');
+                    $fail('Tanggal minimal harus ' . $days . ' hari dari hari ini.');
                 }
             }],
             'start_time'        => 'required',
