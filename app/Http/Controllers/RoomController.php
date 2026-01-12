@@ -6,6 +6,7 @@ use App\Models\Room;
 use App\Models\Item;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str; // Tambahkan ini untuk generate random string saat duplikat
+use Illuminate\Support\Facades\DB;
 
 class RoomController extends Controller
 {
