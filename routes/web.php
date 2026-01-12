@@ -45,9 +45,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // ====================================================
     // 1. DASHBOARD
     // ====================================================
-    Route::get('/dashboard', function () {
-        return view('dashboard');
-    })->name('dashboard');
+    Route::get('/dashboard', [App\Http\Controllers\DashboardController::class, 'index'])->name('dashboard');
+
+    // Panduan Sistem / SOP
+    Route::get('/tutorial', [App\Http\Controllers\GuideController::class, 'index'])->name('guide.index');
 
     // ====================================================
     // 2. PROFILE MANAGEMENT

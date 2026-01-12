@@ -179,8 +179,7 @@
                 <a href="{{ route('superadmin.logs.index') }}" :class="sidebarOpen ? 'justify-start' : 'justify-center'"
                     class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group {{ dynamicActive('superadmin/logs', $isDash) }}">
                     <div class="relative flex-shrink-0">
-                        <i data-lucide="activity"
-                            class="w-5 h-5 {{ $isDash ? 'text-amber-400' : 'text-amber-600' }}"></i>
+                        <i data-lucide="activity" class="w-5 h-5 {{ $isDash ? 'text-amber-400' : 'text-amber-600' }}"></i>
                     </div>
                     <span x-show="sidebarOpen" x-transition class="text-sm font-medium truncate">Activity Logs</span>
                 </a>
@@ -244,6 +243,19 @@
                     </a>
                 </div>
             </div>
+
+            <div x-show="sidebarOpen" x-transition class="px-3 pt-4 pb-2">
+                <p class="text-[10px] uppercase tracking-widest font-bold {{ $sectionTitleClass }}">Bantuan</p>
+            </div>
+            <div x-show="!sidebarOpen" class="h-px mx-2 my-2 {{ $dividerClass }}"></div>
+
+            <a href="{{ route('guide.index') }}" :class="sidebarOpen ? 'justify-start' : 'justify-center'"
+                class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group {{ dynamicActive('tutorial', $isDash) }}">
+                <div class="relative flex-shrink-0">
+                    <i data-lucide="book-open" class="w-5 h-5 {{ $isDash ? 'text-pink-400' : 'text-pink-600' }}"></i>
+                </div>
+                <span x-show="sidebarOpen" x-transition class="text-sm font-medium truncate">Panduan Sistem</span>
+            </a>
 
         </nav>
 
