@@ -4,7 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\Room;
 use App\Models\Item;
+use App\Models\ActivityLog;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str; // Tambahkan ini untuk generate random string saat duplikat
 use Illuminate\Support\Facades\DB;
 
@@ -56,6 +58,17 @@ class RoomController extends Controller
                 if ($action === 'delete') {
                     // Hapus Masal
                     Room::whereIn('id', $ids)->delete();
+                    
+                    // ✅ LOGGING untuk bulk delete
+                    ActivityLog::create([
+                        'user_id' => auth()->id(),
+                        'action' => 'bulk_delete',
+                        'model' => 'Room',
+                        'model_id' => null,
+                        'description' => 'Bulk delete: ' . count($ids) . ' rooms (IDs: ' . implode(',', $ids) . ')',
+                        'ip_address' => request()->ip(),
+                    ]);
+                    
                     return ['success' => true, 'count' => count($ids), 'action' => 'delete'];
                 
                 } elseif ($action === 'copy') {
@@ -72,6 +85,17 @@ class RoomController extends Controller
                             $count++;
                         }
                     }
+                    
+                    // ✅ LOGGING untuk bulk copy
+                    ActivityLog::create([
+                        'user_id' => auth()->id(),
+                        'action' => 'bulk_copy',
+                        'model' => 'Room',
+                        'model_id' => null,
+                        'description' => "Bulk copy: {$count} rooms duplicated",
+                        'ip_address' => request()->ip(),
+                    ]);
+                    
                     return ['success' => true, 'count' => $count, 'action' => 'copy'];
                 }
                 
@@ -88,7 +112,7 @@ class RoomController extends Controller
         } catch (\Exception $e) {
             return redirect()->back()->with('error', 'Gagal melakukan aksi: ' . $e->getMessage());
         }
-
+        
         return redirect()->back()->with('error', 'Aksi tidak dikenali.');
     }
 
