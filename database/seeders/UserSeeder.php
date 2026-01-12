@@ -19,6 +19,23 @@ class UserSeeder extends Seeder
                 'updated_at' => '2025-12-04 17:41:40',
             ],
 
+            [
+                'name' => 'admin',
+                'email' => 'admin@example.com',
+                'email_verified_at' => '2025-12-17 01:34:11',
+                'password' => bcrypt('password'),
+                'created_at' => '2025-12-17 01:34:11',
+                'updated_at' => '2025-12-17 01:34:11',
+            ],
+            [
+                'name' => 'superadmin',
+                'email' => 'superadmin@example.com',
+                'email_verified_at' => '2025-12-17 01:34:11',
+                'role' => 'superadmin',
+                'password' => bcrypt('password'),
+                'created_at' => '2025-12-17 01:34:11',
+                'updated_at' => '2025-12-17 01:34:11',
+            ],
         ]);
     }
 }

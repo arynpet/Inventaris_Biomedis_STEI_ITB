@@ -71,7 +71,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('items/regenerate-qr', [ItemController::class, 'regenerateAllQr'])->name('items.regenerate_qr');
     Route::post('items/bulk-action', [ItemController::class, 'bulkAction'])->name('items.bulk_action');
     Route::get('/items/{item}/qr-pdf', [ItemController::class, 'qrPdf'])->name('items.qr.pdf');
-    Route::get('/api/items/by-qr/{qr}', [ItemController::class, 'findByQr']); // API internal
+    Route::get('/api/items/by-qr/{qr}', [ItemController::class, 'findByQr'])->middleware('throttle:60,1'); // API internal
 
     // Barang Keluar (Logs)
     Route::prefix('items-management')->group(function () {
