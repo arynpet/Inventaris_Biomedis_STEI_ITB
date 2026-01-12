@@ -156,6 +156,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
             // Backup & Restore
             Route::get('/backup', [App\Http\Controllers\SuperAdmin\BackupController::class, 'index'])->name('backup.index');
             Route::post('/backup/download', [App\Http\Controllers\SuperAdmin\BackupController::class, 'download'])->name('backup.download');
+            Route::post('/backup/database', [App\Http\Controllers\SuperAdmin\BackupController::class, 'backupDatabase'])->name('backup.database');
+            Route::post('/backup/reset', [App\Http\Controllers\SuperAdmin\BackupController::class, 'resetDatabase'])->name('backup.reset');
+            Route::post('/backup/import-items', [App\Http\Controllers\SuperAdmin\BackupController::class, 'importItems'])->name('backup.import_items');
         });
 
 });

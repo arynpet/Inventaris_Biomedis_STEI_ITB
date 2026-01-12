@@ -19,10 +19,14 @@ use App\Models\Category;
 class BackupExport implements WithMultipleSheets
 {
     protected $modules;
+    protected $startDate;
+    protected $endDate;
 
-    public function __construct($modules = [])
+    public function __construct($modules = [], $startDate = null, $endDate = null)
     {
         $this->modules = $modules;
+        $this->startDate = $startDate;
+        $this->endDate = $endDate;
     }
 
     public function sheets(): array
@@ -32,6 +36,12 @@ class BackupExport implements WithMultipleSheets
         foreach ($this->modules as $module) {
             switch ($module) {
                 case 'items':
+                    // Items usually don't need date filtering for backup unless specified, keeping all for now or adding created_at filter?
+                    // Request says: "User bisa memilih ... Rentang Waktu Tertentu". "Semua Waktu" or range.
+                    // Assuming items are master data and should probably be ALL, but let's apply filter if user wants 'created' in that range?
+                    // Re-reading: "Tujuan: ... mem-backup/menghapus data ... Rentang Waktu Tertentu".
+                    // Usually Master Data (Items, Rooms, Users, Categories, Printers, Materials) are kept FULL.
+                    // Transaction Data (Logs, Borrowings, Prints) are filtered.
                     $data = Item::with('room')->get()->map(function ($item) {
                         return [
                             'ID' => $item->id,
@@ -61,7 +71,11 @@ class BackupExport implements WithMultipleSheets
                     break;
 
                 case 'activity_logs':
-                    $data = ActivityLog::with('user')->latest()->take(2000)->get()->map(function ($log) {
+                    $query = ActivityLog::with('user')->latest();
+                    if ($this->startDate && $this->endDate) {
+                        $query->whereBetween('created_at', [$this->startDate, $this->endDate]);
+                    }
+                    $data = $query->take(2000)->get()->map(function ($log) {
                         return [
                             'ID' => $log->id,
                             'Time' => $log->created_at->format('Y-m-d H:i:s'),
@@ -88,7 +102,11 @@ class BackupExport implements WithMultipleSheets
                     break;
 
                 case 'item_out_logs':
-                    $data = ItemOutLog::with('item')->get()->map(function ($out) {
+                    $query = ItemOutLog::with('item');
+                    if ($this->startDate && $this->endDate) {
+                        $query->whereBetween('created_at', [$this->startDate, $this->endDate]);
+                    }
+                    $data = $query->get()->map(function ($out) {
                         return [
                             'ID' => $out->id,
                             'Item' => $out->item->name ?? '-',
@@ -102,7 +120,11 @@ class BackupExport implements WithMultipleSheets
                     break;
 
                 case 'borrowings':
-                    $data = Borrowing::with(['item', 'borrower'])->get()->map(function ($b) {
+                    $query = Borrowing::with(['item', 'borrower']);
+                    if ($this->startDate && $this->endDate) {
+                        $query->whereBetween('created_at', [$this->startDate, $this->endDate]);
+                    }
+                    $data = $query->get()->map(function ($b) {
                         return [
                             'ID' => $b->id,
                             'Item' => $b->item->name ?? '-',
@@ -118,7 +140,11 @@ class BackupExport implements WithMultipleSheets
                     break;
 
                 case 'room_borrowings':
-                    $data = RoomBorrowing::with(['room', 'user'])->get()->map(function ($rb) {
+                    $query = RoomBorrowing::with(['room', 'user']);
+                    if ($this->startDate && $this->endDate) {
+                        $query->whereBetween('created_at', [$this->startDate, $this->endDate]);
+                    }
+                    $data = $query->get()->map(function ($rb) {
                         return [
                             'ID' => $rb->id,
                             'Ruangan' => $rb->room->name ?? '-',
@@ -133,7 +159,11 @@ class BackupExport implements WithMultipleSheets
                     break;
 
                 case 'prints':
-                    $data = Print3D::with(['user', 'printer', 'materialType'])->get()->map(function ($p) {
+                    $query = Print3D::with(['user', 'printer', 'materialType']);
+                    if ($this->startDate && $this->endDate) {
+                        $query->whereBetween('created_at', [$this->startDate, $this->endDate]);
+                    }
+                    $data = $query->get()->map(function ($p) {
                         return [
                             'ID' => $p->id,
                             'User' => $p->user->name ?? '-',
