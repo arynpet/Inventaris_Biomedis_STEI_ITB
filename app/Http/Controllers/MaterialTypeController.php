@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\MaterialType;
+use App\Models\ActivityLog;
 use Illuminate\Http\Request;
 
 class MaterialTypeController extends Controller
@@ -44,6 +45,17 @@ class MaterialTypeController extends Controller
 
         if ($action === 'delete') {
             MaterialType::whereIn('id', $ids)->delete();
+            
+            // ✅ LOGGING untuk bulk delete (posisi BENAR - di dalam if block)
+            ActivityLog::create([
+                'user_id' => auth()->id(),
+                'action' => 'bulk_delete',
+                'model' => 'MaterialType',
+                'model_id' => null,
+                'description' => 'Bulk delete: ' . count($ids) . ' materials (IDs: ' . implode(',', $ids) . ')',
+                'ip_address' => request()->ip(),
+            ]);
+            
             return back()->with('success', count($ids) . ' material berhasil dihapus.');
         }
 
