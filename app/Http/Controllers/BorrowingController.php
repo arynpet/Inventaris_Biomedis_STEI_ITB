@@ -98,6 +98,16 @@ class BorrowingController extends Controller
                         'condition' => $condition
                     ]);
                 }
+                
+                // ✅ 3. LOG setiap borrowing yang di-return
+                ActivityLog::create([
+                    'user_id'   => auth()->id(),
+                    'action'    => 'bulk_return',
+                    'model' => 'Borrowing',
+                    'model_id'   => $borrow->id,
+                    'description' => "Returned '{$borrow->item->name}' (Condition: {$condition})",
+                    'ip_address' => request()->ip(),
+                ]);
             }
 
             ActivityLog::create([
@@ -273,6 +283,16 @@ class BorrowingController extends Controller
             $borrow->item->update([
                 'status' => $newStatus,
                 'condition' => $condition
+            ]);
+            
+            // ✅ B. LOG di dalam transaction
+            ActivityLog::create([
+                'user_id'   => auth()->id(),
+                'action'    => 'return_item',
+                'model' => 'Borrowing',
+                'model_id'   => $borrow->id,
+                'description' => "Returned '{$borrow->item->name}' (Condition: {$condition})",
+                'ip_address' => request()->ip(),
             ]);
         });
 
