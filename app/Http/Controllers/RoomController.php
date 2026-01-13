@@ -8,7 +8,6 @@ use App\Models\ActivityLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str; // Tambahkan ini untuk generate random string saat duplikat
-use Illuminate\Support\Facades\DB;
 
 class RoomController extends Controller
 {
