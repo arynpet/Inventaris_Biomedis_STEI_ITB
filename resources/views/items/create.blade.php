@@ -128,6 +128,24 @@
                             placeholder="Contoh: Laptop Dell Latitude 5420" value="{{ old('name') }}" required>
                     </div>
 
+                    {{-- Brand --}}
+                    <div>
+                        <label class="block mb-2 font-bold text-gray-700">Merk / Brand <span
+                                class="text-gray-400 font-normal text-xs">(Optional)</span></label>
+                        <input type="text" name="brand"
+                            class="w-full rounded-xl border-gray-300 focus:ring-blue-500 focus:border-blue-500 px-4 py-3"
+                            placeholder="Contoh: Dell, Epson, Logitech" value="{{ old('brand') }}">
+                    </div>
+
+                    {{-- Type --}}
+                    <div>
+                        <label class="block mb-2 font-bold text-gray-700">Tipe / Model <span
+                                class="text-gray-400 font-normal text-xs">(Optional)</span></label>
+                        <input type="text" name="type"
+                            class="w-full rounded-xl border-gray-300 focus:ring-blue-500 focus:border-blue-500 px-4 py-3"
+                            placeholder="Contoh: Latitude 5420, L3110" value="{{ old('type') }}">
+                    </div>
+
                     {{-- Asset Number --}}
                     <div>
                         <label class="block mb-2 font-bold text-gray-700">Asset Number <span

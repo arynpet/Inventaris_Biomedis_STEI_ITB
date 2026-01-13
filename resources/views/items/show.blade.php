@@ -75,6 +75,27 @@
                             </div>
                         </div>
 
+                        {{-- Merk & Tipe (NEW) --}}
+                        <div
+                            class="group flex items-start p-3 rounded-xl hover:bg-teal-50 transition-colors duration-200">
+                            <div
+                                class="flex-shrink-0 w-8 h-8 bg-teal-100 rounded-lg flex items-center justify-center mr-3 group-hover:bg-teal-200 transition-colors">
+                                <svg class="w-4 h-4 text-teal-600" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                                </svg>
+                            </div>
+                            <div class="flex-1">
+                                <p class="text-xs text-gray-500 font-medium mb-1">Merk / Tipe</p>
+                                <p class="text-sm font-bold text-gray-900">
+                                    {{ $item->brand ?? '-' }}
+                                    <span class="text-gray-400 mx-1">/</span>
+                                    {{ $item->type ?? '-' }}
+                                </p>
+                            </div>
+                        </div>
+
                         {{-- Quantity --}}
                         <div
                             class="group flex items-start p-3 rounded-xl hover:bg-orange-50 transition-colors duration-200">

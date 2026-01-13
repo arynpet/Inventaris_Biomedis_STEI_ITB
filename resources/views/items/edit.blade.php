@@ -4,7 +4,7 @@
         <h1 class="text-2xl font-bold text-gray-800 mb-6">Edit Item</h1>
 
         <form action="{{ route('items.update', $item->id) }}" method="POST"
-              class="bg-white shadow-sm border border-gray-100 p-6 rounded-2xl space-y-5">
+            class="bg-white shadow-sm border border-gray-100 p-6 rounded-2xl space-y-5">
             @csrf
             @method('PUT')
 
@@ -14,6 +14,22 @@
                 <input type="text" name="name"
                     class="w-full rounded-xl border-gray-300 focus:ring-blue-500 focus:border-blue-500 px-3 py-2"
                     value="{{ old('name', $item->name) }}" required>
+            </div>
+
+            {{-- Brand --}}
+            <div>
+                <label class="block mb-1 font-semibold text-gray-700">Merk / Brand (Optional)</label>
+                <input type="text" name="brand"
+                    class="w-full rounded-xl border-gray-300 focus:ring-blue-500 focus:border-blue-500 px-3 py-2"
+                    value="{{ old('brand', $item->brand) }}" placeholder="Contoh: Dell, Epson">
+            </div>
+
+            {{-- Type --}}
+            <div>
+                <label class="block mb-1 font-semibold text-gray-700">Tipe / Model (Optional)</label>
+                <input type="text" name="type"
+                    class="w-full rounded-xl border-gray-300 focus:ring-blue-500 focus:border-blue-500 px-3 py-2"
+                    value="{{ old('type', $item->type) }}" placeholder="Contoh: L3110, Latitude 5420">
             </div>
 
             {{-- Asset Number --}}
@@ -30,11 +46,9 @@
                     Serial Number
                 </label>
 
-                <input type="text"
-                       name="serial_number"
-                       class="w-full rounded-xl border-gray-300 focus:ring-blue-500 focus:border-blue-500 px-3 py-2"
-                       value="{{ old('serial_number', $item->serial_number) }}"
-                       required>
+                <input type="text" name="serial_number"
+                    class="w-full rounded-xl border-gray-300 focus:ring-blue-500 focus:border-blue-500 px-3 py-2"
+                    value="{{ old('serial_number', $item->serial_number) }}" required>
 
                 <p class="text-xs text-gray-500 mt-1">
                     Serial number akan digunakan sebagai isi QR Code
@@ -50,8 +64,7 @@
                     required>
                     <option value="">-- Select Room --</option>
                     @foreach($rooms as $room)
-                        <option value="{{ $room->id }}"
-                            {{ old('room_id', $item->room_id) == $room->id ? 'selected' : '' }}>
+                        <option value="{{ $room->id }}" {{ old('room_id', $item->room_id) == $room->id ? 'selected' : '' }}>
                             {{ $room->name }}
                         </option>
                     @endforeach
@@ -70,8 +83,7 @@
                     @endphp
 
                     @foreach($categories as $category)
-                        <option value="{{ $category->id }}"
-                            {{ in_array($category->id, $selectedCategories) ? 'selected' : '' }}>
+                        <option value="{{ $category->id }}" {{ in_array($category->id, $selectedCategories) ? 'selected' : '' }}>
                             {{ $category->name }}
                         </option>
                     @endforeach
@@ -112,8 +124,8 @@
                 $placed = old(
                     'placed_in_service_at',
                     $item->placed_in_service_at
-                        ? $item->placed_in_service_at->format('Y-m-d')
-                        : null
+                    ? $item->placed_in_service_at->format('Y-m-d')
+                    : null
                 );
             @endphp
 
@@ -134,15 +146,18 @@
 
             {{-- Grid Condition & Status --}}
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                
+
                 {{-- Condition (BARU) --}}
                 <div>
                     <label class="block mb-1 font-semibold text-gray-700">Condition</label>
                     <select name="condition"
-                            class="w-full rounded-xl border-gray-300 focus:ring-blue-500 focus:border-blue-500 px-3 py-2">
-                        <option value="good" {{ old('condition', $item->condition) == 'good' ? 'selected' : '' }}>Baik (Good)</option>
-                        <option value="damaged" {{ old('condition', $item->condition) == 'damaged' ? 'selected' : '' }}>Rusak Ringan (Damaged)</option>
-                        <option value="broken" {{ old('condition', $item->condition) == 'broken' ? 'selected' : '' }}>Rusak Berat (Broken)</option>
+                        class="w-full rounded-xl border-gray-300 focus:ring-blue-500 focus:border-blue-500 px-3 py-2">
+                        <option value="good" {{ old('condition', $item->condition) == 'good' ? 'selected' : '' }}>Baik
+                            (Good)</option>
+                        <option value="damaged" {{ old('condition', $item->condition) == 'damaged' ? 'selected' : '' }}>
+                            Rusak Ringan (Damaged)</option>
+                        <option value="broken" {{ old('condition', $item->condition) == 'broken' ? 'selected' : '' }}>
+                            Rusak Berat (Broken)</option>
                     </select>
                 </div>
 
@@ -151,8 +166,10 @@
                     <label class="block mb-1 font-semibold text-gray-700">Status</label>
                     <select name="status"
                         class="w-full rounded-xl border-gray-300 focus:ring-blue-500 focus:border-blue-500 px-3 py-2">
-                        <option value="available" {{ old('status', $item->status) === 'available' ? 'selected' : '' }}>Available</option>
-                        <option value="borrowed" {{ old('status', $item->status) === 'borrowed' ? 'selected' : '' }}>Borrowed</option>
+                        <option value="available" {{ old('status', $item->status) === 'available' ? 'selected' : '' }}>
+                            Available</option>
+                        <option value="borrowed" {{ old('status', $item->status) === 'borrowed' ? 'selected' : '' }}>
+                            Borrowed</option>
                         <option value="maintenance" {{ old('status', $item->status) === 'maintenance' ? 'selected' : '' }}>Maintenance</option>
                     </select>
                 </div>

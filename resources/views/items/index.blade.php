@@ -183,6 +183,7 @@
                                     </th>
                                     <th scope="col" class="px-3 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">ID</th>
                                     <th scope="col" class="px-3 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider min-w-[200px]">Barang</th>
+                                    <th scope="col" class="px-3 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider hidden md:table-cell">Merk</th>
                                     <th scope="col" class="px-3 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider hidden lg:table-cell">No Asset</th>
                                     <th scope="col" class="px-3 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap hidden xl:table-cell">S/N</th>
                                     <th scope="col" class="px-3 py-3 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">QR</th>
@@ -221,6 +222,10 @@
                                             <div class="lg:hidden mt-1 text-xs text-gray-500">
                                                 {{ $item->asset_number }}
                                             </div>
+                                        </td>
+
+                                        <td class="px-3 py-3 whitespace-nowrap text-xs text-gray-600 hidden md:table-cell">
+                                            {{ $item->brand ?? '-' }}
                                         </td>
 
                                         {{-- Asset Number --}}

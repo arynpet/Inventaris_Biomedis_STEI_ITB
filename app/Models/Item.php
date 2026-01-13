@@ -18,21 +18,23 @@ class Item extends Model
         'serial_number',
         'qr_code',
         'name',
+        'brand',
+        'type',
         'room_id',
         'quantity',
         'source',
         'acquisition_year',
         'placed_in_service_at',
         'fiscal_group',
-        'status',     
-        'condition',   
+        'status',
+        'condition',
     ];
 
     // Konversi otomatis tipe data
     protected $casts = [
         'placed_in_service_at' => 'date',
-        'acquisition_year'     => 'integer',
-        'quantity'             => 'integer',
+        'acquisition_year' => 'integer',
+        'quantity' => 'integer',
     ];
 
     public function room()
@@ -46,7 +48,7 @@ class Item extends Model
     }
 
     public function latestLog()
-{
-    return $this->hasOne(ItemOutLog::class)->latestOfMany();
-}
+    {
+        return $this->hasOne(ItemOutLog::class)->latestOfMany();
+    }
 }

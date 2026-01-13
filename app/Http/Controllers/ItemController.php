@@ -82,6 +82,8 @@ class ItemController extends Controller
         // 1. Validasi
         $rules = [
             'name' => 'required|string|max:255',
+            'brand' => 'nullable|string|max:255',
+            'type' => 'nullable|string|max:255',
             'room_id' => 'required|exists:rooms,id',
             'quantity' => 'required|integer|min:1',
             'source' => 'nullable|string|max:255',
@@ -171,6 +173,8 @@ class ItemController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
+            'brand' => 'nullable|string|max:255',
+            'type' => 'nullable|string|max:255',
             'asset_number' => 'nullable|string|max:255',
             'serial_number' => 'required|string|max:255|unique:items,serial_number,' . $item->id,
             'room_id' => 'required|exists:rooms,id',

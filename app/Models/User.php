@@ -5,14 +5,15 @@ namespace App\Models;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use Laravel\Sanctum\HasApiTokens; // <--- Import Sanctum
 use Illuminate\Notifications\Notifiable;
 use App\Traits\LogsActivity; // <--- Import Trait
 
 class User extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-        use LogsActivity; // <--- Pasang CCTV disini
-    use HasFactory, Notifiable;
+    use LogsActivity; // <--- Pasang CCTV disini
+    use HasApiTokens, HasFactory, Notifiable; // <--- Pasang HasApiTokens
 
     /**
      * The attributes that are mass assignable.
@@ -27,10 +28,10 @@ class User extends Authenticatable
     ];
 
     // Helper untuk cek apakah dia superadmin (Opsional, biar kodingan rapi)
-public function isSuperAdmin()
-{
-    return $this->role === 'superadmin';
-}
+    public function isSuperAdmin()
+    {
+        return $this->role === 'superadmin';
+    }
 
     /**
      * The attributes that should be hidden for serialization.

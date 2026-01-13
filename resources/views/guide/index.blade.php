@@ -160,6 +160,8 @@
                                     <li>Klik Simpan.</li>
                                 </ol>
 
+
+
                                 {{-- VISUALISASI NOMOR SERI --}}
                                 <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
                                     <h4 class="text-sm font-bold text-blue-800 mb-2 uppercase tracking-wide">
@@ -212,6 +214,70 @@
                                         </path>
                                     </svg>
                                     <span class="text-xs">Form Input</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        {{-- NEW: SMART SERIAL GENERATOR GUIDE (FULL WIDTH) --}}
+                        <div class="mt-8 mb-8 border-t border-gray-100 pt-6">
+                            <h4 class="font-bold text-indigo-900 text-base mb-4 flex items-center">
+                                <span class="bg-indigo-100 text-indigo-600 p-1.5 rounded-lg mr-2">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                                    </svg>
+                                </span>
+                                Fitur Baru: Smart Serial Generator (Auto)
+                            </h4>
+
+                            <div class="bg-indigo-50 border border-indigo-100 rounded-xl p-6 relative overflow-hidden">
+                                <div class="absolute top-0 right-0 p-4 opacity-5">
+                                    <svg class="w-32 h-32 text-indigo-900" fill="currentColor" viewBox="0 0 24 24">
+                                        <path d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                    </svg>
+                                </div>
+
+                                <div class="relative z-10">
+                                    <p class="text-sm text-indigo-800 mb-6 leading-relaxed max-w-2xl">
+                                        Input barang kini lebih cepat. Anda tidak perlu lagi mengetik Serial Number
+                                        secara manual untuk setiap item. Cukup tentukan jumlahnya, sistem yang akan
+                                        bekerja.
+                                    </p>
+
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        {{-- Point 1 --}}
+                                        <div
+                                            class="flex items-start bg-white p-4 rounded-xl border border-indigo-100 shadow-sm">
+                                            <div
+                                                class="flex-shrink-0 w-8 h-8 flex items-center justify-center bg-indigo-600 text-white text-sm font-bold rounded-lg mr-4">
+                                                1</div>
+                                            <div>
+                                                <strong class="text-indigo-900 text-sm block mb-1">Serial Number
+                                                    Opsional</strong>
+                                                <p class="text-xs text-gray-600 leading-relaxed">
+                                                    Kosongkan kolom Serial Number saat input. Sistem otomatis generate
+                                                    kode unik <code
+                                                        class="bg-gray-100 px-1 py-0.5 rounded text-indigo-600 font-mono font-bold">KODE-THN-URUT</code>.
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        {{-- Point 2 --}}
+                                        <div
+                                            class="flex items-start bg-white p-4 rounded-xl border border-indigo-100 shadow-sm">
+                                            <div
+                                                class="flex-shrink-0 w-8 h-8 flex items-center justify-center bg-indigo-600 text-white text-sm font-bold rounded-lg mr-4">
+                                                2</div>
+                                            <div>
+                                                <strong class="text-indigo-900 text-sm block mb-1">Input Banyak (Batch
+                                                    Mode)</strong>
+                                                <p class="text-xs text-gray-600 leading-relaxed">
+                                                    Isi "Jumlah Input Barang" (misal: 10). Sistem langsung membuat 10
+                                                    data barang berurutan dalam sekali klik.
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -361,6 +427,92 @@
                                             d="M12 4v1m6 11h2m-6 0h-2v4h-4v-4H6v-4h6v4m0-6h6m-6 0H6"></path>
                                     </svg>
                                     <span class="text-xs">Label Review</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        {{-- NEW SECTION: FUNGSI QR CODE --}}
+                        <div class="mt-8 border-t border-gray-100 pt-6">
+                            <h4 class="text-base font-bold text-gray-800 mb-6 px-1 flex items-center gap-2">
+                                <span class="bg-yellow-400 text-white p-1 rounded-md shadow-sm">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                                    </svg>
+                                </span>
+                                Mengapa Harus Ada QR Code?
+                            </h4>
+
+                            <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                                {{-- Kolom 1-3: Penjelasan --}}
+                                <div class="md:col-span-3 grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    {{-- Feature 1 --}}
+                                    <div
+                                        class="flex flex-col items-center text-center p-3 rounded-xl bg-yellow-50/50 hover:bg-yellow-50 transition border border-transparent hover:border-yellow-200">
+                                        <div
+                                            class="w-12 h-12 rounded-full bg-yellow-100 text-yellow-600 flex items-center justify-center mb-3 shadow-sm">
+                                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                                            </svg>
+                                        </div>
+                                        <h5 class="font-bold text-gray-800 text-sm mb-1">Identifikasi Kilat</h5>
+                                        <p class="text-xs text-gray-600 leading-snug">
+                                            Scan QR untuk buka detail barang di HP dalam <span
+                                                class="font-semibold text-yellow-700">1 detik</span>. Tanpa cari manual.
+                                        </p>
+                                    </div>
+
+                                    {{-- Feature 2 --}}
+                                    <div
+                                        class="flex flex-col items-center text-center p-3 rounded-xl bg-blue-50/50 hover:bg-blue-50 transition border border-transparent hover:border-blue-200">
+                                        <div
+                                            class="w-12 h-12 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center mb-3 shadow-sm">
+                                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M7 11.5V14m0-2.5v-6a1.5 1.5 0 113 0m-3 6a1.5 1.5 0 00-3 0v2a7.5 7.5 0 0015 0v-5a1.5 1.5 0 00-3 0m-6-3V11m0-5.5v-1a1.5 1.5 0 013 0v1m0 0V11m0-5.5a1.5 1.5 0 013 0v3m0 0V11">
+                                                </path>
+                                            </svg>
+                                        </div>
+                                        <h5 class="font-bold text-gray-800 text-sm mb-1">Sirkulasi Otomatis</h5>
+                                        <p class="text-xs text-gray-600 leading-snug">
+                                            Admin cukup <b>Scan</b> barang yang akan dipinjam siswa. Sistem otomatis
+                                            mencatat.
+                                        </p>
+                                    </div>
+
+                                    {{-- Feature 3 --}}
+                                    <div
+                                        class="flex flex-col items-center text-center p-3 rounded-xl bg-green-50/50 hover:bg-green-50 transition border border-transparent hover:border-green-200">
+                                        <div
+                                            class="w-12 h-12 rounded-full bg-green-100 text-green-600 flex items-center justify-center mb-3 shadow-sm">
+                                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4">
+                                                </path>
+                                            </svg>
+                                        </div>
+                                        <h5 class="font-bold text-gray-800 text-sm mb-1">Audit & Stok Opname</h5>
+                                        <p class="text-xs text-gray-600 leading-snug">
+                                            Cek fisik tahunan jadi mudah. Scan barang untuk validasi "Hadir & Layak".
+                                        </p>
+                                    </div>
+                                </div>
+
+                                {{-- Kolom 4: Ilustrasi Stiker --}}
+                                <div class="flex items-center justify-center">
+                                    <div
+                                        class="bg-white border-2 border-gray-800 rounded p-3 shadow-lg transform rotate-2 hover:rotate-0 transition duration-300 w-32 flex flex-col items-center">
+                                        <div class="bg-gray-800 p-2 rounded mb-2">
+                                            <svg class="w-16 h-16 text-white" fill="currentColor" viewBox="0 0 24 24">
+                                                <path
+                                                    d="M3 3h6v6H3V3zm2 2v2h2V5H5zm8-2h6v6h-6V3zm2 2v2h2V5h-2zM3 11h6v6H3v-6zm2 2v2h2v-2H5zm13-2h3v3h-3v-3zm0 3h-3v3h3v-3zm3 0h-3v3h3v-3zm-6 3h3v3h-3v-3zm3 0h3v3h-3v-3zm-3-6h3v3h-3v-3zm3-3h3v3h-3v-3z" />
+                                            </svg>
+                                        </div>
+                                        <span
+                                            class="text-[10px] font-black uppercase tracking-widest text-gray-800">Scan
+                                            Me</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
