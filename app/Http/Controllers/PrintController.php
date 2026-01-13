@@ -128,7 +128,7 @@ class PrintController extends Controller
 
         $user = PeminjamUser::find($request->user_id);
         if (!$user->is_trained) {
-            return back()->withErrors(['user_id' => 'User ini belum mengikuti pelatihan (Training)!']);
+            return back()->withErrors(['user_id' => __('messages.print.user_not_trained')]);
         }
 
         // ✅ M5 FIX: Use extracted method
@@ -140,7 +140,7 @@ class PrintController extends Controller
         );
 
         if ($overlap) {
-            return back()->withErrors(['start_time' => 'Waktu print bentrok dengan jadwal lain di mesin ini!']);
+            return back()->withErrors(['start_time' => __('messages.print.schedule_overlap')]);
         }
 
         // Upload File
@@ -210,7 +210,7 @@ class PrintController extends Controller
         // Validasi: Cegah invalid status transitions
         // Contoh: done/canceled tidak bisa kembali ke pending
         if (in_array($oldStatus, ['done', 'canceled']) && in_array($newStatus, ['pending', 'printing'])) {
-            return back()->withErrors(['status' => 'Status ' . $oldStatus . ' tidak dapat diubah ke ' . $newStatus]);
+            return back()->withErrors(['status' => __('messages.print.invalid_status_transition', ['old_status' => $oldStatus, 'new_status' => $newStatus])]);
         }
 
         try {
