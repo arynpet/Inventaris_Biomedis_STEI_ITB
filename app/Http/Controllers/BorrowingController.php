@@ -109,15 +109,6 @@ class BorrowingController extends Controller
                     'ip_address' => request()->ip(),
                 ]);
             }
-
-            ActivityLog::create([
-                'user_id'   => auth()->id(),
-                'action'    => 'return',
-                'item_id'   => $borrow->item_id,
-                'borrow_id' => $borrow->id,
-                'condition' => $condition,
-            ]);
-            
         });
 
         return back()->with('success', count($ids) . ' barang berhasil dikembalikan masal (Kondisi: ' . ucfirst($condition) . ').');
@@ -295,14 +286,6 @@ class BorrowingController extends Controller
                 'ip_address' => request()->ip(),
             ]);
         });
-
-        ActivityLog::create([
-            'user_id'   => auth()->id(),
-            'action'    => 'return',
-            'item_id'   => $borrow->item_id,
-            'borrow_id' => $borrow->id,
-            'condition' => $condition,
-        ]);
 
         return back()->with('success', 'Barang berhasil dikembalikan dengan kondisi: ' . $validated['condition']);
     }
