@@ -59,14 +59,12 @@ class RoomBorrowingController extends Controller
             'notes' => 'nullable|string',
         ]);
 
-        // ✅ H1 FIX: Check for room booking conflicts
-        $overlap = RoomBorrowing::where('room_id', $request->room_id)
-            ->where(function ($q) use ($request) {
-                $q->where('start_time', '<', $request->end_time)
-                    ->where('end_time', '>', $request->start_time);
-            })
-            ->whereNotIn('status', ['finished', 'rejected'])
-            ->exists();
+        // ✅ M4 FIX: Use extracted method
+        $overlap = $this->hasRoomOverlap(
+            $request->room_id,
+            $request->start_time,
+            $request->end_time
+        );
 
         if ($overlap) {
             return back()->withErrors(['start_time' => 'Ruangan sudah dipesan di waktu tersebut! Silakan pilih waktu lain.']);
@@ -126,14 +124,13 @@ class RoomBorrowingController extends Controller
             'notes' => 'nullable|string',
         ]);
 
-        $isOverlap = RoomBorrowing::where('room_id', $request->room_id)
-            ->where('id', '!=', $roomBorrowing->id)
-            ->whereNotIn('status', ['finished', 'rejected'])
-            ->where(function ($query) use ($request) {
-                $query->where('start_time', '<', $request->end_time)
-                    ->where('end_time', '>', $request->start_time);
-            })
-            ->exists();
+        // ✅ M4 FIX: Use extracted method with exclude ID
+        $isOverlap = $this->hasRoomOverlap(
+            $request->room_id,
+            $request->start_time,
+            $request->end_time,
+            $roomBorrowing->id
+        );
 
         if ($isOverlap) {
             return back()->withErrors(['start_time' => 'Jadwal bentrok dengan peminjaman lain!'])->withInput();
@@ -234,6 +231,18 @@ class RoomBorrowingController extends Controller
         $borrowing->update(['status' => 'approved']);
 
         return back()->with('success', 'Peminjaman ruangan berhasil disetujui. Status kini Approved.');
+    }
+
+    private function hasRoomOverlap($roomId, $startTime, $endTime, $excludeId = null)
+    {
+        return RoomBorrowing::where('room_id', $roomId)
+            ->when($excludeId, fn($q) => $q->where('id', '!=', $excludeId))
+            ->whereNotIn('status', ['finished', 'rejected'])
+            ->where(function ($query) use ($startTime, $endTime) {
+                $query->where('start_time', '<', $endTime)
+                    ->where('end_time', '>', $startTime);
+            })
+            ->exists();
     }
 
     /**
