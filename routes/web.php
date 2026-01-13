@@ -36,7 +36,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // ====================================================
     // 0. AI ASSISTANT (N.A.R.A)
     // ====================================================
-    Route::prefix('nara')->name('nara.')->group(function () {
+    Route::prefix('nara')->middleware('throttle:30,1')->name('nara.')->group(function () {
         Route::post('/chat', [NaraController::class, 'ask'])->name('chat');
         Route::post('/destroy', [NaraController::class, 'destroyAsset'])->name('destroy');
         Route::post('/store-batch', [NaraController::class, 'storeBatch'])->name('store_batch');
