@@ -331,60 +331,66 @@ class NaraController extends Controller
 
         $items = $validated['items'];
 
-        $count = 0;
-        
-        foreach ($items as $itemData) {
-            // 1. Bersihkan data
-            unset($itemData['display_room']); 
-            
-            // 2. LOGIKA ANTI-BENTROK SERIAL NUMBER
-            // Kita cek loop: Jika SN sudah ada, kita naikkan angkanya (Increment)
-            // Contoh: E-MOU-25001 (ada) -> ubah jadi E-MOU-25002 -> dst.
-            
-            $originalSn = $itemData['serial_number'];
-            $loopGuard = 0; // Penjaga agar tidak infinite loop
+        // ✅ M3 FIX: Wrap dalam DB transaction untuk atomicity
+        try {
+            $count = DB::transaction(function () use ($items) {
+                $count = 0;
+                
+                foreach ($items as $itemData) {
+                    // 1. Bersihkan data
+                    unset($itemData['display_room']); 
+                    
+                    // 2. LOGIKA ANTI-BENTROK SERIAL NUMBER
+                    // Kita cek loop: Jika SN sudah ada, kita naikkan angkanya (Increment)
+                    // Contoh: E-MOU-25001 (ada) -> ubah jadi E-MOU-25002 -> dst.
+                    
+                    $originalSn = $itemData['serial_number'];
+                    $loopGuard = 0; // Penjaga agar tidak infinite loop
 
-            while (Item::where('serial_number', $itemData['serial_number'])->exists()) {
-                // Ambil angka paling belakang dari string
-                if (preg_match('/(\d+)$/', $itemData['serial_number'], $matches)) {
-                    $number = $matches[1]; // misal "001"
-                    $length = strlen($number); // panjang 3 digit
-                    $newNumber = $number + 1; // jadi 2
-                    
-                    // Format ulang jadi "002" (pertahankan leading zero)
-                    $paddedNumber = str_pad($newNumber, $length, '0', STR_PAD_LEFT);
-                    
-                    // Ganti angka lama dengan angka baru di string SN
-                    $itemData['serial_number'] = preg_replace('/'.$number.'$/', $paddedNumber, $itemData['serial_number']);
-                } else {
-                    // Fallback jika format SN aneh/tidak ada angka di belakang
-                    // Tambahkan suffix random agar tetap unik
-                    $itemData['serial_number'] = $originalSn . '-' . rand(100, 999);
+                    while (Item::where('serial_number', $itemData['serial_number'])->exists()) {
+                        // Ambil angka paling belakang dari string
+                        if (preg_match('/(\d+)$/', $itemData['serial_number'], $matches)) {
+                            $number = $matches[1]; // misal "001"
+                            $length = strlen($number); // panjang 3 digit
+                            $newNumber = $number + 1; // jadi 2
+                            
+                            // Format ulang jadi "002" (pertahankan leading zero)
+                            $paddedNumber = str_pad($newNumber, $length, '0', STR_PAD_LEFT);
+                            
+                            // Ganti angka lama dengan angka baru di string SN
+                            $itemData['serial_number'] = preg_replace('/'.$number.'$/', $paddedNumber, $itemData['serial_number']);
+                        } else {
+                            // Fallback jika format SN aneh/tidak ada angka di belakang
+                            // Tambahkan suffix random agar tetap unik
+                            $itemData['serial_number'] = $originalSn . '-' . rand(100, 999);
+                        }
+
+                        $loopGuard++;
+                        if ($loopGuard > 100) {
+                            // Throw exception untuk rollback transaction
+                            throw new \Exception("Gagal generate unique serial number untuk: {$originalSn}. Sudah mencoba 100x.");
+                        }
+                    }
+
+                    // 3. Simpan ke Database
+                    Item::create($itemData);
+                    $count++;
                 }
+                
+                return $count;
+            });
 
-                $loopGuard++;
-                if ($loopGuard > 100) break; // Berhenti jika sudah mencoba 100x (safety)
-            }
-
-            // 3. Simpan ke Database
-            try {
-                Item::create($itemData);
-                $count++;
-            } catch (\Exception $e) {
-                // Skip jika masih error (jarang terjadi dengan logika di atas)
-                continue;
-            }
-        }
-
-        if ($count > 0) {
             return response()->json([
-                'success' => true, 
-                // Kirim pesan detail berapa yang diminta vs berhasil
-                'message' => "Berhasil menyimpan $count dari " . count($items) . " aset baru."
+                'success' => true,
+                'message' => "Berhasil menyimpan {$count} aset baru."
             ]);
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal menyimpan batch items: ' . $e->getMessage()
+            ], 500);
         }
-        
-        return response()->json(['success' => false, 'message' => "Gagal menyimpan data."], 400);
     }
 
     /**
