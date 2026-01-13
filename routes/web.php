@@ -141,6 +141,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // 9. SUPER ADMIN AREA (LOGS & USERS)
     // ====================================================
 
+    // Item Helper: Smart Serial Generator
+    Route::get('/items/next-sequence', [ItemController::class, 'getNextSequence'])->name('items.next_sequence');
+
     // A. LOG ACTIVITY (READ ONLY - Bisa diakses Admin Biasa)
     // Saya taruh di luar middleware superadmin agar admin biasa bisa lihat (kalau kebijakanmu begitu)
     Route::get('/superadmin/logs', [ActivityLogController::class, 'index'])->name('superadmin.logs.index');

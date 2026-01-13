@@ -350,7 +350,7 @@ class ItemController extends Controller
                     $undoUrl = route('items.bulk_restore', ['ids' => $idsString]);
 
                     session()->flash('action_undo', $undoUrl);
-                    
+
                     // ✅ LOGGING untuk bulk delete
                     ActivityLog::create([
                         'user_id' => auth()->id(),
@@ -381,7 +381,7 @@ class ItemController extends Controller
                         }
                         $count++;
                     }
-                    
+
                     // ✅ LOGGING untuk bulk copy
                     ActivityLog::create([
                         'user_id' => auth()->id(),
@@ -396,7 +396,7 @@ class ItemController extends Controller
         } catch (\Exception $e) {
             return redirect()->back()->with('error', 'Gagal melakukan aksi: ' . $e->getMessage());
         }
-        
+
         if ($action === 'delete') {
             return redirect()->route('items.index')
                 ->with('success', "$count item berhasil dihapus.");
@@ -590,10 +590,7 @@ class ItemController extends Controller
         $itemAsset = $item->asset_number ?? 'N/A';
 
         $item->forceDelete();
-<<<<<<< HEAD
 
-=======
-        
         // ✅ LOGGING untuk hard delete permanent (CRITICAL ACTION)
         ActivityLog::create([
             'user_id' => auth()->id(),
@@ -603,9 +600,60 @@ class ItemController extends Controller
             'description' => "Hard delete permanent: '{$itemName}' (SN: {$itemSN}, Asset: {$itemAsset})",
             'ip_address' => request()->ip(),
         ]);
-        
->>>>>>> 8f0e44cb6698c669f799f9b9487eca4c48a10757
+
         return redirect()->route('items.trash')
             ->with('success', 'Data berhasil di-terminate (dihapus selamanya).');
+    }
+
+    // ===================================
+    // API HELPERS FOR FRONTEND
+    // ===================================
+    public function getNextSequence(Request $request)
+    {
+        // Validasi input
+        $prefix = $request->input('prefix'); // e.g., 'E'
+        $abbr = $request->input('abbr');     // e.g., 'TRML'
+        $year = $request->input('year');     // e.g., '26'
+
+        if (!$prefix || !$abbr || !$year) {
+            return response()->json(['sequence' => '001', 'error' => 'Missing params']);
+        }
+
+        // Kita cari serial number yang mirip: "E-TRML-26%"
+        // Asumsi format bakunya adalah PREFIX-ABBR-YEAR[SEQ]
+        $pattern = "{$prefix}-{$abbr}-{$year}%";
+
+        // Cari item terakhir yang sesuai pattern
+        // Menggunakan natural sort order untuk bagian sequence bisa tricky di SQL murni, jadi kita ambil yang terbaru by created_at sebagai estimasi cepat
+        // ATAU kita ambil max serial_number stringnya.
+
+        $latestItem = Item::where('serial_number', 'like', $pattern)
+            ->orderBy('serial_number', 'desc') // String sorting might be enough if format is strict
+            ->first();
+
+        if ($latestItem) {
+            // Extract sequence number (3 digit terakhir)
+            // Contoh: E-TRML-26005 -> ambil 005
+            // Kita coba ambil numeric part terakhir
+            if (preg_match('/(\d+)$/', $latestItem->serial_number, $matches)) {
+                // matches[1] = "26005" kemungkinan.
+                // Jika formatnya '26' + '005', maka kita ambil 3 digit terakhir
+                $lastSeqStr = substr($matches[1], 2); // Buang 2 digit tahun (26)
+                $lastSeq = (int) $lastSeqStr;
+                $nextSeq = $lastSeq + 1;
+            } else {
+                $nextSeq = 1;
+            }
+        } else {
+            $nextSeq = 1;
+        }
+
+        // Format ulang jadi 001, 002 dst
+        $formattedSeq = str_pad($nextSeq, 3, '0', STR_PAD_LEFT);
+
+        return response()->json([
+            'sequence' => $formattedSeq,
+            'full_preview' => "{$prefix}-{$abbr}-{$year}{$formattedSeq}"
+        ]);
     }
 }

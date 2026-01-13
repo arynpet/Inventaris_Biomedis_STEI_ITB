@@ -159,6 +159,43 @@
                                     <li>Isi detail: Nama, Kategori, Kondisi, Tahun Perolehan.</li>
                                     <li>Klik Simpan.</li>
                                 </ol>
+
+                                {{-- VISUALISASI NOMOR SERI --}}
+                                <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                                    <h4 class="text-sm font-bold text-blue-800 mb-2 uppercase tracking-wide">
+                                        Standar Penomoran Aset (PENTING)
+                                    </h4>
+
+                                    <div class="flex items-center gap-2 mb-3">
+                                        <div class="text-2xl font-mono font-black text-gray-800 tracking-wider">
+                                            E-TRML-26003
+                                        </div>
+                                    </div>
+
+                                    <div class="flex flex-wrap gap-2 text-xs font-semibold">
+                                        <span class="px-2 py-1 rounded bg-red-100 text-red-700 border border-red-200">
+                                            E = Jenis (Elektronik)
+                                        </span>
+                                        <span
+                                            class="px-2 py-1 rounded bg-yellow-100 text-yellow-700 border border-yellow-200">
+                                            TRML = Singkatan (Terminal)
+                                        </span>
+                                        <span
+                                            class="px-2 py-1 rounded bg-green-100 text-green-700 border border-green-200">
+                                            26 = Tahun (2026)
+                                        </span>
+                                        <span
+                                            class="px-2 py-1 rounded bg-blue-100 text-blue-700 border border-blue-200">
+                                            003 = No. Urut
+                                        </span>
+                                    </div>
+
+                                    <p class="mt-3 text-xs text-blue-600 italic">
+                                        "Harap gunakan format ini saat mengisi kolom 'Nomor Seri' agar data inventaris
+                                        rapi dan mudah dilacak."
+                                    </p>
+                                </div>
+
                                 <div class="flex gap-4 bg-gray-50 p-4 rounded-lg border border-gray-200">
                                     <button type="button"
                                         class="inline-flex items-center px-4 py-2 bg-blue-600 border border-transparent rounded-lg font-semibold text-xs text-white tracking-widest cursor-default select-none shadow-sm">
@@ -176,6 +213,118 @@
                                     </svg>
                                     <span class="text-xs">Form Input</span>
                                 </div>
+                            </div>
+                        </div>
+
+                        {{-- PENJELASAN KATEGORI BARANG --}}
+                        <div class="mt-8 border-t border-gray-100 pt-6">
+                            <h4 class="text-base font-bold text-gray-800 mb-4 px-1">Penjelasan Kategori Barang</h4>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+                                {{-- 1. Aset Tetap --}}
+                                <div
+                                    class="bg-white border text-left border-blue-200 rounded-lg p-4 shadow-sm hover:shadow-md transition">
+                                    <div class="flex items-start gap-3">
+                                        <div class="bg-blue-100 text-blue-600 p-2 rounded-lg">
+                                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z">
+                                                </path>
+                                            </svg>
+                                        </div>
+                                        <div>
+                                            <h5 class="font-bold text-gray-900 text-sm">Aset Tetap (Fixed Asset)</h5>
+                                            <p class="text-xs text-gray-600 mt-1 leading-relaxed">
+                                                Barang inventaris utama, masa pakai panjang (>1 tahun). Tidak habis
+                                                dipakai.
+                                            </p>
+                                            <p
+                                                class="text-[10px] text-gray-400 mt-2 font-mono bg-gray-50 inline-block px-1 rounded">
+                                                Ex: Mikroskop, Alat Ukur, Mebel
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {{-- 2. Bahan Habis Pakai --}}
+                                <div
+                                    class="bg-white border text-left border-orange-200 rounded-lg p-4 shadow-sm hover:shadow-md transition">
+                                    <div class="flex items-start gap-3">
+                                        <div class="bg-orange-100 text-orange-600 p-2 rounded-lg">
+                                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M19.428 15.428a2 2 0 00-1.022-.547l-2.384-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z">
+                                                </path>
+                                            </svg>
+                                        </div>
+                                        <div>
+                                            <h5 class="font-bold text-gray-900 text-sm">Bahan Habis Pakai (Consumables)
+                                            </h5>
+                                            <p class="text-xs text-gray-600 mt-1 leading-relaxed">
+                                                Barang yang berkurang jumlah/volumenya saat dipakai hingga habis.
+                                            </p>
+                                            <p
+                                                class="text-[10px] text-gray-400 mt-2 font-mono bg-gray-50 inline-block px-1 rounded">
+                                                Ex: Filamen, Resin, Alkohol, Tisu
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {{-- 3. Alat Riset --}}
+                                <div
+                                    class="bg-white border text-left border-purple-200 rounded-lg p-4 shadow-sm hover:shadow-md transition">
+                                    <div class="flex items-start gap-3">
+                                        <div class="bg-purple-100 text-purple-600 p-2 rounded-lg">
+                                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path d="M12 14l9-5-9-5-9 5 9 5z"></path>
+                                                <path
+                                                    d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z">
+                                                </path>
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M12 14l9-5-9-5-9 5 9 5zm0 0l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14zm-4 6v-7.5l4-2.222">
+                                                </path>
+                                            </svg>
+                                        </div>
+                                        <div>
+                                            <h5 class="font-bold text-gray-900 text-sm">Alat Riset (Research)</h5>
+                                            <p class="text-xs text-gray-600 mt-1 leading-relaxed">
+                                                Alat khusus untuk proyek penelitian/tugas akhir. Penggunaan
+                                                terbatas/eksklusif.
+                                            </p>
+                                            <p
+                                                class="text-[10px] text-gray-400 mt-2 font-mono bg-gray-50 inline-block px-1 rounded">
+                                                Ex: Sensor Khusus, Komponen Hibah
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {{-- 4. Alat Praktikum --}}
+                                <div
+                                    class="bg-white border text-left border-green-200 rounded-lg p-4 shadow-sm hover:shadow-md transition">
+                                    <div class="flex items-start gap-3">
+                                        <div class="bg-green-100 text-green-600 p-2 rounded-lg">
+                                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 6.253v13zM12 6.253C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253">
+                                                </path>
+                                            </svg>
+                                        </div>
+                                        <div>
+                                            <h5 class="font-bold text-gray-900 text-sm">Alat Praktikum (Teaching)</h5>
+                                            <p class="text-xs text-gray-600 mt-1 leading-relaxed">
+                                                Alat untuk kegiatan belajar massal (modul lab). Jumlah banyak &
+                                                perputaran cepat.
+                                            </p>
+                                            <p
+                                                class="text-[10px] text-gray-400 mt-2 font-mono bg-gray-50 inline-block px-1 rounded">
+                                                Ex: Kit Arduino Dasar, Multimeter
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+
                             </div>
                         </div>
                     </div>
