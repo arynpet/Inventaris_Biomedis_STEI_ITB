@@ -4,9 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Models\Room;
 use App\Models\Item;
+use App\Models\ActivityLog;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str; // Tambahkan ini untuk generate random string saat duplikat
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str; // Tambahkan ini untuk generate random string saat duplikat
 
 class RoomController extends Controller
 {
@@ -62,14 +63,28 @@ class RoomController extends Controller
                     $rooms = Room::withCount(['items', 'borrowings'])->whereIn('id', $ids)->get();
                     $deletedCount = 0;
                     $failedCount = 0;
+                    $deletedIds = [];
 
                     foreach ($rooms as $room) {
                         if ($room->items_count > 0 || $room->borrowings_count > 0) {
                             $failedCount++;
                         } else {
+                            $deletedIds[] = $room->id;
                             $room->delete();
                             $deletedCount++;
                         }
+                    }
+
+                    if ($deletedCount > 0) {
+                        // ✅ LOGGING untuk bulk delete
+                        ActivityLog::create([
+                            'user_id' => auth()->id(),
+                            'action' => 'bulk_delete',
+                            'model' => 'Room',
+                            'model_id' => null,
+                            'description' => 'Bulk delete: ' . $deletedCount . ' rooms (IDs: ' . implode(',', $deletedIds) . ')',
+                            'ip_address' => request()->ip(),
+                        ]);
                     }
 
                     if ($failedCount > 0) {
@@ -92,6 +107,19 @@ class RoomController extends Controller
                             $count++;
                         }
                     }
+
+                    // ✅ LOGGING untuk bulk copy
+                    if ($count > 0) {
+                        ActivityLog::create([
+                            'user_id' => auth()->id(),
+                            'action' => 'bulk_copy',
+                            'model' => 'Room',
+                            'model_id' => null,
+                            'description' => "Bulk copy: {$count} rooms duplicated",
+                            'ip_address' => request()->ip(),
+                        ]);
+                    }
+
                     return ['success' => true, 'count' => $count, 'action' => 'copy'];
                 }
 

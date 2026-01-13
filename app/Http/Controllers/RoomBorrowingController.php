@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\RoomBorrowing;
 use App\Models\Room;
 use App\Models\PeminjamUser;
+use App\Models\ActivityLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
@@ -179,6 +180,15 @@ class RoomBorrowingController extends Controller
             return back()->with('error', 'Peminjaman ini sudah selesai sebelumnya.');
         }
 
+        ActivityLog::create([
+            'user_id' => auth()->id(),
+            'action' => 'return_room_borrowing',
+            'model' => 'RoomBorrowing',
+            'model_id' => $borrowing->id,
+            'description' => "Returned room: {$borrowing->room->name} (Booking ID: {$borrowing->id})",
+            'ip_address' => request()->ip(),
+        ]);
+        
         // Update status menjadi finished
         $borrowing->update([
             'status' => 'finished'
@@ -212,6 +222,12 @@ class RoomBorrowingController extends Controller
             return back()->with('error', 'Hanya peminjaman berstatus Pending yang bisa disetujui.');
         }
 
+        ActivityLog::create([
+            'user_id' => auth()->id(),
+            'action' => 'approve_room_borrowing',
+            'description' => 'Menyetujui peminjaman ruangan dengan ID ' . $borrowing->id,
+        ]);
+        
         $borrowing->update(['status' => 'approved']);
 
         return back()->with('success', 'Peminjaman ruangan berhasil disetujui. Status kini Approved.');

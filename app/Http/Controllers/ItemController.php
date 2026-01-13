@@ -6,6 +6,7 @@ use App\Models\Item;
 use App\Models\Room;
 use App\Models\Category;
 use App\Models\ItemOutLog;
+use App\Models\ActivityLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
@@ -13,7 +14,6 @@ use SimpleSoftwareIO\QrCode\Facades\QrCode;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Str; // Dari Local (Penting untuk serial number)
 use Illuminate\Support\Arr; // Dari Remote (Penting untuk array manipulation)
-
 
 class ItemController extends Controller
 {
@@ -350,6 +350,16 @@ class ItemController extends Controller
                     $undoUrl = route('items.bulk_restore', ['ids' => $idsString]);
 
                     session()->flash('action_undo', $undoUrl);
+                    
+                    // ✅ LOGGING untuk bulk delete
+                    ActivityLog::create([
+                        'user_id' => auth()->id(),
+                        'action' => 'bulk_delete',
+                        'model' => 'Item',
+                        'model_id' => null,
+                        'description' => "Bulk delete: {$count} items (IDs: {$idsString})",
+                        'ip_address' => request()->ip(),
+                    ]);
                 }
 
                 // --- AKSI COPY ---
@@ -371,12 +381,22 @@ class ItemController extends Controller
                         }
                         $count++;
                     }
+                    
+                    // ✅ LOGGING untuk bulk copy
+                    ActivityLog::create([
+                        'user_id' => auth()->id(),
+                        'action' => 'bulk_copy',
+                        'model' => 'Item',
+                        'model_id' => null,
+                        'description' => "Bulk copy: {$count} items duplicated",
+                        'ip_address' => request()->ip(),
+                    ]);
                 }
             });
         } catch (\Exception $e) {
             return redirect()->back()->with('error', 'Gagal melakukan aksi: ' . $e->getMessage());
         }
-
+        
         if ($action === 'delete') {
             return redirect()->route('items.index')
                 ->with('success', "$count item berhasil dihapus.");
@@ -564,8 +584,27 @@ class ItemController extends Controller
 
         $this->authorize('terminate', $item);
 
-        $item->forceDelete();
+        // Simpan data untuk logging SEBELUM dihapus permanent
+        $itemName = $item->name;
+        $itemSN = $item->serial_number ?? 'N/A';
+        $itemAsset = $item->asset_number ?? 'N/A';
 
+        $item->forceDelete();
+<<<<<<< HEAD
+
+=======
+        
+        // ✅ LOGGING untuk hard delete permanent (CRITICAL ACTION)
+        ActivityLog::create([
+            'user_id' => auth()->id(),
+            'action' => 'terminate',
+            'model' => 'Item',
+            'model_id' => $id,
+            'description' => "Hard delete permanent: '{$itemName}' (SN: {$itemSN}, Asset: {$itemAsset})",
+            'ip_address' => request()->ip(),
+        ]);
+        
+>>>>>>> 8f0e44cb6698c669f799f9b9487eca4c48a10757
         return redirect()->route('items.trash')
             ->with('success', 'Data berhasil di-terminate (dihapus selamanya).');
     }
