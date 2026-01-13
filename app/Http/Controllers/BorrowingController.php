@@ -256,7 +256,7 @@ class BorrowingController extends Controller
         $borrow = Borrowing::with('item')->findOrFail($id);
 
         if ($borrow->status === 'returned') {
-            return back()->withErrors(['error' => 'Barang sudah dikembalikan sebelumnya.']);
+            return back()->withErrors(['error' => __('messages.borrowing.already_returned')]);
         }
 
         DB::transaction(function () use ($borrow, $validated) {

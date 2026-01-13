@@ -67,7 +67,7 @@ class RoomBorrowingController extends Controller
         );
 
         if ($overlap) {
-            return back()->withErrors(['start_time' => 'Ruangan sudah dipesan di waktu tersebut! Silakan pilih waktu lain.']);
+            return back()->withErrors(['start_time' => __('messages.room.overlap')]);
         }
 
         $data = $request->only(['room_id', 'user_id', 'start_time', 'end_time', 'purpose', 'notes']);
@@ -133,7 +133,7 @@ class RoomBorrowingController extends Controller
         );
 
         if ($isOverlap) {
-            return back()->withErrors(['start_time' => 'Jadwal bentrok dengan peminjaman lain!'])->withInput();
+            return back()->withErrors(['start_time' => __('messages.room.overlap_update')])->withInput();
         }
 
         $data = $request->except('surat_peminjaman');
