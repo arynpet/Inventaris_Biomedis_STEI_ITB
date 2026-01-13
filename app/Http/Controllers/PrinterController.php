@@ -30,15 +30,15 @@ class PrinterController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'name'        => 'required|string|max:255',
-            'category'    => 'required|in:filament,resin',   // <-- ADD
+            'name' => 'required|string|max:255',
+            'category' => 'required|in:filament,resin',   // <-- ADD
             'description' => 'nullable|string',
-            'status'      => 'required|in:available,in_use,maintenance',
-            'available_at'=> 'nullable|date',
+            'status' => 'required|in:available,in_use,maintenance',
+            'available_at' => 'nullable|date',
         ]);
 
         $data = $request->only(['name', 'category', 'description', 'status', 'available_at']);
-        $data['material_type_id'] = $request->category; 
+        $data['material_type_id'] = $request->category;
 
         Printer::create($data);
 
@@ -68,11 +68,11 @@ class PrinterController extends Controller
     public function update(Request $request, Printer $printer)
     {
         $request->validate([
-            'name'        => 'required|string|max:255',
-            'category'    => 'required|in:filament,resin',  // <-- ADD
+            'name' => 'required|string|max:255',
+            'category' => 'required|in:filament,resin',  // <-- ADD
             'description' => 'nullable|string',
-            'status'      => 'required|in:available,in_use,maintenance',
-            'available_at'=> 'nullable|date',
+            'status' => 'required|in:available,in_use,maintenance',
+            'available_at' => 'nullable|date',
         ]);
 
         $printer->update($request->only([
@@ -96,5 +96,24 @@ class PrinterController extends Controller
 
         return redirect()->route('printers.index')
             ->with('success', 'Printer berhasil dihapus!');
+    }
+
+    /**
+     * Bulk Action
+     */
+    public function bulkAction(Request $request)
+    {
+        $ids = $request->input('selected_ids', []);
+        $action = $request->input('action_type');
+
+        if (empty($ids))
+            return back()->with('error', 'Tidak ada printer dipilih.');
+
+        if ($action === 'delete') {
+            Printer::whereIn('id', $ids)->delete();
+            return back()->with('success', count($ids) . ' printer berhasil dihapus.');
+        }
+
+        return back()->with('error', 'Aksi tidak valid.');
     }
 }

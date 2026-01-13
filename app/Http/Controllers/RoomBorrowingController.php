@@ -10,16 +10,21 @@ use Illuminate\Support\Facades\Storage;
 
 class RoomBorrowingController extends Controller
 {
-public function index()
-{
-    // Index hanya menampilkan yang BELUM selesai
-    $borrowings = RoomBorrowing::with('room', 'user')
-        ->whereIn('status', ['pending', 'approved']) 
-        ->latest()
-        ->paginate(10);
-        
-    return view('room_borrowings.index', compact('borrowings'));
-}
+    public function index()
+    {
+        // Index hanya menampilkan yang BELUM selesai
+        $query = RoomBorrowing::with('room', 'user')
+            ->whereIn('status', ['pending', 'approved'])
+            ->latest();
+
+        if (request('show_all') == '1') {
+            $borrowings = $query->get();
+        } else {
+            $borrowings = $query->paginate(10);
+        }
+
+        return view('room_borrowings.index', compact('borrowings'));
+    }
 
     public function create()
     {
@@ -34,30 +39,30 @@ public function index()
         // 1. VALIDASI DIPERLENGKAP
         // ✅ H5 FIX: Enhanced file validation with actual MIME type check
         $request->validate([
-            'room_id'          => 'required|exists:rooms,id',
-            'user_id'          => 'required|exists:peminjam_users,id',
-            'start_time'       => 'required|date',
-            'end_time'         => 'required|date|after:start_time',
+            'room_id' => 'required|exists:rooms,id',
+            'user_id' => 'required|exists:peminjam_users,id',
+            'start_time' => 'required|date',
+            'end_time' => 'required|date|after:start_time',
             'surat_peminjaman' => [
                 'required',
                 'file',
                 'mimes:pdf',
                 'max:2048',
-                function($attribute, $value, $fail) {
+                function ($attribute, $value, $fail) {
                     if ($value->getMimeType() !== 'application/pdf') {
                         $fail('File harus PDF valid (bukan hanya extension .pdf).');
                     }
                 }
             ],
-            'purpose'          => 'required|string|max:255', 
-            'notes'            => 'nullable|string',
+            'purpose' => 'required|string|max:255',
+            'notes' => 'nullable|string',
         ]);
 
         // ✅ H1 FIX: Check for room booking conflicts
         $overlap = RoomBorrowing::where('room_id', $request->room_id)
-            ->where(function($q) use ($request) {
+            ->where(function ($q) use ($request) {
                 $q->where('start_time', '<', $request->end_time)
-                  ->where('end_time', '>', $request->start_time);
+                    ->where('end_time', '>', $request->start_time);
             })
             ->whereNotIn('status', ['finished', 'rejected'])
             ->exists();
@@ -70,7 +75,7 @@ public function index()
 
         // 2. SET DEFAULT STATUS
         // Karena di form create biasanya tidak ada input status, kita set default 'pending'
-        $data['status'] = 'pending'; 
+        $data['status'] = 'pending';
 
         // 3. LOGIKA UPLOAD FILE
         if ($request->hasFile('surat_peminjaman')) {
@@ -100,39 +105,39 @@ public function index()
     public function update(Request $request, RoomBorrowing $roomBorrowing)
     {
         $request->validate([
-            'room_id'          => 'required|exists:rooms,id',
-            'user_id'          => 'required|exists:peminjam_users,id',
-            'start_time'       => 'required|date',
-            'end_time'         => 'required|date|after:start_time',
+            'room_id' => 'required|exists:rooms,id',
+            'user_id' => 'required|exists:peminjam_users,id',
+            'start_time' => 'required|date',
+            'end_time' => 'required|date|after:start_time',
             'surat_peminjaman' => [
                 'nullable',
                 'file',
                 'mimes:pdf',
                 'max:2048',
-                function($attribute, $value, $fail) {
+                function ($attribute, $value, $fail) {
                     if ($value && $value->getMimeType() !== 'application/pdf') {
                         $fail('File harus PDF valid (bukan hanya extension .pdf).');
                     }
                 }
             ],
-            'purpose'          => 'required|string|max:255',
-            'status'           => 'required|in:pending,approved,rejected,finished',
-            'notes'            => 'nullable|string',
+            'purpose' => 'required|string|max:255',
+            'status' => 'required|in:pending,approved,rejected,finished',
+            'notes' => 'nullable|string',
         ]);
 
         $isOverlap = RoomBorrowing::where('room_id', $request->room_id)
-        ->where('id', '!=', $roomBorrowing->id) 
-        ->whereNotIn('status', ['finished', 'rejected']) 
-        ->where(function ($query) use ($request) {
-            $query->where('start_time', '<', $request->end_time)
-                  ->where('end_time', '>', $request->start_time);
-        })
-        ->exists();
+            ->where('id', '!=', $roomBorrowing->id)
+            ->whereNotIn('status', ['finished', 'rejected'])
+            ->where(function ($query) use ($request) {
+                $query->where('start_time', '<', $request->end_time)
+                    ->where('end_time', '>', $request->start_time);
+            })
+            ->exists();
 
         if ($isOverlap) {
             return back()->withErrors(['start_time' => 'Jadwal bentrok dengan peminjaman lain!'])->withInput();
         }
-        
+
         $data = $request->except('surat_peminjaman');
 
         // LOGIKA GANTI FILE
@@ -161,8 +166,6 @@ public function index()
         return redirect()->route('room_borrowings.index')
             ->with('success', 'Data peminjaman berhasil dihapus.');
     }
-
-    // ... method lainnya ...
 
     /**
      * Aksi Mengembalikan Ruangan (Selesaikan Peminjaman)
@@ -213,6 +216,29 @@ public function index()
 
         return back()->with('success', 'Peminjaman ruangan berhasil disetujui. Status kini Approved.');
     }
-    
-    // ... method lainnya ...
+
+    /**
+     * Bulk Action
+     */
+    public function bulkAction(Request $request)
+    {
+        $ids = $request->input('selected_ids', []);
+        $action = $request->input('action_type');
+
+        if (empty($ids))
+            return back()->with('error', 'Tidak ada item dipilih.');
+
+        if ($action === 'delete') {
+            $borrowings = RoomBorrowing::whereIn('id', $ids)->get();
+            foreach ($borrowings as $b) {
+                if ($b->surat_peminjaman && Storage::disk('public')->exists($b->surat_peminjaman)) {
+                    Storage::disk('public')->delete($b->surat_peminjaman);
+                }
+                $b->delete();
+            }
+            return back()->with('success', count($ids) . ' peminjaman ruangan berhasil dihapus.');
+        }
+
+        return back()->with('error', 'Aksi tidak valid.');
+    }
 }

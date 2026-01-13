@@ -33,7 +33,7 @@ class UserController extends Controller
 
         // 2. Logic Khusus jika membuat Super Admin
         if ($request->role === 'superadmin') {
-            
+
             // Validasi Input Password Verifikasi Harus Ada
             $request->validate([
                 'superadmin_verification' => 'required',
@@ -65,8 +65,36 @@ class UserController extends Controller
         if ($user->id === auth()->id()) {
             return back()->with('error', 'Tidak bisa menghapus akun sendiri!');
         }
-        
+
         $user->delete();
         return back()->with('success', 'User berhasil dihapus.');
+    }
+
+    /**
+     * Bulk Action
+     */
+    public function bulkAction(Request $request)
+    {
+        $ids = $request->input('selected_ids', []);
+        $action = $request->input('action_type');
+
+        if (empty($ids))
+            return back()->with('error', 'Tidak ada user yang dipilih.');
+
+        if ($action === 'delete') {
+            // Filter ID sendiri
+            $ids = array_filter($ids, function ($id) {
+                return $id != auth()->id();
+            });
+
+            if (empty($ids)) {
+                return back()->with('error', 'Semua user yang dipilih tidak valid untuk dihapus (termasuk akun Anda sendiri).');
+            }
+
+            User::whereIn('id', $ids)->delete();
+            return back()->with('success', count($ids) . ' user berhasil dihapus.');
+        }
+
+        return back()->with('error', 'Aksi tidak valid.');
     }
 }

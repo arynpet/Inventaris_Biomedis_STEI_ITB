@@ -352,9 +352,29 @@
                         </table>
                     </div>
                     
-                    {{-- Pagination --}}
-                    <div class="bg-gray-50 px-6 py-4 border-t border-gray-200">
-                        {{ $items->links() }}
+                    {{-- Pagination & Layout Control --}}
+                    <div class="bg-gray-50 px-6 py-4 border-t border-gray-200 flex flex-col md:flex-row justify-between items-center gap-4">
+                        <div class="w-full">
+                            @if($items instanceof \Illuminate\Pagination\LengthAwarePaginator)
+                                {{ $items->links() }}
+                            @else
+                                <div class="text-sm text-gray-500">Menampilkan semua {{ $items->count() }} data.</div>
+                            @endif
+                        </div>
+                        
+                        <div class="whitespace-nowrap">
+                            @if(request('show_all'))
+                                <a href="{{ request()->fullUrlWithQuery(['show_all' => null]) }}" class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                                    <svg class="mr-2 -ml-1 h-5 w-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+                                    Batasi Per Halaman
+                                </a>
+                            @else
+                                <a href="{{ request()->fullUrlWithQuery(['show_all' => 1]) }}" class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                                    <svg class="mr-2 -ml-1 h-5 w-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path></svg>
+                                    Tampilkan Semua
+                                </a>
+                            @endif
+                        </div>
                     </div>
                 </div>
             </form>

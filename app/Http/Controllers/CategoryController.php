@@ -7,9 +7,16 @@ use Illuminate\Http\Request;
 
 class CategoryController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $categories = Category::orderBy('id', 'DESC')->paginate(10);
+        $query = Category::orderBy('id', 'DESC');
+
+        if ($request->get('show_all') == '1') {
+            $categories = $query->get();
+        } else {
+            $categories = $query->paginate(10);
+        }
+
         return view('categories.index', compact('categories'));
     }
 
@@ -55,5 +62,24 @@ class CategoryController extends Controller
 
         return redirect()->route('categories.index')
             ->with('success', 'Category deleted successfully.');
+    }
+
+    /**
+     * Bulk Action
+     */
+    public function bulkAction(Request $request)
+    {
+        $action = $request->input('action_type');
+        $ids = $request->input('selected_ids', []);
+
+        if (empty($ids))
+            return back()->with('error', 'No categories selected.');
+
+        if ($action === 'delete') {
+            Category::whereIn('id', $ids)->delete();
+            return back()->with('success', count($ids) . ' categories deleted successfully.');
+        }
+
+        return back()->with('error', 'Invalid action.');
     }
 }

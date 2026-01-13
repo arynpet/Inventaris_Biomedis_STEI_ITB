@@ -6,6 +6,7 @@ use App\Models\Room;
 use App\Models\Item;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str; // Tambahkan ini untuk generate random string saat duplikat
+use Illuminate\Support\Facades\DB;
 
 class RoomController extends Controller
 {
@@ -17,23 +18,27 @@ class RoomController extends Controller
         // 1. Ambil input filter
         $search = $request->input('search');
         $status = $request->input('status');
-        
+
         // 2. Query Builder
         $rooms = Room::query()
             ->when($search, function ($query, $search) {
                 // Cari berdasarkan Nama atau Kode Ruangan
                 return $query->where(function ($q) use ($search) {
                     $q->where('name', 'like', "%{$search}%")
-                      ->orWhere('code', 'like', "%{$search}%");
+                        ->orWhere('code', 'like', "%{$search}%");
                 });
             })
             ->when($status, function ($query, $status) {
                 return $query->where('status', $status);
             })
-            // Default sort by Code ascending, tapi bisa diubah jika nanti mau fitur sort header
-            ->orderBy('code', 'asc') 
-            ->paginate(10) // Pagination 10 baris per halaman
-            ->withQueryString(); // Agar filter tidak hilang saat ganti halaman
+            // Default sort by Code ascending
+            ->orderBy('code', 'asc');
+
+        if ($request->get('show_all') == '1') {
+            $rooms = $rooms->get();
+        } else {
+            $rooms = $rooms->paginate(10)->withQueryString();
+        }
 
         return view('rooms.index', compact('rooms'));
     }
@@ -51,12 +56,28 @@ class RoomController extends Controller
         }
 
         try {
-            $result = DB::transaction(function () use ($ids, $action) {
+            $result = \Illuminate\Support\Facades\DB::transaction(function () use ($ids, $action) {
                 if ($action === 'delete') {
-                    // Hapus Masal
-                    Room::whereIn('id', $ids)->delete();
-                    return ['success' => true, 'count' => count($ids), 'action' => 'delete'];
-                
+                    // Cek dependensi sebelum hapus masal
+                    $rooms = Room::withCount(['items', 'borrowings'])->whereIn('id', $ids)->get();
+                    $deletedCount = 0;
+                    $failedCount = 0;
+
+                    foreach ($rooms as $room) {
+                        if ($room->items_count > 0 || $room->borrowings_count > 0) {
+                            $failedCount++;
+                        } else {
+                            $room->delete();
+                            $deletedCount++;
+                        }
+                    }
+
+                    if ($failedCount > 0) {
+                        throw new \Exception("$deletedCount room dihapus. $failedCount room gagal dihapus karena masih digunakan (ada barang/booking).");
+                    }
+
+                    return ['success' => true, 'count' => $deletedCount, 'action' => 'delete'];
+
                 } elseif ($action === 'copy') {
                     // Duplikat Masal
                     $count = 0;
@@ -73,7 +94,7 @@ class RoomController extends Controller
                     }
                     return ['success' => true, 'count' => $count, 'action' => 'copy'];
                 }
-                
+
                 return ['success' => false];
             });
 

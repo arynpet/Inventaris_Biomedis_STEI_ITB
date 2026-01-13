@@ -24,30 +24,34 @@ class BorrowingController extends Controller
         $status_filter = $request->input('status_filter'); // 'late' atau null
 
         // 2. Query Builder
-        $borrowings = Borrowing::with(['item', 'borrower']) 
+        $borrowings = Borrowing::with(['item', 'borrower'])
             ->where('status', 'borrowed') // Hanya ambil yang SEDANG dipinjam
-            
+
             // Logika Pencarian (Nama Peminjam ATAU Nama Barang)
             ->when($search, function ($query, $search) {
-                return $query->where(function($q) use ($search) {
-                    $q->whereHas('borrower', function($b) use ($search) {
+                return $query->where(function ($q) use ($search) {
+                    $q->whereHas('borrower', function ($b) use ($search) {
                         $b->where('name', 'like', "%{$search}%");
                     })
-                    ->orWhereHas('item', function($i) use ($search) {
-                        $i->where('name', 'like', "%{$search}%");
-                    });
+                        ->orWhereHas('item', function ($i) use ($search) {
+                            $i->where('name', 'like', "%{$search}%");
+                        });
                 });
             })
-            
+
             // Logika Filter Terlambat
             ->when($status_filter === 'late', function ($query) {
                 return $query->whereDate('return_date', '<', now());
             })
-            
+
             // Logika Sorting (Berdasarkan tanggal pinjam)
-            ->orderBy('borrow_date', $sort)
-            ->paginate(10)
-            ->withQueryString(); // Agar filter tidak hilang saat pindah halaman
+            ->orderBy('borrow_date', $sort);
+
+        if ($request->get('show_all') == '1') {
+            $borrowings = $borrowings->get();
+        } else {
+            $borrowings = $borrowings->paginate(10)->withQueryString();
+        }
 
         return view('borrowings.index', compact('borrowings'));
     }
@@ -69,16 +73,16 @@ class BorrowingController extends Controller
             // Ambil data borrowing yang dipilih dan masih status borrowed
             // ✅ FIXED: Added lockForUpdate() to prevent race condition
             $borrowings = Borrowing::whereIn('id', $ids)
-                                   ->where('status', 'borrowed')
-                                   ->lockForUpdate()
-                                   ->with('item')
-                                   ->get();
+                ->where('status', 'borrowed')
+                ->lockForUpdate()
+                ->with('item')
+                ->get();
 
             foreach ($borrowings as $borrow) {
                 // 1. Update Peminjaman
                 $borrow->update([
-                    'status'           => 'returned',
-                    'return_date'      => now(),
+                    'status' => 'returned',
+                    'return_date' => now(),
                     'return_condition' => $condition
                 ]);
 
@@ -86,10 +90,10 @@ class BorrowingController extends Controller
                 // Logika ini MENGIKUTI logika returnItem() yang sudah ada:
                 // Jika good -> available, Jika rusak -> maintenance
                 $newItemStatus = ($condition === 'good') ? 'available' : 'maintenance';
-                
+
                 if ($borrow->item) {
                     $borrow->item->update([
-                        'status'    => $newItemStatus,
+                        'status' => $newItemStatus,
                         'condition' => $condition
                     ]);
                 }
@@ -116,18 +120,18 @@ class BorrowingController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'user_id'     => 'required|exists:peminjam_users,id',
-            'item_id'     => 'required|exists:items,id',
+            'user_id' => 'required|exists:peminjam_users,id',
+            'item_id' => 'required|exists:items,id',
             'borrow_date' => 'required|date',
             'return_date' => 'nullable|date|after_or_equal:borrow_date',
-            'notes'       => 'nullable|string',
+            'notes' => 'nullable|string',
         ]);
 
         DB::transaction(function () use ($validated) {
             $item = Item::where('id', $validated['item_id'])
                 ->lockForUpdate()
                 ->first();
-            
+
             if ($item->status !== 'available') {
                 throw ValidationException::withMessages([
                     'item_id' => 'Item sedang dipinjam atau dalam perbaikan.'
@@ -135,19 +139,19 @@ class BorrowingController extends Controller
             }
 
             Borrowing::create([
-                'item_id'     => $validated['item_id'],
-                'user_id'     => $validated['user_id'],
+                'item_id' => $validated['item_id'],
+                'user_id' => $validated['user_id'],
                 'borrow_date' => $validated['borrow_date'],
                 'return_date' => $validated['return_date'] ?? null,
-                'notes'       => $validated['notes'] ?? null,
-                'status'      => 'borrowed',
+                'notes' => $validated['notes'] ?? null,
+                'status' => 'borrowed',
             ]);
 
             $item->update(['status' => 'borrowed']);
         });
 
         return redirect()->route('borrowings.index')
-                        ->with('success', 'Peminjaman berhasil dibuat!');
+            ->with('success', 'Peminjaman berhasil dibuat!');
     }
 
     // ==========================================
@@ -178,24 +182,24 @@ class BorrowingController extends Controller
                 $newItem = Item::where('id', $request->item_id)
                     ->lockForUpdate()
                     ->first();
-                
+
                 if (!$newItem) {
                     throw \Illuminate\Validation\ValidationException::withMessages([
                         'item_id' => 'Item tidak ditemukan.'
                     ]);
                 }
-                
+
                 if ($newItem->status !== 'available') {
                     throw \Illuminate\Validation\ValidationException::withMessages([
                         'item_id' => 'Item yang dipilih sedang tidak tersedia (Status: ' . $newItem->status . ').'
                     ]);
                 }
-                
+
                 // Return old item to available only if borrowing is still active
                 if ($borrowing->status === 'borrowed') {
                     $borrowing->item->update(['status' => 'available']);
                 }
-                
+
                 // Update new item to borrowed
                 $newItem->update(['status' => 'borrowed']);
             }
@@ -213,7 +217,7 @@ class BorrowingController extends Controller
     public function destroy(Borrowing $borrowing)
     {
         // Kembalikan status item jadi available jika peminjaman dihapus (opsional, tergantung kebijakan)
-        if($borrowing->status == 'borrowed') {
+        if ($borrowing->status == 'borrowed') {
             $borrowing->item()->update(['status' => 'available']);
         }
 
@@ -238,7 +242,7 @@ class BorrowingController extends Controller
             'condition' => 'required|in:good,damaged,broken',
         ]);
 
-        $borrow = Borrowing::with('item')->findOrFail($id); 
+        $borrow = Borrowing::with('item')->findOrFail($id);
 
         if ($borrow->status === 'returned') {
             return back()->withErrors(['error' => 'Barang sudah dikembalikan sebelumnya.']);
@@ -246,18 +250,18 @@ class BorrowingController extends Controller
 
         DB::transaction(function () use ($borrow, $validated) {
             $condition = $validated['condition'];
-            
+
             // A. Update Peminjaman
             $borrow->update([
-                'status'           => 'returned',
-                'return_date'      => now(),
+                'status' => 'returned',
+                'return_date' => now(),
                 'return_condition' => $condition,
             ]);
 
             $newStatus = ($condition === 'good') ? 'available' : 'maintenance';
-            
+
             $borrow->item->update([
-                'status'    => $newStatus,
+                'status' => $newStatus,
                 'condition' => $condition
             ]);
         });
@@ -271,7 +275,7 @@ class BorrowingController extends Controller
     public function history(Request $request)
     {
         $from = $request->query('from');
-        $to   = $request->query('to');
+        $to = $request->query('to');
 
         $query = Borrowing::with(['item', 'borrower'])
             ->where('status', 'returned')
@@ -292,7 +296,7 @@ class BorrowingController extends Controller
     public function historyPdf(Request $request)
     {
         $from = $request->query('from');
-        $to   = $request->query('to');
+        $to = $request->query('to');
 
         $query = Borrowing::with(['item', 'borrower'])
             ->where('status', 'returned')
@@ -308,14 +312,14 @@ class BorrowingController extends Controller
         $history = $query->get();
 
         $data = [
-            'history'      => $history,
+            'history' => $history,
             'generated_at' => Carbon::now()->setTimezone('Asia/Jakarta'),
-            'from'         => $from,
-            'to'           => $to,
+            'from' => $from,
+            'to' => $to,
         ];
 
         $pdf = Pdf::loadView('borrowings.history_pdf', $data)
-                ->setPaper('a4', 'portrait');
+            ->setPaper('a4', 'portrait');
 
         return $pdf->stream('history.pdf');
     }
@@ -334,7 +338,7 @@ class BorrowingController extends Controller
         }
 
         if ($item->status !== 'available') {
-            return response()->json(['success' => false, 'message' => 'Item sedang tidak tersedia (Status: '.$item->status.')'], 400);
+            return response()->json(['success' => false, 'message' => 'Item sedang tidak tersedia (Status: ' . $item->status . ')'], 400);
         }
 
         return response()->json([
@@ -366,7 +370,7 @@ class BorrowingController extends Controller
         return response()->json([
             'success' => true,
             'item' => [
-                'id'   => $item->id,
+                'id' => $item->id,
                 'name' => $item->name
             ]
         ], 200);

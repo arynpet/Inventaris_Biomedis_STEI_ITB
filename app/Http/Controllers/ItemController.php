@@ -26,10 +26,10 @@ class ItemController extends Controller
 
         // Filter Search
         if ($request->has('search')) {
-            $query->where(function($q) use ($request) {
+            $query->where(function ($q) use ($request) {
                 $q->where('name', 'like', '%' . $request->search . '%')
-                  ->orWhere('serial_number', 'like', '%' . $request->search . '%')
-                  ->orWhere('asset_number', 'like', '%' . $request->search . '%');
+                    ->orWhere('serial_number', 'like', '%' . $request->search . '%')
+                    ->orWhere('asset_number', 'like', '%' . $request->search . '%');
             });
         }
 
@@ -44,7 +44,7 @@ class ItemController extends Controller
         // Opsi Grouping by Asset Number
         if ($request->get('group_by_asset') === '1') {
             $allItems = $query->orderBy('asset_number')->orderBy('id')->get();
-            $groupedItems = $allItems->groupBy(function($item) {
+            $groupedItems = $allItems->groupBy(function ($item) {
                 return $item->asset_number ?? 'no-asset-' . $item->id;
             });
             $rooms = Room::orderBy('name')->get();
@@ -52,7 +52,11 @@ class ItemController extends Controller
         }
 
         // Default: tampilan list biasa
-        $items = $query->orderBy('id', 'DESC')->paginate(10)->withQueryString();
+        if ($request->get('show_all') == '1') {
+            $items = $query->orderBy('id', 'DESC')->get();
+        } else {
+            $items = $query->orderBy('id', 'DESC')->paginate(10)->withQueryString();
+        }
         $rooms = Room::orderBy('name')->get();
 
         return view('items.index', compact('items', 'rooms'));
@@ -77,18 +81,18 @@ class ItemController extends Controller
 
         // 1. Validasi
         $rules = [
-            'name'                 => 'required|string|max:255',
-            'room_id'              => 'required|exists:rooms,id',
-            'quantity'             => 'required|integer|min:1',
-            'source'               => 'nullable|string|max:255',
-            'acquisition_year'     => 'nullable|digits:4|integer',
+            'name' => 'required|string|max:255',
+            'room_id' => 'required|exists:rooms,id',
+            'quantity' => 'required|integer|min:1',
+            'source' => 'nullable|string|max:255',
+            'acquisition_year' => 'nullable|digits:4|integer',
             'placed_in_service_at' => 'nullable|date',
-            'fiscal_group'         => 'nullable|string|max:255',
-            'status'               => 'required|in:available,borrowed,maintenance,dikeluarkan',
-            'condition'            => 'required|in:good,damaged,broken',
-            'categories'           => 'nullable|array',
-            'categories.*'         => 'exists:categories,id',
-            'asset_number'         => 'nullable|string|max:255', 
+            'fiscal_group' => 'nullable|string|max:255',
+            'status' => 'required|in:available,borrowed,maintenance,dikeluarkan',
+            'condition' => 'required|in:good,damaged,broken',
+            'categories' => 'nullable|array',
+            'categories.*' => 'exists:categories,id',
+            'asset_number' => 'nullable|string|max:255',
         ];
 
         if ($isBatch) {
@@ -104,7 +108,7 @@ class ItemController extends Controller
             // --- MODE BATCH ---
             $rawSerials = preg_split('/\r\n|\r|\n/', $request->serial_numbers_batch);
             $serials = array_values(array_filter(array_map('trim', $rawSerials)));
-            
+
             // Cek duplikat serial
             $existingSerials = Item::whereIn('serial_number', $serials)->pluck('serial_number')->toArray();
             if (!empty($existingSerials)) {
@@ -116,18 +120,18 @@ class ItemController extends Controller
             foreach ($serials as $index => $sn) {
                 // Gunakan Arr::except (Fitur Remote) agar lebih bersih
                 $itemData = Arr::except($validated, ['serial_numbers_batch', 'categories']);
-                
+
                 $itemData['serial_number'] = $sn;
                 $itemData['name'] = $validated['name'] . ' ' . ($index + 1); // Logic Nama Berurut (Fitur Local)
                 $itemData['asset_number'] = $validated['asset_number']; // Asset Number Sama
 
                 $item = Item::create($itemData);
                 $this->generateAndSaveQr($item);
-                
+
                 if ($request->categories) {
                     $item->categories()->sync($request->categories);
                 }
-                
+
                 $savedCount++;
             }
 
@@ -137,7 +141,7 @@ class ItemController extends Controller
             // --- MODE SINGLE ---
             // Gunakan Arr::except (Fitur Remote)
             $itemData = Arr::except($validated, ['categories']);
-            
+
             $item = Item::create($itemData);
             $this->generateAndSaveQr($item);
 
@@ -166,33 +170,33 @@ class ItemController extends Controller
     public function update(Request $request, Item $item)
     {
         $validated = $request->validate([
-            'name'                 => 'required|string|max:255',
-            'asset_number'         => 'nullable|string|max:255',
-            'serial_number'        => 'required|string|max:255|unique:items,serial_number,' . $item->id,
-            'room_id'              => 'required|exists:rooms,id',
-            'quantity'             => 'required|integer|min:1',
-            'source'               => 'nullable|string|max:255',
-            'acquisition_year'     => 'nullable|digits:4|integer',
+            'name' => 'required|string|max:255',
+            'asset_number' => 'nullable|string|max:255',
+            'serial_number' => 'required|string|max:255|unique:items,serial_number,' . $item->id,
+            'room_id' => 'required|exists:rooms,id',
+            'quantity' => 'required|integer|min:1',
+            'source' => 'nullable|string|max:255',
+            'acquisition_year' => 'nullable|digits:4|integer',
             'placed_in_service_at' => 'nullable|date',
-            'fiscal_group'         => 'nullable|string|max:255',
-            'status'               => 'required|in:available,borrowed,maintenance,dikeluarkan',
-            'condition'            => 'required|in:good,damaged,broken',
-            'categories'           => 'nullable|array',
-            'categories.*'         => 'exists:categories,id',
+            'fiscal_group' => 'nullable|string|max:255',
+            'status' => 'required|in:available,borrowed,maintenance,dikeluarkan',
+            'condition' => 'required|in:good,damaged,broken',
+            'categories' => 'nullable|array',
+            'categories.*' => 'exists:categories,id',
         ]);
 
-        $qrFieldsChanged = ($validated['name'] !== $item->name) || 
-                           ($validated['asset_number'] !== $item->asset_number) || 
-                           ($validated['serial_number'] !== $item->serial_number) ||
-                           ($validated['room_id'] !== $item->room_id) ||
-                           ($validated['condition'] !== $item->condition);
+        $qrFieldsChanged = ($validated['name'] !== $item->name) ||
+            ($validated['asset_number'] !== $item->asset_number) ||
+            ($validated['serial_number'] !== $item->serial_number) ||
+            ($validated['room_id'] !== $item->room_id) ||
+            ($validated['condition'] !== $item->condition);
 
         // Gunakan Arr::except (Fitur Remote)
         $itemData = Arr::except($validated, ['categories']);
 
         $message = 'Item updated successfully.';
         $alertType = 'success';
-        
+
         if ($qrFieldsChanged) {
             if (in_array($item->status, ['available', 'maintenance'])) {
                 if ($item->qr_code && Storage::disk('public')->exists($item->qr_code)) {
@@ -200,11 +204,10 @@ class ItemController extends Controller
                 }
                 $item->update($itemData);
                 $this->generateAndSaveQr($item);
-            }
-            else {
-            $item->update($itemData);
-            $message = 'Data berhasil diupdate, tetapi QR Code tidak diperbarui karena barang sedang dipinjam.';
-            $alertType = 'warning';
+            } else {
+                $item->update($itemData);
+                $message = 'Data berhasil diupdate, tetapi QR Code tidak diperbarui karena barang sedang dipinjam.';
+                $alertType = 'warning';
             }
         } else {
             $item->update($itemData);
@@ -220,14 +223,14 @@ class ItemController extends Controller
     // =========================
     public function destroy(Item $item)
     {
-$item->delete(); // Ini sekarang menjadi Soft Delete (database only)
+        $item->delete(); // Ini sekarang menjadi Soft Delete (database only)
 
         // Kirim session 'action_undo' ke View untuk memunculkan tombol
         return redirect()->route('items.index')
             ->with('success', 'Item berhasil dihapus.')
-            ->with('action_undo', route('items.restore', $item->id)); 
+            ->with('action_undo', route('items.restore', $item->id));
     }
-    
+
 
     // =========================
     // SHOW & PDF
@@ -241,7 +244,7 @@ $item->delete(); // Ini sekarang menjadi Soft Delete (database only)
     {
         return Pdf::loadView('items.qr-pdf', compact('item'))
             ->setPaper('a4')
-            ->stream('qr-'.$item->serial_number.'.pdf');
+            ->stream('qr-' . $item->serial_number . '.pdf');
     }
 
     // =========================
@@ -265,8 +268,8 @@ $item->delete(); // Ini sekarang menjadi Soft Delete (database only)
     {
         $validated = $request->validate([
             'recipient_name' => 'required|string|max:255',
-            'out_date'       => 'required|date',
-            'reason'         => 'nullable|string',
+            'out_date' => 'required|date',
+            'reason' => 'nullable|string',
             'reference_file' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:2048',
         ]);
 
@@ -278,10 +281,10 @@ $item->delete(); // Ini sekarang menjadi Soft Delete (database only)
         $item->update(['status' => 'dikeluarkan']);
 
         ItemOutLog::create([
-            'item_id'        => $item->id,
+            'item_id' => $item->id,
             'recipient_name' => $validated['recipient_name'],
-            'out_date'       => $validated['out_date'],
-            'reason'         => $validated['reason'],
+            'out_date' => $validated['out_date'],
+            'reason' => $validated['reason'],
             'reference_file' => $filePath,
         ]);
 
@@ -293,7 +296,7 @@ $item->delete(); // Ini sekarang menjadi Soft Delete (database only)
     {
         $log = ItemOutLog::where('item_id', $item->id)->latest()->first();
         $pdf = Pdf::loadView('items.out-pdf', compact('item', 'log'))->setPaper('a4', 'portrait');
-        return $pdf->stream('Surat_Keluar_'.$item->serial_number.'.pdf');
+        return $pdf->stream('Surat_Keluar_' . $item->serial_number . '.pdf');
     }
 
     public function outPdf(Item $item)
@@ -315,9 +318,9 @@ $item->delete(); // Ini sekarang menjadi Soft Delete (database only)
     public function bulkAction(Request $request)
     {
         $request->validate([
-            'selected_ids'   => 'required|array',
+            'selected_ids' => 'required|array',
             'selected_ids.*' => 'exists:items,id',
-            'action_type'    => 'required|in:delete,copy',
+            'action_type' => 'required|in:delete,copy',
         ]);
 
         $ids = $request->selected_ids;
@@ -335,17 +338,17 @@ $item->delete(); // Ini sekarang menjadi Soft Delete (database only)
                     foreach ($items as $item) {
                         // HAPUS bagian Storage::delete agar file QR tidak hilang fisik
                         // if ($item->qr_code && Storage::disk('public')->exists($item->qr_code)) { ... }
-                        
+
                         $item->delete(); // Ini melakukan Soft Delete
                         $deletedIds[] = $item->id; // Simpan ID untuk keperluan undo
                         $count++;
                     }
-                    
+
                     // Buat URL Undo dengan mengirim ID yang dipisahkan koma (misal: 1,2,5)
                     // Kita implode array jadi string agar mudah dikirim lewat URL
                     $idsString = implode(',', $deletedIds);
                     $undoUrl = route('items.bulk_restore', ['ids' => $idsString]);
-                    
+
                     session()->flash('action_undo', $undoUrl);
                 }
 
@@ -359,9 +362,9 @@ $item->delete(); // Ini sekarang menjadi Soft Delete (database only)
                         $newItem->serial_number = $item->serial_number . '-CPY-' . Str::upper(Str::random(3));
                         $newItem->qr_code = null;
                         $newItem->push();
-                        
+
                         $this->generateAndSaveQr($newItem);
-                        
+
                         $categoryIds = $item->categories->pluck('id')->toArray();
                         if (!empty($categoryIds)) {
                             $newItem->categories()->sync($categoryIds);
@@ -378,11 +381,11 @@ $item->delete(); // Ini sekarang menjadi Soft Delete (database only)
             return redirect()->route('items.index')
                 ->with('success', "$count item berhasil dihapus.");
         }
-        
+
         if ($action === 'copy') {
             return redirect()->route('items.index')->with('success', "$count item berhasil diduplikasi.");
         }
-        
+
         return redirect()->back();
     }
 
@@ -393,15 +396,15 @@ $item->delete(); // Ini sekarang menjadi Soft Delete (database only)
     {
         // TODO: For production with thousands of items, move to Laravel Queue
         // Example: RegenerateQrJob::dispatch();
-        
+
         // Batch size limit to prevent timeout (max 100 items per request)
         $limit = $request->input('limit', 100);
         $offset = $request->input('offset', 0);
-        
+
         $count = 0;
         $totalItems = Item::count();
         $remaining = max(0, $totalItems - $offset);
-        
+
         // Process limited batch
         Item::skip($offset)
             ->take(min($limit, $remaining))
@@ -411,19 +414,19 @@ $item->delete(); // Ini sekarang menjadi Soft Delete (database only)
                     $count++;
                 }
             });
-        
+
         $newOffset = $offset + $count;
         $stillRemaining = $totalItems - $newOffset;
-        
+
         // If there are still items remaining, show continue button
         if ($stillRemaining > 0) {
-            $continueUrl = route('items.regenerate-qr') . '?offset=' . $newOffset . '&limit=' . $limit;
+            $continueUrl = route('items.regenerate_qr') . '?offset=' . $newOffset . '&limit=' . $limit;
             return redirect()->route('items.index')
                 ->with('warning', "Diproses $count QR code. Masih tersisa $stillRemaining item.")
                 ->with('continue_url', $continueUrl)
                 ->with('continue_text', 'Lanjutkan Regenerasi QR');
         }
-        
+
         return redirect()->route('items.index')
             ->with('success', "Berhasil regenerasi total $newOffset QR code!");
     }
@@ -434,27 +437,27 @@ $item->delete(); // Ini sekarang menjadi Soft Delete (database only)
     private function generateAndSaveQr(Item $item)
     {
         // Generate unique path dengan microtime + random string untuk menjamin uniqueness
-        $timestamp = (int)(microtime(true) * 10000); // Mikrodetik untuk uniqueness
+        $timestamp = (int) (microtime(true) * 10000); // Mikrodetik untuk uniqueness
         $randomSuffix = Str::random(6); // Tambahkan random string untuk mencegah collision
         $qrPath = 'qr/items/' . $item->id . '-' . $timestamp . '-' . $randomSuffix . '.svg';
-        
+
         // Hapus QR lama jika ada
         if ($item->qr_code && Storage::disk('public')->exists($item->qr_code)) {
             Storage::disk('public')->delete($item->qr_code);
         }
-        
+
         $item->load('room');
         $roomName = $item->room ? $item->room->name : 'N/A';
 
-$qrPayload = $item->name . "\n" . $item->serial_number;
+        $qrPayload = $item->name . "\n" . $item->serial_number;
 
         // Generate QR Code
         // Size tetap 300, tapi karena payload lebih pendek, "kotak-kotak" akan otomatis lebih besar/renggang
         $qrContent = QrCode::format('svg')
-                        ->size(300)
-                        ->margin(2)
-                        ->errorCorrection('M') // Turunkan level koreksi ke 'M' (Medium) atau 'L' (Low) agar lebih renggang
-                        ->generate($qrPayload);
+            ->size(300)
+            ->margin(2)
+            ->errorCorrection('M') // Turunkan level koreksi ke 'M' (Medium) atau 'L' (Low) agar lebih renggang
+            ->generate($qrPayload);
 
         Storage::disk('public')->put($qrPath, $qrContent);
         $item->update(['qr_code' => $qrPath]);
@@ -464,10 +467,10 @@ $qrPayload = $item->name . "\n" . $item->serial_number;
     {
         if (preg_match('/^(.*?) (\d+)$/', $originalName, $matches)) {
             $baseName = $matches[1];
-            $number   = (int)$matches[2];
+            $number = (int) $matches[2];
         } else {
             $baseName = $originalName;
-            $number   = 0;
+            $number = 0;
         }
 
         do {
@@ -504,7 +507,7 @@ $qrPayload = $item->name . "\n" . $item->serial_number;
 
         if ($idsString) {
             $ids = explode(',', $idsString);
-            
+
             // Restore semua item yang ID-nya ada di list tersebut
             // whereIn + withTrashed (karena statusnya sudah terhapus)
             Item::withTrashed()->whereIn('id', $ids)->restore();
@@ -516,42 +519,42 @@ $qrPayload = $item->name . "\n" . $item->serial_number;
         return redirect()->route('items.index')->with('error', 'Gagal mengembalikan data.');
     }
 
-public function trash(Request $request)
-{
-    // 1. Ambil Data untuk Dropdown Filter
-    $categories = Category::all();
-    $rooms = Room::all();
+    public function trash(Request $request)
+    {
+        // 1. Ambil Data untuk Dropdown Filter
+        $categories = Category::all();
+        $rooms = Room::all();
 
-    // 2. Ambil Input Filter, Search, Sort
-    $search = $request->input('search');
-    $category_id = $request->input('category_id');
-    $room_id = $request->input('room_id');
-    $sort = $request->input('sort', 'deleted_at'); 
-    $direction = $request->input('direction', 'desc');
+        // 2. Ambil Input Filter, Search, Sort
+        $search = $request->input('search');
+        $category_id = $request->input('category_id');
+        $room_id = $request->input('room_id');
+        $sort = $request->input('sort', 'deleted_at');
+        $direction = $request->input('direction', 'desc');
 
-    // 3. Query Data Sampah dengan Filter
-    $deletedItems = Item::onlyTrashed()
-        ->when($search, function ($query, $search) {
-            return $query->where(function ($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('serial_number', 'like', "%{$search}%")
-                  ->orWhere('asset_number', 'like', "%{$search}%");
-            });
-        })
-        ->when($category_id, function ($query, $catId) {
-            return $query->where('category_id', $catId);
-        })
-        ->when($room_id, function ($query, $roomId) {
-            return $query->where('room_id', $roomId);
-        })
-        ->orderBy($sort, $direction)
-        ->paginate(10)
-        ->withQueryString(); // Penting: agar filter tidak hilang saat ganti halaman
+        // 3. Query Data Sampah dengan Filter
+        $deletedItems = Item::onlyTrashed()
+            ->when($search, function ($query, $search) {
+                return $query->where(function ($q) use ($search) {
+                    $q->where('name', 'like', "%{$search}%")
+                        ->orWhere('serial_number', 'like', "%{$search}%")
+                        ->orWhere('asset_number', 'like', "%{$search}%");
+                });
+            })
+            ->when($category_id, function ($query, $catId) {
+                return $query->where('category_id', $catId);
+            })
+            ->when($room_id, function ($query, $roomId) {
+                return $query->where('room_id', $roomId);
+            })
+            ->orderBy($sort, $direction)
+            ->paginate(10)
+            ->withQueryString(); // Penting: agar filter tidak hilang saat ganti halaman
 
-    return view('items.trash', compact('deletedItems', 'categories', 'rooms'));
-}
+        return view('items.trash', compact('deletedItems', 'categories', 'rooms'));
+    }
 
-public function terminate($id)
+    public function terminate($id)
     {
         $item = Item::onlyTrashed()->where('id', $id)->first();
 
@@ -562,7 +565,7 @@ public function terminate($id)
         $this->authorize('terminate', $item);
 
         $item->forceDelete();
-        
+
         return redirect()->route('items.trash')
             ->with('success', 'Data berhasil di-terminate (dihapus selamanya).');
     }

@@ -124,6 +124,14 @@
                 <span x-show="sidebarOpen" x-transition class="text-sm font-medium truncate">Stok Material</span>
             </a>
 
+            <a href="/categories" :class="sidebarOpen ? 'justify-start' : 'justify-center'"
+                class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group {{ dynamicActive('categories', $isDash) }}">
+                <div class="relative flex-shrink-0">
+                    <i data-lucide="tags" class="w-5 h-5"></i>
+                </div>
+                <span x-show="sidebarOpen" x-transition class="text-sm font-medium truncate">Kategori</span>
+            </a>
+
             <a href="/printers" :class="sidebarOpen ? 'justify-start' : 'justify-center'"
                 class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group {{ dynamicActive('printers', $isDash) }}">
                 <div class="relative flex-shrink-0">
@@ -228,10 +236,6 @@
                     <a href="/suppliers"
                         class="flex items-center gap-2 px-3 py-2 text-sm rounded-lg {{ $subLinkClass }}">
                         <span class="w-1.5 h-1.5 rounded-full {{ $dotClass }}"></span> Supplier
-                    </a>
-                    <a href="/categories"
-                        class="flex items-center gap-2 px-3 py-2 text-sm rounded-lg {{ $subLinkClass }}">
-                        <span class="w-1.5 h-1.5 rounded-full {{ $dotClass }}"></span> Kategori
                     </a>
                     <a href="/locations"
                         class="flex items-center gap-2 px-3 py-2 text-sm rounded-lg {{ $subLinkClass }}">

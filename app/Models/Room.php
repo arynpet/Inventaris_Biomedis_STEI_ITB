@@ -8,7 +8,7 @@ use App\Traits\LogsActivity; // <--- Import Trait
 
 class Room extends Model
 {
-        use LogsActivity; // <--- Pasang CCTV disini
+    use LogsActivity; // <--- Pasang CCTV disini
     use HasFactory;
 
     protected $fillable = [
@@ -22,5 +22,11 @@ class Room extends Model
     public function items()
     {
         return $this->hasMany(Item::class);
+    }
+
+    // 1 Room -> banyak Peminjaman Ruangan
+    public function borrowings()
+    {
+        return $this->hasMany(RoomBorrowing::class);
     }
 }

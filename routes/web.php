@@ -94,6 +94,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::resource('rooms', RoomController::class);
 
     // Categories
+    Route::post('categories/bulk-action', [CategoryController::class, 'bulkAction'])->name('categories.bulk_action');
     Route::resource('categories', CategoryController::class);
 
     // Materials (Stok 3D Print)
@@ -115,6 +116,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // ====================================================
     // 6. PEMINJAMAN RUANGAN
     // ====================================================
+    Route::post('/room_borrowings/bulk-action', [RoomBorrowingController::class, 'bulkAction'])->name('room_borrowings.bulk_action');
     Route::get('/room_borrowings/history', [RoomBorrowingController::class, 'history'])->name('room_borrowings.history');
     Route::put('/room_borrowings/{id}/approve', [RoomBorrowingController::class, 'approveRoom'])->name('room_borrowings.approve');
     Route::put('/room_borrowings/{id}/return', [RoomBorrowingController::class, 'returnRoom'])->name('room_borrowings.return');
@@ -126,11 +128,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/prints/history', [PrintController::class, 'history'])->name('prints.history');
     Route::get('/prints/{id}/file', [PrintController::class, 'downloadFile'])->name('prints.file');
     Route::resource('prints', PrintController::class);
+    Route::post('/printers/bulk-action', [PrinterController::class, 'bulkAction'])->name('printers.bulk_action');
     Route::resource('printers', PrinterController::class);
 
     // ====================================================
     // 8. MANAJEMEN USER (PEMINJAM)
     // ====================================================
+    Route::post('peminjam-users/bulk-action', [PeminjamUserController::class, 'bulkAction'])->name('peminjam-users.bulk_action');
     Route::resource('peminjam-users', PeminjamUserController::class);
 
     // ====================================================
@@ -148,6 +152,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('superadmin.')
         ->group(function () {
             // CRUD Admin Users
+            Route::post('users/bulk-action', [UserController::class, 'bulkAction'])->name('users.bulk_action');
             Route::resource('users', UserController::class);
 
             // Delete Logs Actions

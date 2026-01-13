@@ -47,7 +47,11 @@ class ActivityLogController extends Controller
         }
 
         // 6. Eksekusi Pagination
-        $logs = $query->paginate(20)->withQueryString(); // withQueryString agar filter tidak hilang saat pindah hal
+        if ($request->get('show_all') == '1') {
+            $logs = $query->get();
+        } else {
+            $logs = $query->paginate(20)->withQueryString();
+        }
 
         // Data untuk Dropdown Filter
         $users = User::orderBy('name')->get();
