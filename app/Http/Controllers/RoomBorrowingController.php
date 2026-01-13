@@ -225,7 +225,10 @@ class RoomBorrowingController extends Controller
         ActivityLog::create([
             'user_id' => auth()->id(),
             'action' => 'approve_room_borrowing',
+            'model' => 'RoomBorrowing',
+            'model_id' => $borrowing->id,
             'description' => 'Menyetujui peminjaman ruangan dengan ID ' . $borrowing->id,
+            'ip_address' => request()->ip(),
         ]);
         
         $borrowing->update(['status' => 'approved']);

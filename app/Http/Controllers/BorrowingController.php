@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Borrowing;
 use App\Models\Item;
 use App\Models\PeminjamUser;
+use App\Models\ActivityLog;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
@@ -97,6 +98,16 @@ class BorrowingController extends Controller
                         'condition' => $condition
                     ]);
                 }
+                
+                // ✅ 3. LOG setiap borrowing yang di-return
+                ActivityLog::create([
+                    'user_id'   => auth()->id(),
+                    'action'    => 'bulk_return',
+                    'model' => 'Borrowing',
+                    'model_id'   => $borrow->id,
+                    'description' => "Returned '{$borrow->item->name}' (Condition: {$condition})",
+                    'ip_address' => request()->ip(),
+                ]);
             }
         });
 
@@ -263,6 +274,16 @@ class BorrowingController extends Controller
             $borrow->item->update([
                 'status' => $newStatus,
                 'condition' => $condition
+            ]);
+            
+            // ✅ B. LOG di dalam transaction
+            ActivityLog::create([
+                'user_id'   => auth()->id(),
+                'action'    => 'return_item',
+                'model' => 'Borrowing',
+                'model_id'   => $borrow->id,
+                'description' => "Returned '{$borrow->item->name}' (Condition: {$condition})",
+                'ip_address' => request()->ip(),
             ]);
         });
 
