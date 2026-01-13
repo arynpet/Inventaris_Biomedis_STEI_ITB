@@ -6,6 +6,7 @@ use App\Models\Print3D;
 use App\Models\Printer;
 use App\Models\PeminjamUser;
 use App\Models\MaterialType;
+use App\Models\ActivityLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Carbon\Carbon;
@@ -272,6 +273,15 @@ class PrintController extends Controller
                 // Update data lain jika ada di request (opsional, untuk edit detail)
                 $print->fill($request->except(['status', '_token', '_method']));
                 
+                ActivityLog::create([
+                    'user_id' => auth()->id(),
+                    'action' => 'update',
+                    'model' => 'Print3D',
+                    'model_id' => $print->id,
+                    'description' => "Status changed: {$oldStatus} → {$newStatus} for '{$print->project_name}'",
+                    'ip_address' => request()->ip(),
+                ]);
+
                 $print->save();
             });
         } catch (ValidationException $e) {

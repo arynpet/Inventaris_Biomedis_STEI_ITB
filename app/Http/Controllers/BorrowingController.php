@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Borrowing;
 use App\Models\Item;
 use App\Models\PeminjamUser;
+use App\Models\ActivityLog;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
@@ -98,6 +99,15 @@ class BorrowingController extends Controller
                     ]);
                 }
             }
+
+            ActivityLog::create([
+                'user_id'   => auth()->id(),
+                'action'    => 'return',
+                'item_id'   => $borrow->item_id,
+                'borrow_id' => $borrow->id,
+                'condition' => $condition,
+            ]);
+            
         });
 
         return back()->with('success', count($ids) . ' barang berhasil dikembalikan masal (Kondisi: ' . ucfirst($condition) . ').');
@@ -265,6 +275,14 @@ class BorrowingController extends Controller
                 'condition' => $condition
             ]);
         });
+
+        ActivityLog::create([
+            'user_id'   => auth()->id(),
+            'action'    => 'return',
+            'item_id'   => $borrow->item_id,
+            'borrow_id' => $borrow->id,
+            'condition' => $condition,
+        ]);
 
         return back()->with('success', 'Barang berhasil dikembalikan dengan kondisi: ' . $validated['condition']);
     }
