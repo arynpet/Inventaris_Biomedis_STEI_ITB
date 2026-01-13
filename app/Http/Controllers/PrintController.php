@@ -131,14 +131,13 @@ class PrintController extends Controller
             return back()->withErrors(['user_id' => 'User ini belum mengikuti pelatihan (Training)!']);
         }
 
-        // Cek Bentrok Jadwal
-        $overlap = Print3D::where('date', $request->date)
-            ->where('printer_id', $request->printer_id)
-            ->where(function($q) use ($request){
-                $q->where('start_time', '<', $request->end_time)
-                    ->where('end_time', '>', $request->start_time);
-            })
-            ->exists();
+        // ✅ M5 FIX: Use extracted method
+        $overlap = $this->hasPrintScheduleOverlap(
+            $request->date,
+            $request->printer_id,
+            $request->start_time,
+            $request->end_time
+        );
 
         if ($overlap) {
             return back()->withErrors(['start_time' => 'Waktu print bentrok dengan jadwal lain di mesin ini!']);
@@ -333,5 +332,28 @@ class PrintController extends Controller
         }
 
         return Storage::disk('public')->download($print->file_path, $print->file_name);
+    }
+
+    /**
+     * ✅ M5 FIX: Extracted print schedule overlap checking logic
+     * Check if printer has overlapping print schedules
+     * 
+     * @param string $date
+     * @param int $printerId
+     * @param string $startTime
+     * @param string $endTime
+     * @param int|null $excludeId Optional ID to exclude from check (for updates)
+     * @return bool
+     */
+    private function hasPrintScheduleOverlap($date, $printerId, $startTime, $endTime, $excludeId = null)
+    {
+        return Print3D::where('date', $date)
+            ->where('printer_id', $printerId)
+            ->when($excludeId, fn($q) => $q->where('id', '!=', $excludeId))
+            ->where(function ($query) use ($startTime, $endTime) {
+                $query->where('start_time', '<', $endTime)
+                    ->where('end_time', '>', $startTime);
+            })
+            ->exists();
     }
 }
