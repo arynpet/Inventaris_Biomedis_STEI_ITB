@@ -164,4 +164,21 @@ class PeminjamUserController extends Controller
 
         return back()->with('error', 'Aksi tidak valid.');
     }
+    /**
+     * Reset Password to NIM (Admin Function)
+     */
+    public function resetPassword($id)
+    {
+        $user = PeminjamUser::findOrFail($id);
+
+        if (!$user->nim) {
+            return back()->with('error', 'User ini tidak memiliki NIM, tidak bisa di-reset.');
+        }
+
+        $user->update([
+            'password' => \Illuminate\Support\Facades\Hash::make($user->nim)
+        ]);
+
+        return back()->with('success', "Password untuk {$user->name} berhasil di-reset ke NIM ({$user->nim}).");
+    }
 }

@@ -25,6 +25,15 @@ use App\Http\Controllers\NaraController;
 
 Route::redirect('/', '/login');
 
+// Public Catalog
+// Public Catalog
+Route::get('/katalog', [App\Http\Controllers\PublicCatalogController::class, 'index'])->name('public.catalog');
+
+// Student Auth (Public)
+Route::post('/student/login', [App\Http\Controllers\StudentAuthController::class, 'authenticate'])->name('student.login');
+Route::post('/student/register', [App\Http\Controllers\StudentAuthController::class, 'store'])->name('student.register');
+Route::post('/student/logout', [App\Http\Controllers\StudentAuthController::class, 'logout'])->name('student.logout');
+
 /*
 |--------------------------------------------------------------------------
 | Dashboard & Protected Routes (All Authenticated Users)
@@ -96,7 +105,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::resource('rooms', RoomController::class);
 
     // Categories
-    Route::post('categories/bulk-action', [CategoryController::class, 'bulkAction'])->name('categories.bulk_action');
+    Route::post('/bulk-ops/categories', [CategoryController::class, 'bulkAction'])->name('categories.bulk_action');
     Route::resource('categories', CategoryController::class);
 
     // Materials (Stok 3D Print)
@@ -137,7 +146,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // 8. MANAJEMEN USER (PEMINJAM)
     // ====================================================
     Route::post('peminjam-users/bulk-action', [PeminjamUserController::class, 'bulkAction'])->name('peminjam-users.bulk_action');
+    Route::post('peminjam-users/{id}/reset-password', [PeminjamUserController::class, 'resetPassword'])->name('peminjam-users.reset-password');
     Route::resource('peminjam-users', PeminjamUserController::class);
+
+    // ====================================================
+    // 10. LOAN APPROVALS (ADMIN)
+    // ====================================================
+    Route::get('/admin/loans/pending', [App\Http\Controllers\AdminLoanController::class, 'indexPending'])->name('admin.loans.pending');
+    Route::post('/admin/loans/{id}/approve', [App\Http\Controllers\AdminLoanController::class, 'approve'])->name('admin.loans.approve');
+    Route::post('/admin/loans/{id}/reject', [App\Http\Controllers\AdminLoanController::class, 'reject'])->name('admin.loans.reject');
 
     // ====================================================
     // 9. SUPER ADMIN AREA (LOGS & USERS)
@@ -172,6 +189,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::post('/backup/import-items', [App\Http\Controllers\SuperAdmin\BackupController::class, 'importItems'])->name('backup.import_items');
         });
 
+});
+
+// Student Protected Routes (Needs Login)
+Route::middleware(['auth:student'])->group(function () {
+    Route::post('/student/loans/request', [App\Http\Controllers\LoanRequestController::class, 'store'])->name('student.loans.request');
+    Route::get('/student/loans', [App\Http\Controllers\LoanRequestController::class, 'index'])->name('student.loans.index');
+    Route::post('/student/password/update', [App\Http\Controllers\StudentAuthController::class, 'updatePassword'])->name('student.password.update');
 });
 
 require __DIR__ . '/auth.php';

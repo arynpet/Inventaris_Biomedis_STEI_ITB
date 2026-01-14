@@ -106,6 +106,7 @@
                                     Identitas</th>
                                 <th class="px-6 py-4 text-left font-bold uppercase tracking-wider text-xs">Kontak</th>
                                 <th class="px-6 py-4 text-left font-bold uppercase tracking-wider text-xs">Role</th>
+                                <th class="px-6 py-4 text-left font-bold uppercase tracking-wider text-xs">Password</th>
                                 <th class="px-6 py-4 text-left font-bold uppercase tracking-wider text-xs">Pelatihan
                                 </th>
                                 <th class="px-6 py-4 text-center font-bold uppercase tracking-wider text-xs">Aksi</th>
@@ -137,6 +138,36 @@
                                             class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-gray-100 text-gray-700 border border-gray-200 capitalize">
                                             {{ $user->role ?? '-' }}
                                         </span>
+                                    </td>
+
+                                    {{-- Status Password --}}
+                                    <td class="px-6 py-4">
+                                        @if($user->is_default_password)
+                                            <div class="flex flex-col">
+                                                <span class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Password:</span>
+                                                <div class="flex items-center gap-2">
+                                                    <span class="font-mono text-sm font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded border border-emerald-200">
+                                                        {{ $user->nim }}
+                                                    </span>
+                                                    <span class="text-[10px] text-emerald-600">(Default)</span>
+                                                </div>
+                                            </div>
+                                        @else
+                                            <div class="flex flex-col">
+                                                <span class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Password:</span>
+                                                <div class="flex items-center gap-2">
+                                                    <span class="font-mono text-sm text-gray-400 tracking-widest">●●●●●●●●</span>
+                                                    
+                                                    <form action="{{ route('peminjam-users.reset-password', $user->id) }}" method="POST" onsubmit="return confirm('Reset password user ini kembali ke NIM ({{$user->nim}})?');">
+                                                        @csrf
+                                                        <button type="submit" class="text-[10px] bg-red-50 text-red-600 px-2 py-1 rounded border border-red-100 hover:bg-red-100 font-bold transition" title="Reset ke Default">
+                                                            Reset
+                                                        </button>
+                                                    </form>
+                                                </div>
+                                                <span class="text-[10px] text-gray-400 mt-1 italic">User telah mengubah password</span>
+                                            </div>
+                                        @endif
                                     </td>
 
                                     {{-- Status Pelatihan --}}

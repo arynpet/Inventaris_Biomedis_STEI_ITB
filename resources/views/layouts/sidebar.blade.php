@@ -261,6 +261,16 @@
                 <span x-show="sidebarOpen" x-transition class="text-sm font-medium truncate">Panduan Sistem</span>
             </a>
 
+            <a href="{{ route('public.catalog') }}" target="_blank"
+                :class="sidebarOpen ? 'justify-start' : 'justify-center'"
+                class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group {{ $isDash ? 'text-gray-400 hover:bg-cyan-900/20 hover:text-cyan-200' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }}">
+                <div class="relative flex-shrink-0">
+                    <i data-lucide="globe" class="w-5 h-5 {{ $isDash ? 'text-green-400' : 'text-green-600' }}"></i>
+                </div>
+                <span x-show="sidebarOpen" x-transition class="text-sm font-medium truncate">Katalog Publik</span>
+                <i x-show="sidebarOpen" data-lucide="external-link" class="w-3 h-3 ml-auto opacity-50"></i>
+            </a>
+
         </nav>
 
         <div class="px-3 py-4 border-t {{ $isDash ? 'border-cyan-500/30' : 'border-gray-100' }}">

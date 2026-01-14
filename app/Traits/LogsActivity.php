@@ -20,8 +20,12 @@ trait LogsActivity
             $changes = $model->getChanges(); // Ambil kolom apa saja yang berubah
             $original = $model->getOriginal();
 
-            // Abaikan timestamps update
+            // Abaikan timestamps & credentials
             unset($changes['updated_at']);
+            unset($changes['password']);
+            unset($changes['remember_token']);
+            unset($changes['two_factor_secret']);
+            unset($changes['two_factor_recovery_codes']);
 
             $details = [];
             foreach ($changes as $key => $value) {
@@ -49,11 +53,20 @@ trait LogsActivity
     // Fungsi Simpan ke Database
     protected static function saveLog($model, $action, $description)
     {
-        if (Auth::check()) {
+        $userId = null;
+        $userType = null; // Opsional: jika nanti tabel activity_logs mendukung polimorfik
+
+        if (Auth::guard('web')->check()) {
+            $userId = Auth::guard('web')->id();
+        } elseif (Auth::guard('student')->check()) {
+            $userId = Auth::guard('student')->id();
+        }
+
+        if ($userId) {
             ActivityLog::create([
-                'user_id' => Auth::id(),
+                'user_id' => $userId,
                 'action' => $action,
-                'model' => class_basename($model), // Ambil nama class saja (contoh: Print3D)
+                'model' => class_basename($model),
                 'model_id' => $model->id,
                 'description' => $description,
                 'ip_address' => request()->ip(),

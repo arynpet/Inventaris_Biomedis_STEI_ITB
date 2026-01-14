@@ -4,19 +4,20 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use App\Traits\LogsActivity; // <--- Import Trait
+use App\Traits\LogsActivity;
 
 class Borrowing extends Model
 {
-        use LogsActivity; // <--- Pasang CCTV disini
+    use LogsActivity;
     use HasFactory;
 
     protected $fillable = [
         'item_id',
         'user_id',
+        'quantity', // ✅ Added quantity
         'borrow_date',
         'return_date',
-        'return_condition', // <--- Kolom Baru
+        'return_condition',
         'status',
         'notes',
     ];
@@ -24,6 +25,7 @@ class Borrowing extends Model
     protected $casts = [
         'borrow_date' => 'datetime',
         'return_date' => 'datetime',
+        'quantity' => 'integer',
     ];
 
     // Relasi ke Item

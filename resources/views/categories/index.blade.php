@@ -26,11 +26,8 @@
                 </a>
             </div>
 
-            <form id="bulkActionForm" action="{{ route('categories.bulk_action') }}" method="POST">
-                @csrf
-                <input type="hidden" name="action_type" id="bulkActionType">
-
-                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+            <!-- Bulk Form removed from here to fix nesting issues -->
+            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                     <div class="overflow-x-auto">
                         <table class="min-w-full divide-y divide-gray-200">
                             <thead class="bg-gray-50">
@@ -92,7 +89,7 @@
                         </table>
                     </div>
                 </div>
-            </form>
+            <!-- </form> -->
 
             <div class="mt-4 flex flex-col md:flex-row justify-between items-center gap-4">
                 <div class="w-full">
@@ -173,11 +170,33 @@
                 },
                 submitBulkAction(type) {
                     if (confirm('Yakin ingin menghapus ' + this.selectedItems.length + ' kategori?')) {
+                        const form = document.getElementById('bulkActionForm');
                         document.getElementById('bulkActionType').value = type;
-                        document.getElementById('bulkActionForm').submit();
+
+                        // Clear previous hidden inputs
+                        const oldInputs = form.querySelectorAll('.dynamic-id');
+                        oldInputs.forEach(el => el.remove());
+
+                        // Append new inputs
+                        this.selectedItems.forEach(id => {
+                            const input = document.createElement('input');
+                            input.type = 'hidden';
+                            input.name = 'selected_ids[]';
+                            input.value = id;
+                            input.className = 'dynamic-id';
+                            form.appendChild(input);
+                        });
+
+                        form.submit();
                     }
                 }
             }
         }
     </script>
+
+    {{-- Hidden Bulk Action Form --}}
+    <form id="bulkActionForm" action="{{ route('categories.bulk_action') }}" method="POST" style="display: none;">
+        @csrf
+        <input type="hidden" name="action_type" id="bulkActionType">
+    </form>
 </x-app-layout>
