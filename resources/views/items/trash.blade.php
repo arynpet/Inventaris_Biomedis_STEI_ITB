@@ -81,18 +81,33 @@
                 </div>
 
                 {{-- AREA TOMBOL BULK ACTION (Muncul via JS) --}}
-                <div id="bulk-action-container" style="display: none;" class="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg flex justify-between items-center animate-pulse">
-                    <span class="text-sm text-green-800 font-bold">
-                        <span id="count-selected">0</span> item dipilih
+                <div id="bulk-action-container" style="display: none;" class="mb-4 p-3 bg-gray-50 border border-gray-200 rounded-lg flex justify-between items-center animate-pulse shadow-sm">
+                    <span class="text-sm text-gray-800 font-bold flex items-center gap-2">
+                        <svg class="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
+                        <span id="count-selected" class="bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full">0</span> item terpilih
                     </span>
-                    <button id="btn-bulk-restore" class="px-4 py-2 bg-green-600 text-white rounded-md font-bold text-xs uppercase hover:bg-green-700 transition shadow-sm">
-                        Pulihkan Terpilih
-                    </button>
+                    <div class="flex gap-2">
+                        {{-- Restore Button --}}
+                        <button id="btn-bulk-restore" class="px-4 py-2 bg-green-600 text-white rounded-md font-bold text-xs uppercase hover:bg-green-700 transition shadow-sm flex items-center gap-1">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                            Pulihkan
+                        </button>
+                        {{-- Terminate Button --}}
+                        @if(auth()->user()->role === 'superadmin')
+                        <button id="btn-bulk-terminate" class="px-4 py-2 bg-red-600 text-white rounded-md font-bold text-xs uppercase hover:bg-red-700 transition shadow-sm flex items-center gap-1">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                            Hapus Permanen
+                        </button>
+                        @endif
+                    </div>
                 </div>
 
                 {{-- ALERT MESSAGES --}}
                 @if(session('success'))
                     <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-4 text-sm font-medium">{{ session('success') }}</div>
+                @endif
+                @if(session('error'))
+                    <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-4 text-sm font-medium">{{ session('error') }}</div>
                 @endif
 
                 {{-- TABEL DATA --}}
@@ -206,8 +221,10 @@
             const checkboxes = document.querySelectorAll('.item-checkbox');
             const bulkContainer = document.getElementById('bulk-action-container');
             const btnBulkRestore = document.getElementById('btn-bulk-restore');
+            const btnBulkTerminate = document.getElementById('btn-bulk-terminate'); // NEW
             const countSpan = document.getElementById('count-selected');
             const bulkRestoreUrl = "{{ route('items.bulk_restore') }}";
+            const bulkTerminateUrl = "{{ route('items.bulk_terminate') }}"; // NEW
 
             function updateUI() {
                 let selectedIds = [];
@@ -231,6 +248,7 @@
 
             checkboxes.forEach(cb => cb.addEventListener('change', updateUI));
 
+            // RESTORE
             btnBulkRestore.addEventListener('click', function() {
                 let ids = updateUI(); 
                 if (ids.length === 0) return;
@@ -238,6 +256,49 @@
                     window.location.href = bulkRestoreUrl + '?ids=' + ids.join(',');
                 }
             });
+
+            // TERMINATE (NEW)
+            if (btnBulkTerminate) {
+                btnBulkTerminate.addEventListener('click', function() {
+                    let ids = updateUI();
+                    if (ids.length === 0) return;
+                    if (confirm('PERINGATAN KERAS:\n\nAnda akan menghapus PERMANEN ' + ids.length + ' data terpilih.\nData yang dihapus TIDAK DAPAT DIKEMBALIKAN.\n\nLanjutkan penghapusan?')) {
+                        
+                        // Create Toggle form for DELETE request
+                        let form = document.createElement('form');
+                        form.method = 'POST';
+                        form.action = bulkTerminateUrl;
+                        form.style.display = 'none';
+
+                        // CSRF
+                        let csrfToken = document.querySelector('meta[name="csrf-token"]');
+                        if (csrfToken) {
+                            let csrfInput = document.createElement('input');
+                            csrfInput.type = 'hidden';
+                            csrfInput.name = '_token';
+                            csrfInput.value = csrfToken.content;
+                            form.appendChild(csrfInput);
+                        }
+
+                        // Method DELETE
+                        let methodInput = document.createElement('input');
+                        methodInput.type = 'hidden';
+                        methodInput.name = '_method';
+                        methodInput.value = 'DELETE';
+                        form.appendChild(methodInput);
+
+                        // IDs
+                        let idsInput = document.createElement('input');
+                        idsInput.type = 'hidden';
+                        idsInput.name = 'ids';
+                        idsInput.value = ids.join(',');
+                        form.appendChild(idsInput);
+
+                        document.body.appendChild(form);
+                        form.submit();
+                    }
+                });
+            }
         });
     </script>
 </x-app-layout>

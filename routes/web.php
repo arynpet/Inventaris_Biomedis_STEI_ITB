@@ -49,6 +49,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Panduan Sistem / SOP
     Route::get('/tutorial', [App\Http\Controllers\GuideController::class, 'index'])->name('guide.index');
+    Route::get('/panduan-praktis', [App\Http\Controllers\GuideController::class, 'scenarios'])->name('guide.scenarios');
 
     // ====================================================
     // 2. PROFILE MANAGEMENT
@@ -65,6 +66,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Trash & Restore
     Route::get('/items/trash', [ItemController::class, 'trash'])->name('items.trash');
     Route::get('/items/action/bulk-restore', [ItemController::class, 'bulkRestore'])->name('items.bulk_restore');
+    Route::delete('/items/action/bulk-terminate', [ItemController::class, 'bulkTerminate'])->name('items.bulk_terminate');
     Route::get('/items/{id}/restore', [ItemController::class, 'restore'])->name('items.restore');
     Route::delete('/items/{id}/terminate', [ItemController::class, 'terminate'])->name('items.terminate'); // Hard Delete
 

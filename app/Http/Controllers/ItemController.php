@@ -543,6 +543,55 @@ class ItemController extends Controller
         return redirect()->route('items.index')->with('error', 'Gagal mengembalikan data.');
     }
 
+    // =========================
+    // BULK TERMINATE (HAPUS PERMANEN MASAL)
+    // =========================
+    public function bulkTerminate(Request $request)
+    {
+        // Validasi input ids string "1,2,3"
+        $idsString = $request->input('ids');
+
+        if (!$idsString) {
+            return redirect()->route('items.trash')->with('error', 'Tidak ada item yang dipilih.');
+        }
+
+        $ids = explode(',', $idsString);
+        $count = 0;
+
+        // Ambil item yang ada di trash
+        $items = Item::onlyTrashed()->whereIn('id', $ids)->get();
+
+        foreach ($items as $item) {
+            // Cek policy jika perlu: $this->authorize('terminate', $item);
+
+            // Simpan log sebelum hapus
+            $itemName = $item->name;
+            $itemSN = $item->serial_number ?? 'N/A';
+
+            $item->forceDelete();
+
+            // Logging per item atau bulk log nanti
+            $count++;
+        }
+
+        if ($count > 0) {
+            // Bulk Log
+            ActivityLog::create([
+                'user_id' => auth()->id(),
+                'action' => 'bulk_terminate',
+                'model' => 'Item',
+                'model_id' => null,
+                'description' => "Bulk permanent delete: {$count} items (IDs: {$idsString})",
+                'ip_address' => request()->ip(),
+            ]);
+
+            return redirect()->route('items.trash')
+                ->with('success', "$count item berhasil dihapus permanen.");
+        }
+
+        return redirect()->route('items.trash')->with('error', 'Gagal menghapus data.');
+    }
+
     public function trash(Request $request)
     {
         // 1. Ambil Data untuk Dropdown Filter

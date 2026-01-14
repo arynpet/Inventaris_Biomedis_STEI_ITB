@@ -13,4 +13,12 @@ class GuideController extends Controller
     {
         return view('guide.index');
     }
+
+    /**
+     * Display the practical scenarios guide (Use Cases).
+     */
+    public function scenarios()
+    {
+        return view('guide.scenarios');
+    }
 }
