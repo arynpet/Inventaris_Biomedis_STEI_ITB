@@ -28,8 +28,21 @@
             year: '{{ date('y') }}',
             startSeq: '001',
             qty: 1,
-            generatedSerials: [], 
+            generatedSerials: [''], 
             
+            init() {
+                this.$watch('autoGen', value => {
+                    if(value) {
+                        // Instant feedback pake data yg ada dulu
+                        this.previewSerials();
+
+                        // Lalu update dari server/logika nama
+                        if(this.itemName) this.generateAbbr();
+                        else this.fetchSequence();
+                    }
+                });
+            },
+
             generateAbbr() {
                 if(!this.itemName) return;
                 let clean = this.itemName.toUpperCase().replace(/[^A-Z]/g, '');
@@ -242,8 +255,7 @@
                         <div x-show="mode === 'single'">
                             <label class="block mb-2 font-bold text-gray-700">Serial Number <span
                                     class="text-red-500">*</span></label>
-                            <input type="text" name="serial_number" :value="generatedSerials[0] || ''"
-                                @input="generatedSerials[0] = $el.value"
+                            <input type="text" name="serial_number" x-model="generatedSerials[0]"
                                 class="w-full rounded-xl border-gray-300 focus:ring-blue-500 focus:border-blue-500 px-4 py-3 font-mono font-bold"
                                 :class="autoGen ? 'bg-blue-50 text-blue-900 border-blue-300' : ''"
                                 placeholder="Masukkan Serial Number Unik" :required="mode === 'single'"
