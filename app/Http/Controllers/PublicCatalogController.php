@@ -27,7 +27,7 @@ class PublicCatalogController extends Controller
             'status',
             'condition',
             'serial_number',
-            // 'image_path' // Kolom ini belum ada di model, kita skip dulu biar aman
+            'image_path' // Kolom ini sudah ada sekarang
         )
             ->with('categories:id,name'); // Eager load kategori (cuma nama & id)
 

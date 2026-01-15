@@ -25,6 +25,7 @@ class User extends Authenticatable
         'email',
         'password',
         'role', // <--- Tambahkan ini
+        'is_dev_mode', // <--- Developer Mode Toggle
     ];
 
     // Helper untuk cek apakah dia superadmin (Opsional, biar kodingan rapi)

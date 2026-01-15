@@ -66,7 +66,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::prefix('profile')->group(function () {
         Route::get('/', [ProfileController::class, 'edit'])->name('profile.edit');
         Route::patch('/', [ProfileController::class, 'update'])->name('profile.update');
+        Route::patch('/dev-mode', [ProfileController::class, 'updateDevMode'])->name('profile.dev_mode'); // <--- Toggle Dev Mode
         Route::delete('/', [ProfileController::class, 'destroy'])->name('profile.destroy');
+    });
+
+    // ====================================================
+    // 2.5. DEVELOPER TOOLS
+    // ====================================================
+    Route::prefix('dev')->name('dev.')->group(function () {
+        Route::get('/dashboard', [App\Http\Controllers\DevController::class, 'index'])->name('index');
+        Route::post('/reset-database', [App\Http\Controllers\DevController::class, 'resetDatabase'])->name('reset_db');
     });
 
     // ====================================================

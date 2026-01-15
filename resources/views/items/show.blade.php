@@ -239,157 +239,173 @@
                     </div>
                 </div>
 
-                {{-- QR SECTION --}}
-                <div class="flex flex-col items-center justify-center">
-                    <div
-                        class="bg-gradient-to-br from-gray-50 to-white border-2 border-dashed border-gray-200 rounded-2xl p-8 hover:border-blue-300 transition-all duration-300 hover:shadow-lg">
-                        @if ($item->qr_code)
-                            <div class="relative group">
-                                <div
-                                    class="absolute -inset-1 bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl blur opacity-25 group-hover:opacity-50 transition duration-300">
-                                </div>
-                                <div class="relative">
-                                    <img src="{{ asset('storage/' . $item->qr_code) }}"
-                                        class="w-56 h-56 rounded-xl shadow-lg transform group-hover:scale-105 transition-transform duration-300"
-                                        alt="QR {{ $item->serial_number }}">
-                                </div>
-                            </div>
-                            <p class="text-center text-sm text-gray-600 mt-4 font-medium">Scan QR Code</p>
-                        @else
-                            <div class="flex flex-col items-center justify-center w-56 h-56">
-                                <svg class="w-16 h-16 text-gray-300 mb-3" fill="none" stroke="currentColor"
-                                    viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z">
-                                    </path>
-                                </svg>
-                                <p class="text-gray-400 text-sm font-medium">QR belum tersedia</p>
-                            </div>
-                        @endif
+                {{-- RIGHT COLUMN: IMAGE & QR --}}
+                <div class="flex flex-col gap-6">
+
+                    {{-- ITEM IMAGE --}}
+                    <div class="bg-white p-2 rounded-2xl shadow-md border border-gray-100">
+                        <img src="{{ $item->optimized_image }}" alt="{{ $item->name }}"
+                            class="w-full h-64 object-cover rounded-xl bg-gray-50"
+                            onerror="this.src='https://placehold.co/600x400?text=No+Image'">
+                        <p class="text-xs text-center text-gray-400 mt-2 italic">Foto Barang</p>
                     </div>
+
+                    {{-- QR SECTION --}}
+                    <div class="flex flex-col items-center justify-center">
+                        <div
+                            class="bg-gradient-to-br from-gray-50 to-white border-2 border-dashed border-gray-200 rounded-2xl p-8 hover:border-blue-300 transition-all duration-300 hover:shadow-lg">
+                            @if ($item->qr_code)
+                                <div class="relative group">
+                                    <div
+                                        class="absolute -inset-1 bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl blur opacity-25 group-hover:opacity-50 transition duration-300">
+                                    </div>
+                                    <div class="relative">
+                                        <img src="{{ asset('storage/' . $item->qr_code) }}"
+                                            class="w-56 h-56 rounded-xl shadow-lg transform group-hover:scale-105 transition-transform duration-300"
+                                            alt="QR {{ $item->serial_number }}">
+                                    </div>
+                                </div>
+                                <p class="text-center text-sm text-gray-600 mt-4 font-medium">Scan QR Code</p>
+                            @else
+                                <div class="flex flex-col items-center justify-center w-56 h-56">
+                                    <svg class="w-16 h-16 text-gray-300 mb-3" fill="none" stroke="currentColor"
+                                        viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z">
+                                        </path>
+                                    </svg>
+                                    <p class="text-gray-400 text-sm font-medium">QR belum tersedia</p>
+                                </div>
+                            @endif
+                        </div>
+                    </div>
+
                 </div>
 
-            </div>
-
-            {{--
-            ================================================
-            SECTION BARU: DETAIL PENGELUARAN (Jika Ada)
-            ================================================
-            --}}
-            @if($item->status == 'dikeluarkan' && $item->latestLog)
-                <div class="mt-8 pt-8 border-t border-gray-200">
-                    <div class="flex items-center gap-3 mb-6">
-                        <div class="p-2 bg-orange-100 rounded-lg text-orange-600">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1">
-                                </path>
-                            </svg>
-                        </div>
-                        <h3 class="text-xl font-bold text-gray-800">Informasi Pengeluaran Barang</h3>
-                    </div>
-
-                    <div
-                        class="bg-orange-50/50 rounded-2xl p-6 border border-orange-100 grid grid-cols-1 md:grid-cols-2 gap-6">
-                        {{-- Detail Text --}}
-                        <div class="space-y-4">
-                            <div>
-                                <p class="text-xs uppercase text-gray-500 font-bold tracking-wider">Penerima</p>
-                                <p class="text-gray-900 font-semibold text-lg">{{ $item->latestLog->recipient_name }}</p>
+                {{--
+                ================================================
+                SECTION BARU: DETAIL PENGELUARAN (Jika Ada)
+                ================================================
+                --}}
+                @if($item->status == 'dikeluarkan' && $item->latestLog)
+                    <div class="mt-8 pt-8 border-t border-gray-200">
+                        <div class="flex items-center gap-3 mb-6">
+                            <div class="p-2 bg-orange-100 rounded-lg text-orange-600">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1">
+                                    </path>
+                                </svg>
                             </div>
-                            <div>
-                                <p class="text-xs uppercase text-gray-500 font-bold tracking-wider">Tanggal Keluar</p>
-                                <p class="text-gray-900 font-medium">{{ $item->latestLog->out_date->format('d F Y') }}</p>
-                            </div>
-                            <div>
-                                <p class="text-xs uppercase text-gray-500 font-bold tracking-wider">Alasan / Keterangan</p>
-                                <p class="text-gray-700 italic">"{{ $item->latestLog->reason ?? '-' }}"</p>
-                            </div>
+                            <h3 class="text-xl font-bold text-gray-800">Informasi Pengeluaran Barang</h3>
                         </div>
 
-                        {{-- Action Files --}}
-                        <div class="flex flex-col justify-center gap-3 border-l border-orange-200/50 pl-0 md:pl-6">
+                        <div
+                            class="bg-orange-50/50 rounded-2xl p-6 border border-orange-100 grid grid-cols-1 md:grid-cols-2 gap-6">
+                            {{-- Detail Text --}}
+                            <div class="space-y-4">
+                                <div>
+                                    <p class="text-xs uppercase text-gray-500 font-bold tracking-wider">Penerima</p>
+                                    <p class="text-gray-900 font-semibold text-lg">{{ $item->latestLog->recipient_name }}
+                                    </p>
+                                </div>
+                                <div>
+                                    <p class="text-xs uppercase text-gray-500 font-bold tracking-wider">Tanggal Keluar</p>
+                                    <p class="text-gray-900 font-medium">{{ $item->latestLog->out_date->format('d F Y') }}
+                                    </p>
+                                </div>
+                                <div>
+                                    <p class="text-xs uppercase text-gray-500 font-bold tracking-wider">Alasan / Keterangan
+                                    </p>
+                                    <p class="text-gray-700 italic">"{{ $item->latestLog->reason ?? '-' }}"</p>
+                                </div>
+                            </div>
 
-                            {{-- Button Download File Upload --}}
-                            @if($item->latestLog->reference_file)
-                                <a href="{{ asset('storage/' . $item->latestLog->reference_file) }}" target="_blank"
-                                    class="flex items-center justify-between px-4 py-3 bg-white border border-gray-200 rounded-xl hover:border-blue-400 hover:shadow-md transition group">
+                            {{-- Action Files --}}
+                            <div class="flex flex-col justify-center gap-3 border-l border-orange-200/50 pl-0 md:pl-6">
+
+                                {{-- Button Download File Upload --}}
+                                @if($item->latestLog->reference_file)
+                                    <a href="{{ asset('storage/' . $item->latestLog->reference_file) }}" target="_blank"
+                                        class="flex items-center justify-between px-4 py-3 bg-white border border-gray-200 rounded-xl hover:border-blue-400 hover:shadow-md transition group">
+                                        <div class="flex items-center gap-3">
+                                            <div
+                                                class="p-2 bg-blue-50 text-blue-600 rounded-lg group-hover:bg-blue-100 transition">
+                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
+                                                    </path>
+                                                </svg>
+                                            </div>
+                                            <div>
+                                                <p class="text-sm font-bold text-gray-800">File Bukti / Surat</p>
+                                                <p class="text-xs text-gray-500">Klik untuk melihat file</p>
+                                            </div>
+                                        </div>
+                                        <svg class="w-5 h-5 text-gray-400 group-hover:text-blue-500 transition" fill="none"
+                                            stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14">
+                                            </path>
+                                        </svg>
+                                    </a>
+                                @endif
+
+                                {{-- Button Cetak PDF Sistem --}}
+                                <a href="{{ route('items.out.pdf', $item->id) }}" target="_blank"
+                                    class="flex items-center justify-between px-4 py-3 bg-white border border-gray-200 rounded-xl hover:border-red-400 hover:shadow-md transition group">
                                     <div class="flex items-center gap-3">
-                                        <div class="p-2 bg-blue-50 text-blue-600 rounded-lg group-hover:bg-blue-100 transition">
+                                        <div
+                                            class="p-2 bg-red-50 text-red-600 rounded-lg group-hover:bg-red-100 transition">
                                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
+                                                    d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z">
                                                 </path>
                                             </svg>
                                         </div>
                                         <div>
-                                            <p class="text-sm font-bold text-gray-800">File Bukti / Surat</p>
-                                            <p class="text-xs text-gray-500">Klik untuk melihat file</p>
+                                            <p class="text-sm font-bold text-gray-800">Cetak Surat Jalan</p>
+                                            <p class="text-xs text-gray-500">Download PDF Resmi Sistem</p>
                                         </div>
                                     </div>
-                                    <svg class="w-5 h-5 text-gray-400 group-hover:text-blue-500 transition" fill="none"
+                                    <svg class="w-5 h-5 text-gray-400 group-hover:text-red-500 transition" fill="none"
                                         stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14">
-                                        </path>
+                                            d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
                                     </svg>
                                 </a>
-                            @endif
 
-                            {{-- Button Cetak PDF Sistem --}}
-                            <a href="{{ route('items.out.pdf', $item->id) }}" target="_blank"
-                                class="flex items-center justify-between px-4 py-3 bg-white border border-gray-200 rounded-xl hover:border-red-400 hover:shadow-md transition group">
-                                <div class="flex items-center gap-3">
-                                    <div class="p-2 bg-red-50 text-red-600 rounded-lg group-hover:bg-red-100 transition">
-                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z">
-                                            </path>
-                                        </svg>
-                                    </div>
-                                    <div>
-                                        <p class="text-sm font-bold text-gray-800">Cetak Surat Jalan</p>
-                                        <p class="text-xs text-gray-500">Download PDF Resmi Sistem</p>
-                                    </div>
-                                </div>
-                                <svg class="w-5 h-5 text-gray-400 group-hover:text-red-500 transition" fill="none"
-                                    stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
-                                </svg>
-                            </a>
-
+                            </div>
                         </div>
                     </div>
-                </div>
-            @endif
+                @endif
+
+            </div>
+
+            {{-- ACTION BUTTONS --}}
+            <div class="mt-8 flex flex-wrap gap-4">
+                <a href="{{ route('items.index') }}"
+                    class="group flex items-center px-6 py-3 bg-gradient-to-r from-gray-500 to-gray-600 text-white rounded-xl font-medium shadow-lg hover:shadow-xl hover:from-gray-600 hover:to-gray-700 transform hover:-translate-y-0.5 transition-all duration-200">
+                    <svg class="w-5 h-5 mr-2 transform group-hover:-translate-x-1 transition-transform" fill="none"
+                        stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                    </svg>
+                    Kembali
+                </a>
+
+                <a href="{{ route('items.qr.pdf', $item->id) }}"
+                    class="group flex items-center px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl font-medium shadow-lg hover:shadow-xl hover:from-blue-600 hover:to-blue-700 transform hover:-translate-y-0.5 transition-all duration-200">
+                    <svg class="w-5 h-5 mr-2 group-hover:rotate-12 transition-transform" fill="none"
+                        stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
+                        </path>
+                    </svg>
+                    Download QR (PDF)
+                </a>
+            </div>
 
         </div>
-
-        {{-- ACTION BUTTONS --}}
-        <div class="mt-8 flex flex-wrap gap-4">
-            <a href="{{ route('items.index') }}"
-                class="group flex items-center px-6 py-3 bg-gradient-to-r from-gray-500 to-gray-600 text-white rounded-xl font-medium shadow-lg hover:shadow-xl hover:from-gray-600 hover:to-gray-700 transform hover:-translate-y-0.5 transition-all duration-200">
-                <svg class="w-5 h-5 mr-2 transform group-hover:-translate-x-1 transition-transform" fill="none"
-                    stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
-                </svg>
-                Kembali
-            </a>
-
-            <a href="{{ route('items.qr.pdf', $item->id) }}"
-                class="group flex items-center px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl font-medium shadow-lg hover:shadow-xl hover:from-blue-600 hover:to-blue-700 transform hover:-translate-y-0.5 transition-all duration-200">
-                <svg class="w-5 h-5 mr-2 group-hover:rotate-12 transition-transform" fill="none" stroke="currentColor"
-                    viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
-                    </path>
-                </svg>
-                Download QR (PDF)
-            </a>
-        </div>
-
-    </div>
 
 </x-app-layout>

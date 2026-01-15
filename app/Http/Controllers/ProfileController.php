@@ -57,4 +57,23 @@ class ProfileController extends Controller
 
         return Redirect::to('/');
     }
+    /**
+     * Toggle Developer Mode.
+     */
+    /**
+     * Toggle Developer Mode.
+     */
+    public function updateDevMode(Request $request): RedirectResponse
+    {
+        $user = $request->user();
+
+        // Simple Toggle
+        $user->update([
+            'is_dev_mode' => !$user->is_dev_mode
+        ]);
+
+        $message = $user->is_dev_mode ? 'Mode Pengembang AKTIF 🚀' : 'Mode Pengembang NONAKTIF.';
+
+        return back()->with('status', $message);
+    }
 }

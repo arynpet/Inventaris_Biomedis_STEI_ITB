@@ -4,7 +4,7 @@
         <h1 class="text-2xl font-bold text-gray-800 mb-6">Edit Item</h1>
 
         <form action="{{ route('items.update', $item->id) }}" method="POST"
-            class="bg-white shadow-sm border border-gray-100 p-6 rounded-2xl space-y-5">
+            class="bg-white shadow-sm border border-gray-100 p-6 rounded-2xl space-y-5" enctype="multipart/form-data">
             @csrf
             @method('PUT')
 
@@ -53,6 +53,37 @@
                 <p class="text-xs text-gray-500 mt-1">
                     Serial number akan digunakan sebagai isi QR Code
                 </p>
+            </div>
+
+            {{-- Image Edit Section --}}
+            <div
+                x-data="{ currentUrl: '{{ $item->image_path ? (filter_var($item->image_path, FILTER_VALIDATE_URL) ? $item->image_path : '') : '' }}' }">
+                <label class="block mb-2 font-semibold text-gray-700">Item Image</label>
+
+                @if($item->image_path)
+                    <div class="mb-4">
+                        <p class="text-xs text-gray-500 mb-1">Current Image:</p>
+                        <img src="{{ $item->optimized_image }}" alt="Current Image"
+                            class="w-24 h-24 object-cover rounded-lg border border-gray-200 shadow-sm">
+                    </div>
+                @endif
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-gray-50 rounded-xl border border-gray-200">
+                    <div>
+                        <label class="block mb-1 text-xs font-bold text-gray-500 uppercase">Change File (Local)</label>
+                        <input type="file" name="image"
+                            class="w-full text-xs text-gray-500 file:mr-2 file:py-1 file:px-3 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                        @error('image') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+                    </div>
+                    <div>
+                        <label class="block mb-1 text-xs font-bold text-gray-500 uppercase">Or Update URL
+                            (External)</label>
+                        <input type="url" name="image_url" x-model="currentUrl"
+                            class="w-full rounded-lg border-gray-300 focus:ring-blue-500 focus:border-blue-500 px-3 py-1 text-sm"
+                            placeholder="https://">
+                        @error('image_url') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+                    </div>
+                </div>
             </div>
 
 

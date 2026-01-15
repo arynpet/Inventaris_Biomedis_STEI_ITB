@@ -96,9 +96,10 @@
                                     </svg>
                                 </div>
                                 <div>
-                                    <h3 class="text-lg font-bold text-gray-900">Saya punya 100 barang, bagaimana cara
+                                    <h3 class="text-lg font-bold text-gray-900">Saya punya banyak barang identik,
+                                        bagaimana cara
                                         input cepat?</h3>
-                                    <p class="text-sm text-gray-500 mt-1">Menggunakan fitur Batch Import via Excel.</p>
+                                    <p class="text-sm text-gray-500 mt-1">Menggunakan fitur Batch Input Mode.</p>
                                 </div>
                             </div>
                             <div class="ml-4 shrink-0">
@@ -113,38 +114,43 @@
                     <div x-show="open" x-collapse style="display: none;"
                         class="px-6 pb-6 pt-2 bg-gray-50 border-t border-gray-100">
                         <div class="prose prose-indigo max-w-none text-gray-600 ml-14">
-                            <p class="mb-4">Jangan khawatir, Anda tidak perlu input satu per satu. Gunakan Excel:</p>
+                            <p class="mb-4">Jangan khawatir, Anda tidak perlu input satu per satu. Gunakan fitur
+                                <strong>Batch Mode</strong> saat menambah barang:</p>
                             <ol class="list-decimal pl-5 space-y-3">
-                                <li>Masuk ke menu <strong>Import</strong> (biasanya ada di submenu Inventory).</li>
-                                <li><strong>Unduh Template Excel</strong> yang sudah disediakan sistem.</li>
-                                <li>Isi data barang Anda ke dalam file Excel tersebut.</li>
+                                <li>Masuk ke menu <span class="font-bold text-indigo-700">Inventory > Data
+                                        Barang</span>.</li>
+                                <li>Klik tombol <span class="font-bold text-indigo-700">+ Tambah Barang</span>.</li>
+                                <li>Pada form input, perhatikan opsi jumlah barang.</li>
                                 <li>
-                                    <div class="bg-yellow-50 border border-yellow-200 rounded-md p-3 my-2">
+                                    <div class="bg-indigo-50 border border-indigo-200 rounded-md p-3 my-2">
                                         <div class="flex">
                                             <div class="shrink-0">
-                                                <svg class="h-5 w-5 text-yellow-400" viewBox="0 0 20 20"
-                                                    fill="currentColor">
-                                                    <path fill-rule="evenodd"
-                                                        d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
-                                                        clip-rule="evenodd" />
+                                                <svg class="h-5 w-5 text-indigo-500" fill="none" viewBox="0 0 24 24"
+                                                    stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
                                                 </svg>
                                             </div>
                                             <div class="ml-3">
-                                                <h3 class="text-sm leading-5 font-medium text-yellow-800">
-                                                    Penting: Auto-Generate Serial
+                                                <h3 class="text-sm leading-5 font-medium text-indigo-800">
+                                                    Single vs Batch Mode
                                                 </h3>
-                                                <div class="mt-2 text-sm leading-5 text-yellow-700">
-                                                    <p>
-                                                        Kolom <strong>Serial Number BOLEH DIKOSONGKAN</strong>. Jika
-                                                        kosong, sistem akan otomatis membuatkan kode unik untuk barang
-                                                        tersebut. Ini sangat menghemat waktu!
-                                                    </p>
+                                                <div class="mt-2 text-sm leading-5 text-indigo-700">
+                                                    <ul class="list-disc pl-4 space-y-1">
+                                                        <li><b>Single Mode:</b> Isi jumlah 1. Cocok untuk barang
+                                                            unik/satuan.</li>
+                                                        <li><b>Batch Mode:</b> Isi jumlah > 1 (misal 50). Cocok untuk
+                                                            barang identik.</li>
+                                                    </ul>
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
                                 </li>
-                                <li>Upload file Excel yang sudah diisi kembali ke sistem.</li>
+                                <li>Isi <strong>Jumlah Input Barang</strong> (misal: 10).</li>
+                                <li>Kosongkan <strong>Nomor Seri</strong>. Sistem akan otomatis membuatkan kode unik
+                                    berurutan (misal: A-001 s/d A-010).</li>
+                                <li>Klik <strong>Simpan</strong>. 10 barang akan langsung terbuat sekaligus.</li>
                             </ol>
                         </div>
                     </div>

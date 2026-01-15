@@ -19,66 +19,21 @@
         </div>
 
         {{-- FORM CONTAINER (Alpine Data Scope) --}}
-        <div x-data="{ 
-            mode: 'single', 
-            autoGen: false, 
-            itemName: '',
-            catCode: 'E',
-            abbr: 'XXXX',
-            year: '{{ date('y') }}',
-            startSeq: '001',
-            qty: 1,
-            generatedSerials: [''], 
-            
-            init() {
-                this.$watch('autoGen', value => {
-                    if(value) {
-                        // Instant feedback pake data yg ada dulu
-                        this.previewSerials();
+        <div x-data="itemForm" class="bg-white shadow-xl border border-gray-100 rounded-3xl overflow-hidden">
 
-                        // Lalu update dari server/logika nama
-                        if(this.itemName) this.generateAbbr();
-                        else this.fetchSequence();
-                    }
-                });
-            },
-
-            generateAbbr() {
-                if(!this.itemName) return;
-                let clean = this.itemName.toUpperCase().replace(/[^A-Z]/g, '');
-                // Ambil huruf pertama tiap kata jika ada spasi, atau ambil konsonan
-                // Fallback sederhana: 4 Karakter pertama non-symbol
-                this.abbr = clean.substring(0, 4).padEnd(4, 'X');
-                this.fetchSequence();
-            },
-
-            updateCatCode(e) {
-                let text = e.target.options[e.target.selectedIndex].text;
-                this.catCode = text.charAt(0).toUpperCase(); // Ambil huruf depan (E, M, F)
-                this.fetchSequence();
-            },
-
-            fetchSequence() {
-                if(!this.autoGen) return;
-                fetch(`{{ route('items.next_sequence') }}?prefix=${this.catCode}&abbr=${this.abbr}&year=${this.year}`)
-                    .then(res => res.json())
-                    .then(data => {
-                        this.startSeq = data.sequence;
-                        this.previewSerials();
-                    });
-            },
-
-            previewSerials() {
-                if(!this.autoGen) return;
-                let list = [];
-                let current = parseInt(this.startSeq);
-                for(let i=0; i < this.qty; i++) {
-                    let seqStr = (current + i).toString().padStart(3, '0');
-                    list.push(`${this.catCode}-${this.abbr}-${this.year}${seqStr}`);
-                }
-                this.generatedSerials = list;
-            }
-        }" class="bg-white shadow-xl border border-gray-100 rounded-3xl overflow-hidden">
+            {{-- DEV MODE BUTTON --}}
+            @if(auth()->user()->is_dev_mode ?? false)
+                <div class="bg-yellow-100 p-2 text-center border-b border-yellow-200">
+                    <button type="button" @click="fillDummyData()"
+                        class="bg-yellow-400 hover:bg-yellow-500 text-yellow-900 font-bold py-1 px-4 rounded shadow text-sm flex items-center justify-center gap-2 mx-auto w-full">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                        </svg>
+                        ✨ Developer Mode: Auto Fill Random Data
+                    </button>
+                </div>
+            @endif
 
             {{-- TOGGLE SWITCH HEADER --}}
             <div class="bg-gray-50 border-b border-gray-200 p-2 flex justify-center">
@@ -109,7 +64,7 @@
             </div>
 
             {{-- FORM CONTENT --}}
-            <form action="{{ route('items.store') }}" method="POST" class="p-8 space-y-6">
+            <form action="{{ route('items.store') }}" method="POST" class="p-8 space-y-6" enctype="multipart/form-data">
                 @csrf
 
                 {{-- Input Mode (Hidden) --}}
@@ -176,6 +131,53 @@
                         <input type="text" name="fiscal_group"
                             class="w-full rounded-xl border-gray-300 focus:ring-blue-500 focus:border-blue-500 px-4 py-3"
                             value="{{ old('fiscal_group') }}">
+                    </div>
+                </div>
+
+                <hr class="border-gray-100">
+
+                {{-- 2. IMAGE UPLOAD (HYBRID) --}}
+                <div class="bg-gray-50 rounded-2xl p-6 border border-gray-200">
+                    <label class="block mb-4 font-bold text-gray-700 text-lg">Foto Barang (Opsional)</label>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {{-- Opsi A: Upload File --}}
+                        <div>
+                            <label class="block mb-2 font-bold text-gray-600 text-sm">Upload File (Local)</label>
+                            <div class="relative">
+                                <input type="file" name="image"
+                                    @change="if($el.value) { $refs.urlInput.value = ''; $refs.urlInput.disabled = true; } else { $refs.urlInput.disabled = false; }"
+                                    class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer">
+                                <p class="text-xs text-gray-400 mt-1">Format: JPG, PNG. Max: 2MB. Akan di-resize
+                                    otomatis.</p>
+                                @error('image')
+                                    <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                                @enderror
+                            </div>
+                        </div>
+
+                        {{-- Opsi B: External URL --}}
+                        <div class="relative">
+                            <label class="block mb-2 font-bold text-gray-600 text-sm">Atau Paste Link Gambar
+                                (External)</label>
+                            <div class="flex items-center gap-2">
+                                <div class="bg-gray-100 p-2 rounded-lg text-gray-400">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1">
+                                        </path>
+                                    </svg>
+                                </div>
+                                <input type="url" name="image_url" x-ref="urlInput"
+                                    class="w-full rounded-xl border-gray-300 focus:ring-blue-500 focus:border-blue-500 px-4 py-2 text-sm disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed"
+                                    placeholder="https://example.com/image.jpg" value="{{ old('image_url') }}">
+                            </div>
+                            <p class="text-xs text-gray-400 mt-1">Link langsung ke gambar. Akan di-proxy via wsrv.nl.
+                            </p>
+                            @error('image_url')
+                                <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                            @enderror
+                        </div>
                     </div>
                 </div>
 
@@ -378,4 +380,96 @@
             </form>
         </div>
     </div>
+
+    <script>
+        document.addEventListener('alpine:init', () => {
+            Alpine.data('itemForm', () => ({
+                mode: 'single',
+                autoGen: false,
+                itemName: '',
+                catCode: 'E',
+                abbr: 'XXXX',
+                year: '{{ date('y') }}',
+                startSeq: '001',
+                qty: 1,
+                generatedSerials: [''],
+
+                init() {
+                    this.$watch('autoGen', value => {
+                        if (value) {
+                            this.previewSerials();
+                            if (this.itemName) this.generateAbbr();
+                            else this.fetchSequence();
+                        }
+                    });
+                },
+
+                generateAbbr() {
+                    if (!this.itemName) return;
+                    let clean = this.itemName.toUpperCase().replace(/[^A-Z]/g, '');
+                    this.abbr = clean.substring(0, 4).padEnd(4, 'X');
+                    this.fetchSequence();
+                },
+
+                updateCatCode(e) {
+                    let text = e.target.options[e.target.selectedIndex].text;
+                    this.catCode = text.charAt(0).toUpperCase();
+                    this.fetchSequence();
+                },
+
+                fetchSequence() {
+                    if (!this.autoGen) return;
+                    fetch(`{{ route('items.next_sequence') }}?prefix=${this.catCode}&abbr=${this.abbr}&year=${this.year}`)
+                        .then(res => res.json())
+                        .then(data => {
+                            this.startSeq = data.sequence;
+                            this.previewSerials();
+                        });
+                },
+
+                previewSerials() {
+                    if (!this.autoGen) return;
+                    let list = [];
+                    let current = parseInt(this.startSeq);
+                    for (let i = 0; i < this.qty; i++) {
+                        let seqStr = (current + i).toString().padStart(3, '0');
+                        list.push(`${this.catCode}-${this.abbr}-${this.year}${seqStr}`);
+                    }
+                    this.generatedSerials = list;
+                },
+
+                fillDummyData() {
+                    const brands = ['Olympus', 'Nikon', 'Canon', 'Thermo Scientific', 'Leica', 'Fluke', 'Tektronix'];
+                    const types = ['X-500', 'Turbo 3000', 'Vision Pro', 'LabMaster V2', 'Spectra', 'Quantus'];
+                    const names = ['Mikroskop', 'Centrifuge', 'Oscilloscope', 'Multimeter', 'Spectrophotometer', 'Incubator', 'Pipette', 'Autoclave'];
+                    const conditions = ['good', 'good', 'good', 'damaged']; // Lebih banyak good
+                    const sources = ['Pembelian 2024', 'Hibah Dikti', 'Donasi Alumni', 'Pengadaan Mandiri'];
+
+                    // Random Name Generation
+                    const randomName = names[Math.floor(Math.random() * names.length)];
+                    const randomType = types[Math.floor(Math.random() * types.length)];
+
+                    this.itemName = randomName + ' ' + randomType;
+                    this.mode = 'single'; // Always single for now
+                    this.qty = 1; // Always 1
+                    this.autoGen = true;
+
+                    this.generateAbbr();
+
+                    document.querySelector('[name="brand"]').value = brands[Math.floor(Math.random() * brands.length)];
+                    document.querySelector('[name="type"]').value = randomType;
+                    document.querySelector('[name="asset_number"]').value = 'DEV-' + Math.floor(Math.random() * 10000);
+                    document.querySelector('[name="fiscal_group"]').value = 'Elektronik Lab';
+                    document.querySelector('[name="source"]').value = sources[Math.floor(Math.random() * sources.length)];
+                    document.querySelector('[name="acquisition_year"]').value = Math.floor(Math.random() * (2025 - 2020 + 1)) + 2020;
+                    document.querySelector('[name="condition"]').value = conditions[Math.floor(Math.random() * conditions.length)];
+
+                    const roomSelect = document.querySelector('[name="room_id"]');
+                    if (roomSelect.options.length > 1) {
+                        roomSelect.selectedIndex = Math.floor(Math.random() * (roomSelect.options.length - 1)) + 1;
+                    }
+                }
+            }));
+        });
+    </script>
 </x-app-layout>

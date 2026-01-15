@@ -182,6 +182,7 @@
                                                class="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50 cursor-pointer w-4 h-4">
                                     </th>
                                     <th scope="col" class="px-3 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">ID</th>
+                                    <th scope="col" class="px-3 py-3 text-center text-xs font-bold text-gray-500 uppercase tracking-wider w-16">Foto</th>
                                     <th scope="col" class="px-3 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider min-w-[200px]">Barang</th>
                                     <th scope="col" class="px-3 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider hidden md:table-cell">Merk</th>
                                     <th scope="col" class="px-3 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider hidden lg:table-cell">No Asset</th>
@@ -211,6 +212,18 @@
                                         {{-- ID --}}
                                         <td class="px-3 py-3 whitespace-nowrap text-xs text-gray-500">
                                             #{{ $item->id }}
+                                        </td>
+
+                                        {{-- Image Thumbnail --}}
+                                        <td class="px-3 py-3 text-center">
+                                            <div class="h-10 w-10 mx-auto rounded-lg overflow-hidden border border-gray-200 bg-gray-50 relative group shadow-sm">
+                                                 <img src="{{ $item->optimized_image }}" 
+                                                      alt="{{ $item->name }}" 
+                                                      class="object-cover w-full h-full transition-transform duration-300 group-hover:scale-110"
+                                                      loading="lazy"
+                                                      onerror="this.src='https://placehold.co/100x100?text=Err'">
+                                            </div>
+
                                         </td>
 
                                         {{-- Name --}}

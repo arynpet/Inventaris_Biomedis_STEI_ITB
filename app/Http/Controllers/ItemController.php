@@ -14,6 +14,7 @@ use SimpleSoftwareIO\QrCode\Facades\QrCode;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Str; // Dari Local (Penting untuk serial number)
 use Illuminate\Support\Arr; // Dari Remote (Penting untuk array manipulation)
+use Intervention\Image\Facades\Image; // Use Facade for V2
 
 class ItemController extends Controller
 {
@@ -95,6 +96,9 @@ class ItemController extends Controller
             'categories' => 'nullable|array',
             'categories.*' => 'exists:categories,id',
             'asset_number' => 'nullable|string|max:255',
+            // Image Validation
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'image_url' => 'nullable|string',
         ];
 
         if ($isBatch) {
@@ -105,6 +109,9 @@ class ItemController extends Controller
 
         $validated = $request->validate($rules);
         $savedCount = 0;
+
+        // --- PROSES GAMBAR (HYBRID) ---
+        $finalImagePath = $this->processImageUpload($request);
 
         if ($isBatch) {
             // --- MODE BATCH ---
@@ -121,11 +128,12 @@ class ItemController extends Controller
 
             foreach ($serials as $index => $sn) {
                 // Gunakan Arr::except (Fitur Remote) agar lebih bersih
-                $itemData = Arr::except($validated, ['serial_numbers_batch', 'categories']);
+                $itemData = Arr::except($validated, ['serial_numbers_batch', 'categories', 'image', 'image_url']);
 
                 $itemData['serial_number'] = $sn;
                 $itemData['name'] = $validated['name'] . ' ' . ($index + 1); // Logic Nama Berurut (Fitur Local)
                 $itemData['asset_number'] = $validated['asset_number']; // Asset Number Sama
+                $itemData['image_path'] = $finalImagePath;
 
                 $item = Item::create($itemData);
                 $this->generateAndSaveQr($item);
@@ -142,7 +150,8 @@ class ItemController extends Controller
         } else {
             // --- MODE SINGLE ---
             // Gunakan Arr::except (Fitur Remote)
-            $itemData = Arr::except($validated, ['categories']);
+            $itemData = Arr::except($validated, ['categories', 'image', 'image_url']);
+            $itemData['image_path'] = $finalImagePath;
 
             $item = Item::create($itemData);
             $this->generateAndSaveQr($item);
@@ -187,6 +196,9 @@ class ItemController extends Controller
             'condition' => 'required|in:good,damaged,broken',
             'categories' => 'nullable|array',
             'categories.*' => 'exists:categories,id',
+            // Image Validation
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'image_url' => 'nullable|string',
         ]);
 
         $qrFieldsChanged = ($validated['name'] !== $item->name) ||
@@ -195,8 +207,12 @@ class ItemController extends Controller
             ($validated['room_id'] !== $item->room_id) ||
             ($validated['condition'] !== $item->condition);
 
+        // --- PROSES GAMBAR (HYBRID) ---
+        $finalImagePath = $this->processImageUpload($request, $item->image_path);
+
         // Gunakan Arr::except (Fitur Remote)
-        $itemData = Arr::except($validated, ['categories']);
+        $itemData = Arr::except($validated, ['categories', 'image', 'image_url']);
+        $itemData['image_path'] = $finalImagePath;
 
         $message = 'Item updated successfully.';
         $alertType = 'success';
@@ -220,6 +236,62 @@ class ItemController extends Controller
         $item->categories()->sync($request->categories ?? []);
 
         return redirect()->route('items.index')->with($alertType, $message);
+    }
+
+    /**
+     * Helper: Process Image (Upload Local / External URL)
+     */
+    private function processImageUpload(Request $request, $existingPath = null)
+    {
+        // 1. Cek File Upload (Prioritas Utama)
+        if ($request->hasFile('image')) {
+            // Hapus file lama jika ada (dan fisik lokal)
+            if ($existingPath && !filter_var($existingPath, FILTER_VALIDATE_URL)) {
+                if (Storage::disk('public')->exists($existingPath)) {
+                    Storage::disk('public')->delete($existingPath);
+                }
+            }
+
+            $file = $request->file('image');
+            $filename = 'items/' . uniqid('img_', true) . '.jpg';
+
+            // Check if Intervention Image V2 Facade is working
+            // Note: In V2, Image::make is the static method.
+            try {
+                // Resize (Intervention V2 Logic)
+                // Need to use the Facade 'Image::make($file)'
+                $image = Image::make($file);
+
+                // Scale & Crop 500x500
+                $image->fit(500, 500);
+
+                // Encode to JPG (Default quality 90 in v2 if not specified, 80 here)
+                $encoded = $image->encode('jpg', 80);
+
+                // Simpan ke Storage Public
+                Storage::disk('public')->put($filename, (string) $encoded);
+                return $filename;
+
+            } catch (\Exception $e) {
+                // Fallback if resizing fails or class not found
+                // Log::error("Image Processing Failed: " . $e->getMessage()); // Optional logging
+                return $file->store('items', 'public');
+            }
+        }
+
+        // 2. Cek URL (Jika tidak ada file upload)
+        if ($request->filled('image_url')) {
+            // Jika user memasukkan URL baru, hapus file lama (jika itu file lokal)
+            // Agar tidak ada sampah file yang tidak terpakai
+            if ($existingPath && !filter_var($existingPath, FILTER_VALIDATE_URL)) {
+                if (Storage::disk('public')->exists($existingPath)) {
+                    Storage::disk('public')->delete($existingPath);
+                }
+            }
+            return $request->image_url;
+        }
+
+        return $existingPath; // Return old path if no new input
     }
 
     // =========================

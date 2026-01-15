@@ -93,18 +93,24 @@ class BorrowingController extends Controller
                 $newItemStatus = ($condition === 'good') ? 'available' : 'maintenance';
 
                 if ($borrow->item) {
+                    // FIX: Increment quantity when returned
+                    // Hanya increment jika borrowing mencatat quantity (berarti saat pinjam dikurangi)
+                    if ($borrow->quantity > 0) {
+                        $borrow->item->increment('quantity', $borrow->quantity);
+                    }
+
                     $borrow->item->update([
                         'status' => $newItemStatus,
                         'condition' => $condition
                     ]);
                 }
-                
+
                 // ✅ 3. LOG setiap borrowing yang di-return
                 ActivityLog::create([
-                    'user_id'   => auth()->id(),
-                    'action'    => 'bulk_return',
+                    'user_id' => auth()->id(),
+                    'action' => 'bulk_return',
                     'model' => 'Borrowing',
-                    'model_id'   => $borrow->id,
+                    'model_id' => $borrow->id,
                     'description' => "Returned '{$borrow->item->name}' (Condition: {$condition})",
                     'ip_address' => request()->ip(),
                 ]);
@@ -271,17 +277,22 @@ class BorrowingController extends Controller
 
             $newStatus = ($condition === 'good') ? 'available' : 'maintenance';
 
+            // FIX: Increment quantity when returned
+            if ($borrow->quantity > 0) {
+                $borrow->item->increment('quantity', $borrow->quantity);
+            }
+
             $borrow->item->update([
                 'status' => $newStatus,
                 'condition' => $condition
             ]);
-            
+
             // ✅ B. LOG di dalam transaction
             ActivityLog::create([
-                'user_id'   => auth()->id(),
-                'action'    => 'return_item',
+                'user_id' => auth()->id(),
+                'action' => 'return_item',
                 'model' => 'Borrowing',
-                'model_id'   => $borrow->id,
+                'model_id' => $borrow->id,
                 'description' => "Returned '{$borrow->item->name}' (Condition: {$condition})",
                 'ip_address' => request()->ip(),
             ]);

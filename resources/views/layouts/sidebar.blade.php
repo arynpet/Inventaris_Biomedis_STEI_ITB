@@ -66,7 +66,7 @@
                 <div x-show="sidebarOpen" x-transition class="min-w-0">
                     <h1
                         class="text-base font-bold truncate tracking-tight {{ $isDash ? 'text-cyan-100 font-mono' : 'text-gray-900' }}">
-                        STEIKA
+                        Biomedis
                     </h1>
                     <p
                         class="text-[10px] uppercase tracking-wider font-semibold truncate {{ $isDash ? 'text-cyan-600' : 'text-gray-500' }}">
@@ -168,6 +168,22 @@
                 </div>
                 <span x-show="sidebarOpen" x-transition class="text-sm font-medium truncate">Request Print</span>
             </a>
+
+            @if(auth()->check() && auth()->user()->is_dev_mode)
+                <div x-show="sidebarOpen" x-transition class="px-3 pt-4 pb-2">
+                    <p class="text-[10px] uppercase tracking-widest font-bold text-red-500">Developer</p>
+                </div>
+                <div x-show="!sidebarOpen" class="h-px mx-2 my-2 {{ $dividerClass }}"></div>
+
+                <a href="{{ route('dev.index') }}" :class="sidebarOpen ? 'justify-start' : 'justify-center'"
+                    class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group {{ dynamicActive('dev/dashboard', $isDash) }}">
+                    <div class="relative flex-shrink-0">
+                        <i data-lucide="code-2" class="w-5 h-5 text-red-500"></i>
+                    </div>
+                    <span x-show="sidebarOpen" x-transition class="text-sm font-medium truncate text-red-600">Dev
+                        Dashboard</span>
+                </a>
+            @endif
 
             <div x-show="sidebarOpen" x-transition class="px-3 pt-4 pb-2">
                 <p class="text-[10px] uppercase tracking-widest font-bold {{ $sectionTitleClass }}">Admin Area</p>

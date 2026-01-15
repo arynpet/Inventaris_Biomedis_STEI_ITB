@@ -35,16 +35,16 @@ class DatabaseSeeder extends Seeder
         //     PrintSeeder::class,
         ]);
 
-        Category::factory()->count(10)->create();
-        Item::factory()->count(50)->create();
-        PeminjamUser::factory()->trained()->count(20)->create();
-        MaterialType::factory()->count(2)->create();
-        Room::factory()->count(10)->create();
-        User::factory()->count(10)->create();
-        ItemOutLog::factory()->count(10)->create();
-        Print3D::factory()->count(10)->create();
-        Printer::factory()->count(20)->create();
-        Borrowing::factory()->returned()->count(30)->create();
-        RoomBorrowing::factory()->count(10)->create();
+        // Category::factory()->count(10)->create();
+        // Item::factory()->count(50)->create();
+        // PeminjamUser::factory()->trained()->count(20)->create();
+        // MaterialType::factory()->count(2)->create();
+        // Room::factory()->count(10)->create();
+        // User::factory()->count(10)->create();
+        // ItemOutLog::factory()->count(10)->create();
+        // Print3D::factory()->count(10)->create();
+        // Printer::factory()->count(20)->create();
+        // Borrowing::factory()->returned()->count(30)->create();
+        // RoomBorrowing::factory()->count(10)->create();
     }
 }
