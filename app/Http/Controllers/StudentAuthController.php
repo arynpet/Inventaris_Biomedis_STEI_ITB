@@ -59,25 +59,28 @@ class StudentAuthController extends Controller
             return redirect()->intended(route('public.catalog'))->with('success', 'Login berhasil!');
         }
 
-        // Fallback untuk user lama yang passwordnya mungkin masih NULL (belum di-hash)
-        // Cek manual (Legacy Support)
+        // Fallback untuk user lama yang passwordnya mungkin masih NULL
         $student = PeminjamUser::where('email', $request->email)->first();
-
-        // Check if student exists and passwords usage (checking raw nim against database nim for old data)
-        if ($student && $student->nim === $request->nim) {
-            // We need to verify if the password field is actually empty/null before overwriting blindly, 
-            // OR if the password check failed above, it implies password mismatch OR password is null.
-            // If password is null, allow login via NIM match and update hash.
-
-            if (!$student->password) {
-                // Update passwordnya biar lain kali bisa pakai hash
+        
+        if ($student) {
+            // Check 1: Password NULL (legacy user)
+            if (!$student->password && $student->nim === $request->nim) {
+                // Update password dengan hash
                 $student->update(['password' => Hash::make($request->nim)]);
-
+                
                 Auth::guard('student')->login($student);
-                return redirect()->intended(route('public.catalog'))->with('success', 'Login berhasil (Security Updated)!');
+                return redirect()->intended(route('public.catalog'))
+                    ->with('success', 'Login berhasil (Security Updated)!');
+            }
+            
+            // Check 2: Password exists tapi Hash::check gagal di Auth::attempt
+            // (Kemungkinan password corruption atau edge case)
+            if ($student->password && Hash::check($request->nim, $student->password)) {
+                Auth::guard('student')->login($student);
+                return redirect()->intended(route('public.catalog'))
+                    ->with('success', 'Login berhasil!');
             }
         }
-
         throw ValidationException::withMessages([
             'email' => ['Kombinasi Email dan NIM tidak cocok.'],
         ]);
