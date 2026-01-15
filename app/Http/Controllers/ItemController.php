@@ -74,51 +74,22 @@ class ItemController extends Controller
     }
 
     // =========================
-    // STORE (GABUNGAN BATCH & Arr::except)
+    // STORE (SECURE with Form Request)
     // =========================
-    public function store(Request $request)
+    public function store(\App\Http\Requests\Item\StoreItemRequest $request)
     {
         $isBatch = $request->input('input_mode') === 'batch';
-
-        // 1. Validasi
-        $rules = [
-            'name' => 'required|string|max:255',
-            'brand' => 'nullable|string|max:255',
-            'type' => 'nullable|string|max:255',
-            'room_id' => 'required|exists:rooms,id',
-            'quantity' => 'required|integer|min:1',
-            'source' => 'nullable|string|max:255',
-            'acquisition_year' => 'nullable|digits:4|integer',
-            'placed_in_service_at' => 'nullable|date',
-            'fiscal_group' => 'nullable|string|max:255',
-            'status' => 'required|in:available,borrowed,maintenance,dikeluarkan',
-            'condition' => 'required|in:good,damaged,broken',
-            'categories' => 'nullable|array',
-            'categories.*' => 'exists:categories,id',
-            'asset_number' => 'nullable|string|max:255',
-            // Image Validation
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-            'image_url' => 'nullable|string',
-        ];
-
-        if ($isBatch) {
-            $rules['serial_numbers_batch'] = 'required|string';
-        } else {
-            $rules['serial_number'] = 'required|string|max:255|unique:items,serial_number';
-        }
-
-        $validated = $request->validate($rules);
         $savedCount = 0;
 
-        // --- PROSES GAMBAR (HYBRID) ---
+        // Process Image Upload (Hybrid: file or URL)
         $finalImagePath = $this->processImageUpload($request);
 
         if ($isBatch) {
-            // --- MODE BATCH ---
+            // --- BATCH MODE ---
             $rawSerials = preg_split('/\r\n|\r|\n/', $request->serial_numbers_batch);
             $serials = array_values(array_filter(array_map('trim', $rawSerials)));
 
-            // Cek duplikat serial
+            // Check for duplicate serials in DB
             $existingSerials = Item::whereIn('serial_number', $serials)->pluck('serial_number')->toArray();
             if (!empty($existingSerials)) {
                 return back()->withInput()->withErrors([
@@ -126,13 +97,14 @@ class ItemController extends Controller
                 ]);
             }
 
-            foreach ($serials as $index => $sn) {
-                // Gunakan Arr::except (Fitur Remote) agar lebih bersih
-                $itemData = Arr::except($validated, ['serial_numbers_batch', 'categories', 'image', 'image_url']);
+            $baseData = $request->safeData();
+            unset($baseData['serial_number']); // Will be set individually
 
+            foreach ($serials as $index => $sn) {
+                // Secure mapping - no mass assignment
+                $itemData = $baseData;
                 $itemData['serial_number'] = $sn;
-                $itemData['name'] = $validated['name'] . ' ' . ($index + 1); // Logic Nama Berurut (Fitur Local)
-                $itemData['asset_number'] = $validated['asset_number']; // Asset Number Sama
+                $itemData['name'] = $request->name . ' ' . ($index + 1);
                 $itemData['image_path'] = $finalImagePath;
 
                 $item = Item::create($itemData);
@@ -148,9 +120,8 @@ class ItemController extends Controller
             $message = "Berhasil menambahkan $savedCount item secara batch!";
 
         } else {
-            // --- MODE SINGLE ---
-            // Gunakan Arr::except (Fitur Remote)
-            $itemData = Arr::except($validated, ['categories', 'image', 'image_url']);
+            // --- SINGLE MODE ---
+            $itemData = $request->safeData();
             $itemData['image_path'] = $finalImagePath;
 
             $item = Item::create($itemData);
@@ -159,8 +130,12 @@ class ItemController extends Controller
             if ($request->categories) {
                 $item->categories()->sync($request->categories);
             }
-            $message = 'Item berhasil dibuat.';
+
+            $savedCount = 1;
+            $message = 'Item added successfully!';
         }
+
+        ActivityLog::log('Item', null, 'created', "$savedCount item(s) created");
 
         return redirect()->route('items.index')->with('success', $message);
     }
@@ -176,42 +151,22 @@ class ItemController extends Controller
     }
 
     // =========================
-    // UPDATE (GABUNGAN QR LOGIC & Arr::except)
+    // UPDATE (SECURE with Form Request)
     // =========================
-    public function update(Request $request, Item $item)
+    public function update(\App\Http\Requests\Item\UpdateItemRequest $request, Item $item)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'brand' => 'nullable|string|max:255',
-            'type' => 'nullable|string|max:255',
-            'asset_number' => 'nullable|string|max:255',
-            'serial_number' => 'required|string|max:255|unique:items,serial_number,' . $item->id,
-            'room_id' => 'required|exists:rooms,id',
-            'quantity' => 'required|integer|min:1',
-            'source' => 'nullable|string|max:255',
-            'acquisition_year' => 'nullable|digits:4|integer',
-            'placed_in_service_at' => 'nullable|date',
-            'fiscal_group' => 'nullable|string|max:255',
-            'status' => 'required|in:available,borrowed,maintenance,dikeluarkan',
-            'condition' => 'required|in:good,damaged,broken',
-            'categories' => 'nullable|array',
-            'categories.*' => 'exists:categories,id',
-            // Image Validation
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-            'image_url' => 'nullable|string',
-        ]);
+        // Check if QR-relevant fields changed
+        $qrFieldsChanged = ($request->name !== $item->name) ||
+            ($request->asset_number !== $item->asset_number) ||
+            ($request->serial_number !== $item->serial_number) ||
+            ($request->room_id !== $item->room_id) ||
+            ($request->condition !== $item->condition);
 
-        $qrFieldsChanged = ($validated['name'] !== $item->name) ||
-            ($validated['asset_number'] !== $item->asset_number) ||
-            ($validated['serial_number'] !== $item->serial_number) ||
-            ($validated['room_id'] !== $item->room_id) ||
-            ($validated['condition'] !== $item->condition);
-
-        // --- PROSES GAMBAR (HYBRID) ---
+        // Process Image Upload (Hybrid)
         $finalImagePath = $this->processImageUpload($request, $item->image_path);
 
-        // Gunakan Arr::except (Fitur Remote)
-        $itemData = Arr::except($validated, ['categories', 'image', 'image_url']);
+        // Secure data mapping - no mass assignment
+        $itemData = $request->safeData();
         $itemData['image_path'] = $finalImagePath;
 
         $message = 'Item updated successfully.';
@@ -219,6 +174,7 @@ class ItemController extends Controller
 
         if ($qrFieldsChanged) {
             if (in_array($item->status, ['available', 'maintenance'])) {
+                // Delete old QR code
                 if ($item->qr_code && Storage::disk('public')->exists($item->qr_code)) {
                     Storage::disk('public')->delete($item->qr_code);
                 }

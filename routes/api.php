@@ -7,25 +7,51 @@ use App\Http\Controllers\Api\ScanController;
 
 /*
 |--------------------------------------------------------------------------
-| API Routes
+| API Routes (SECURED)
 |--------------------------------------------------------------------------
 |
-| Here is where you can register API routes for your application. These
-| routes are loaded by the RouteServiceProvider and all of them will
-| be assigned to the "api" middleware group. Make something great!
+| All sensitive endpoints are protected with auth:sanctum middleware.
+| Public endpoints have rate limiting to prevent abuse.
 |
 */
 
-// Public Routes
-Route::post('/login', [AuthController::class, 'login']);
-Route::get('/scan/{serial_number}', [ScanController::class, 'showBySerial']);
+// ====================================================
+// PUBLIC ROUTES (with Rate Limiting)
+// ====================================================
 
-// Protected Routes (Butuh Token)
-Route::middleware('auth:sanctum')->group(function () {
+// Authentication - Public but throttled
+Route::post('/login', [AuthController::class, 'login'])
+    ->middleware('throttle:5,1'); // Max 5 attempts per minute
+
+// ====================================================
+// PROTECTED ROUTES (Requires Sanctum Token)
+// ====================================================
+
+Route::middleware(['auth:sanctum', 'throttle:60,1'])->group(function () {
+
+    // Logout
     Route::post('/logout', [AuthController::class, 'logout']);
 
-    // Test Route
+    // Scanner - Get Item by Serial Number (MOVED TO PROTECTED)
+    // This prevents unauthorized users from scanning the entire inventory
+    Route::get('/scan/{serial_number}', [ScanController::class, 'showBySerial']);
+
+    // Test/Debug Route - Get authenticated user info
     Route::get('/user', function (Request $request) {
-        return $request->user();
+        return response()->json([
+            'success' => true,
+            'user' => $request->user(),
+        ]);
     });
+});
+
+// ====================================================
+// FALLBACK: Unauthorized Access
+// ====================================================
+
+Route::fallback(function () {
+    return response()->json([
+        'success' => false,
+        'message' => 'Endpoint not found or unauthorized. Please authenticate first.',
+    ], 404);
 });
