@@ -15,6 +15,7 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Str; // Dari Local (Penting untuk serial number)
 use Illuminate\Support\Arr; // Dari Remote (Penting untuk array manipulation)
 use Intervention\Image\Facades\Image; // Use Facade for V2
+use Carbon\Carbon;
 
 class ItemController extends Controller
 {
@@ -736,5 +737,35 @@ class ItemController extends Controller
             'sequence' => $formattedSeq,
             'full_preview' => "{$prefix}-{$abbr}-{$year}{$formattedSeq}"
         ]);
+    }
+
+    // =========================
+    // BULK QR LABEL PRINTING
+    // =========================
+
+    /**
+     * Print QR labels for multiple selected items (PDF)
+     */
+    public function printBulkQr(Request $request)
+    {
+        $validated = $request->validate([
+            'selected_ids' => 'required|array|min:1',
+            'selected_ids.*' => 'exists:items,id',
+        ]);
+
+        // Get selected items with necessary relations
+        $items = Item::with(['room'])->whereIn('id', $validated['selected_ids'])->get();
+
+        if ($items->isEmpty()) {
+            return back()->with('error', 'Tidak ada item yang dipilih.');
+        }
+
+        // Generate PDF with QR Code labels
+        $pdf = Pdf::loadView('pdf.qr_labels', compact('items'));
+        $pdf->setPaper('a4', 'portrait');
+
+        $filename = 'QR_Labels_' . Carbon::now()->format('Ymd_His') . '.pdf';
+
+        return $pdf->download($filename);
     }
 }

@@ -102,6 +102,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('items/regenerate-qr', [ItemController::class, 'regenerateAllQr'])->name('items.regenerate_qr');
     Route::post('items/bulk-action', [ItemController::class, 'bulkAction'])->name('items.bulk_action');
     Route::get('/items/{item}/qr-pdf', [ItemController::class, 'qrPdf'])->name('items.qr.pdf');
+    Route::post('/items/print-bulk-qr', [ItemController::class, 'printBulkQr'])->name('items.print_bulk_qr');
     Route::get('/api/items/by-qr/{qr}', [ItemController::class, 'findByQr'])->middleware('throttle:60,1'); // API internal
 
     // Barang Keluar (Logs)
@@ -114,6 +115,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Resource Items (Harus di bawah route custom items)
     Route::resource('items', ItemController::class);
+
+    // ====================================================
+    // 3.5. MAINTENANCE & CALIBRATION
+    // ====================================================
+    Route::resource('maintenances', App\Http\Controllers\MaintenanceController::class);
+    Route::post('/maintenances/{maintenance}/start', [App\Http\Controllers\MaintenanceController::class, 'start'])->name('maintenances.start');
+    Route::post('/maintenances/{maintenance}/complete', [App\Http\Controllers\MaintenanceController::class, 'complete'])->name('maintenances.complete');
 
     // ====================================================
     // 4. MASTER DATA

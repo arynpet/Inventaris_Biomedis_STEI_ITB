@@ -4,14 +4,15 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes; // Tambahkan ini
-use App\Traits\LogsActivity; // <--- Import Trait
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Spatie\Activitylog\Traits\LogsActivity;
+use Spatie\Activitylog\LogOptions;
 
 class Item extends Model
 {
-    use LogsActivity; // <--- Pasang CCTV disini
     use HasFactory;
-    use SoftDeletes; // Gunakan ini
+    use SoftDeletes;
+    use LogsActivity;
 
     protected $fillable = [
         'asset_number',
@@ -60,6 +61,18 @@ class Item extends Model
         'quantity' => 'integer',
     ];
 
+    /**
+     * Configure activity logging options
+     */
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly(['*']) // Log all fillable attributes
+            ->logOnlyDirty() // Only log changed attributes
+            ->dontSubmitEmptyLogs() // Don't log if nothing changed
+            ->setDescriptionForEvent(fn(string $eventName) => "Item {$this->name} was {$eventName}");
+    }
+
     public function room()
     {
         return $this->belongsTo(Room::class);
@@ -73,5 +86,10 @@ class Item extends Model
     public function latestLog()
     {
         return $this->hasOne(ItemOutLog::class)->latestOfMany();
+    }
+
+    public function maintenances()
+    {
+        return $this->hasMany(Maintenance::class)->orderBy('scheduled_date', 'desc');
     }
 }
