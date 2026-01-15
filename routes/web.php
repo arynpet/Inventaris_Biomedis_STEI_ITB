@@ -79,6 +79,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
     });
 
     // ====================================================
+    // 2.6. REPORTS & EXPORTS
+    // ====================================================
+    Route::prefix('reports')->name('reports.')->group(function () {
+        Route::get('/', [App\Http\Controllers\ReportController::class, 'index'])->name('index');
+        Route::get('/items/excel', [App\Http\Controllers\ReportController::class, 'exportItemsExcel'])->name('items.excel');
+        Route::post('/monthly/pdf', [App\Http\Controllers\ReportController::class, 'monthlyLoanPdf'])->name('monthly.pdf');
+        Route::get('/item-condition/pdf', [App\Http\Controllers\ReportController::class, 'itemConditionPdf'])->name('condition.pdf');
+    });
+
+    // ====================================================
     // 3. INVENTORY MANAGEMENT (ITEMS)
     // ====================================================
     // Trash & Restore
