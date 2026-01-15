@@ -171,9 +171,19 @@
                                 <input type="url" name="image_url" x-ref="urlInput"
                                     class="w-full rounded-xl border-gray-300 focus:ring-blue-500 focus:border-blue-500 px-4 py-2 text-sm disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed"
                                     placeholder="https://example.com/image.jpg" value="{{ old('image_url') }}">
+
+                                {{-- SEARCH BUTTON --}}
+                                <button type="button" @click="$dispatch('open-image-modal', { query: itemName })"
+                                    class="bg-blue-600 text-white px-4 py-2 rounded-xl text-sm font-bold hover:bg-blue-700 transition flex items-center gap-2 whitespace-nowrap shadow-md shadow-blue-500/30">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                                    </svg>
+                                    Cari Gambar
+                                </button>
                             </div>
-                            <p class="text-xs text-gray-400 mt-1">Link langsung ke gambar. Akan di-proxy via wsrv.nl.
-                            </p>
+                            <p class="text-xs text-gray-400 mt-1">Link langsung ke gambar. Anda bisa mencari foto atau
+                                ilustrasi via Pixabay.</p>
                             @error('image_url')
                                 <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
                             @enderror
@@ -262,6 +272,9 @@
                                 :class="autoGen ? 'bg-blue-50 text-blue-900 border-blue-300' : ''"
                                 placeholder="Masukkan Serial Number Unik" :required="mode === 'single'"
                                 :disabled="mode !== 'single'">
+                            @error('serial_number')
+                                <p class="text-red-500 text-sm mt-1 font-bold">{{ $message }}</p>
+                            @enderror
                         </div>
 
                         {{-- Batch View --}}
@@ -275,6 +288,9 @@
                                 :disabled="mode !== 'batch'"></textarea>
                             <p class="text-xs text-gray-500 mt-2">Daftar ini dibuat otomatis. Jika ingin edit manual,
                                 matikan "Smart Serial Generator" atau edit langsung di box.</p>
+                            @error('serial_numbers_batch')
+                                <p class="text-red-500 text-sm mt-1 font-bold">{{ $message }}</p>
+                            @enderror
                         </div>
                     </div>
 
@@ -470,6 +486,179 @@
                     }
                 }
             }));
+
+            // PIXABAY IMAGE SEARCH COMPONENT
+            Alpine.data('imageSearch', () => ({
+                modalOpen: false,
+                query: '',
+                apiKey: '54205676-9a99102b1018f739098165548', // API Key Pixabay
+                photos: [],
+                loading: false,
+                error: null,
+                imageType: 'all', // all, photo, vector
+
+                init() {
+                    window.addEventListener('open-image-modal', (e) => {
+                        this.query = e.detail.query || '';
+                        this.modalOpen = true;
+                        if (this.query) this.search();
+                    });
+                },
+
+                async search() {
+                    if (!this.query) return;
+                    this.loading = true;
+                    this.error = null;
+                    this.photos = [];
+
+                    try {
+                        const safeQuery = encodeURIComponent(this.query);
+                        // Docs: https://pixabay.com/api/docs/
+                        const url = `https://pixabay.com/api/?key=${this.apiKey}&q=${safeQuery}&image_type=${this.imageType}&per_page=12&safesearch=true`;
+
+                        const req = await fetch(url);
+                        const data = await req.json();
+
+                        if (parseInt(data.totalHits) > 0) {
+                            this.photos = data.hits;
+                        } else {
+                            this.error = 'Tidak ada gambar ditemukan.';
+                        }
+                    } catch (e) {
+                        console.error(e);
+                        this.error = 'Gagal mengambil data dari Pixabay. Cek koneksi atau API Key.';
+                    } finally {
+                        this.loading = false;
+                    }
+                },
+
+                selectImage(url) {
+                    // Update field input di x-data itemForm scope atau via DOM
+                    // Karena input url ada di luar scope ini, kita pakai DOM reference
+                    const urlInput = document.querySelector('input[name="image_url"]');
+                    if (urlInput) {
+                        urlInput.value = url;
+                        // Reset file input agar tidak konflik
+                        const fileInput = document.querySelector('input[name="image"]');
+                        if (fileInput) fileInput.value = '';
+                    }
+                    this.modalOpen = false;
+                }
+            }));
         });
     </script>
+
+    {{-- PIXABAY SEARCH MODAL --}}
+    <div x-data="imageSearch" x-show="modalOpen" x-cloak style="display: none;"
+        class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
+        @keydown.escape.window="modalOpen = false">
+
+        <div class="bg-white rounded-2xl w-full max-w-4xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden"
+            @click.away="modalOpen = false">
+
+            {{-- Header --}}
+            <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+                <h3 class="font-bold text-gray-800 flex items-center gap-2">
+                    <img src="https://pixabay.com/static/img/logo_square.png" class="w-6 h-6 rounded" alt="Pixabay">
+                    Cari Gambar (Pixabay)
+                </h3>
+                <button @click="modalOpen = false" class="text-gray-400 hover:text-gray-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
+                        </path>
+                    </svg>
+                </button>
+            </div>
+
+            {{-- Controls --}}
+            <div class="px-6 py-4 border-b border-gray-100 space-y-4">
+                <div class="flex gap-2">
+                    <input type="text" x-model="query" @keydown.enter="search()"
+                        class="flex-1 rounded-xl border-gray-300 focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="Kata kunci (English recommended)...">
+                    <button @click="search()"
+                        class="px-6 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 transition">
+                        Cari
+                    </button>
+                </div>
+
+                {{-- Filter Type --}}
+                <div class="flex items-center gap-4 text-sm">
+                    <span class="font-semibold text-gray-600">Tipe Gambar:</span>
+                    <label class="flex items-center gap-1 cursor-pointer">
+                        <input type="radio" name="img_type" value="all" x-model="imageType" @change="search()"
+                            class="text-blue-600 focus:ring-blue-500">
+                        <span>Semua</span>
+                    </label>
+                    <label class="flex items-center gap-1 cursor-pointer">
+                        <input type="radio" name="img_type" value="photo" x-model="imageType" @change="search()"
+                            class="text-blue-600 focus:ring-blue-500">
+                        <span>Foto</span>
+                    </label>
+                    <label class="flex items-center gap-1 cursor-pointer">
+                        <input type="radio" name="img_type" value="vector" x-model="imageType" @change="search()"
+                            class="text-blue-600 focus:ring-blue-500">
+                        <span>Vektor/Ilustrasi</span>
+                    </label>
+                </div>
+            </div>
+
+            {{-- Results Grid --}}
+            <div class="flex-1 overflow-y-auto p-6 bg-gray-50 custom-scrollbar">
+
+                {{-- Loading --}}
+                <div x-show="loading" class="flex flex-col items-center justify-center py-12">
+                    <svg class="animate-spin h-10 w-10 text-blue-500 mb-4" xmlns="http://www.w3.org/2000/svg"
+                        fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4">
+                        </circle>
+                        <path class="opacity-75" fill="currentColor"
+                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                        </path>
+                    </svg>
+                    <p class="text-gray-500 font-medium">Mencari gambar...</p>
+                </div>
+
+                {{-- Error/Empty --}}
+                <div x-show="!loading && (error || (photos.length === 0 && query))" class="text-center py-12">
+                    <p class="text-gray-500" x-text="error || 'Tidak ada hasil.'"></p>
+                </div>
+
+                {{-- Empty Start --}}
+                <div x-show="!loading && !query" class="text-center py-12">
+                    <p class="text-gray-400 italic">Ketik kata kunci untuk mencari gambar.</p>
+                </div>
+
+                {{-- Grid --}}
+                <div x-show="!loading && photos.length > 0"
+                    class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                    <template x-for="photo in photos" :key="photo.id">
+                        <div class="group relative rounded-xl overflow-hidden bg-gray-200 cursor-pointer shadow-sm hover:shadow-lg transition-all aspect-[4/3]"
+                            @click="selectImage(photo.largeImageURL)">
+                            <img :src="photo.webformatURL"
+                                class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
+
+                            {{-- Overlay info --}}
+                            <div
+                                class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent p-3 translate-y-full group-hover:translate-y-0 transition-transform duration-300">
+                                <p class="text-white text-xs font-bold truncate" x-text="photo.tags"></p>
+                                <p class="text-gray-300 text-[10px]" x-text="'by ' + photo.user"></p>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </div>
+
+            {{-- Footer --}}
+            <div
+                class="px-6 py-3 border-t border-gray-100 bg-gray-50 flex justify-between items-center text-xs text-gray-500">
+                <span>Powered by <a href="https://pixabay.com" target="_blank"
+                        class="text-blue-500 hover:underline">Pixabay</a></span>
+                <button @click="modalOpen = false"
+                    class="px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 font-bold text-gray-700">
+                    Batal
+                </button>
+            </div>
+        </div>
+    </div>
 </x-app-layout>
