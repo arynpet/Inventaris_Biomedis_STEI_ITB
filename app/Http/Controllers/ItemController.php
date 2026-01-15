@@ -273,12 +273,6 @@ class ItemController extends Controller
         return view('items.show', compact('item'));
     }
 
-    public function qrPdf(Item $item)
-    {
-        return Pdf::loadView('items.qr-pdf', compact('item'))
-            ->setPaper('a4')
-            ->stream('qr-' . $item->serial_number . '.pdf');
-    }
 
     // =========================
     // BARANG KELUAR
@@ -766,6 +760,21 @@ class ItemController extends Controller
 
         $filename = 'QR_Labels_' . Carbon::now()->format('Ymd_His') . '.pdf';
 
-        return $pdf->download($filename);
+        return $pdf->stream($filename);
+    }
+
+    /**
+     * Print single QR label
+     */
+    public function qrPdf(Item $item)
+    {
+        $items = collect([$item]); // Wrap single item in collection
+
+        $pdf = Pdf::loadView('pdf.qr_labels', compact('items'));
+        $pdf->setPaper('a4', 'portrait');
+
+        $filename = 'QR_' . Str::slug($item->name) . '_' . $item->id . '.pdf';
+
+        return $pdf->stream($filename);
     }
 }

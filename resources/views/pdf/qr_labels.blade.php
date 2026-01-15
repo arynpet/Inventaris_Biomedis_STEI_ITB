@@ -11,159 +11,125 @@
             size: A4 portrait;
         }
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
         body {
-            font-family: 'DejaVu Sans', Arial, sans-serif;
+            font-family: sans-serif;
             font-size: 9pt;
-            line-height: 1.3;
         }
 
-        .label-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 8mm;
+        .items-container {
             width: 100%;
+        }
+
+        .label-wrapper {
+            float: left;
+            width: 32%;
+            /* 3 columns roughly */
+            margin-right: 1.3%;
+            margin-bottom: 10mm;
+            height: 90mm;
+        }
+
+        .label-wrapper:nth-child(3n) {
+            margin-right: 0;
+            clear: right;
         }
 
         .label {
             border: 2px solid #333;
-            padding: 6mm;
+            padding: 5mm;
             text-align: center;
-            page-break-inside: avoid;
+            height: 100%;
             background: #fff;
-            border-radius: 8px;
-            height: 90mm;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
+            box-sizing: border-box;
         }
 
-        .label-header {
+        .header {
             font-weight: bold;
             font-size: 10pt;
-            color: #1E40AF;
-            margin-bottom: 4mm;
-            padding-bottom: 3mm;
-            border-bottom: 2px solid #3B82F6;
+            color: #000;
+            border-bottom: 2px solid #000;
+            padding-bottom: 5px;
+            margin-bottom: 10px;
+            text-transform: uppercase;
         }
 
-        .qr-container {
-            flex: 1;
-            display: flex;
-            align-items: center;
-            justify-center;
-            padding: 2mm 0;
+        .qr-img {
+            width: 45mm;
+            height: 45mm;
+            margin: 0 auto;
+            display: block;
         }
 
-        .qr-container img {
-            max-width: 50mm;
-            max-height: 50mm;
-            width: 100%;
-            height: auto;
+        .info {
+            margin-top: 10px;
+            border-top: 1px solid #ccc;
+            padding-top: 5px;
         }
 
-        .item-info {
-            margin-top: 3mm;
-            padding-top: 3mm;
-            border-top: 1px solid #E5E7EB;
-        }
-
-        .item-name {
+        .name {
             font-weight: bold;
             font-size: 9pt;
-            margin-bottom: 2mm;
-            color: #1F2937;
-            min-height: 12mm;
-            display: flex;
-            align-items: center;
-            justify-center;
-            text-align: center;
+            margin-bottom: 5px;
+            overflow: hidden;
+            height: 30px;
         }
 
-        .item-code {
-            font-family: 'Courier New', monospace;
+        .meta {
+            font-family: monospace;
             font-size: 8pt;
-            color: #6B7280;
-            margin-bottom: 1mm;
+            color: #333;
         }
 
-        .item-location {
+        .footer {
             font-size: 7pt;
-            color: #9CA3AF;
+            color: #777;
+            margin-top: 5px;
             font-style: italic;
         }
 
-        .label-footer {
-            font-size: 6pt;
-            color: #9CA3AF;
-            margin-top: 2mm;
-            padding-top: 2mm;
-            border-top: 1px dashed #E5E7EB;
-        }
-
-        /* Print-specific adjustments */
-        @media print {
-            .label {
-                page-break-inside: avoid;
-            }
+        .page-break {
+            page-break-after: always;
+            clear: both;
         }
     </style>
 </head>
 
 <body>
-    <div class="label-grid">
+    <div class="items-container">
         @foreach($items as $item)
-            <div class="label">
-                <div class="label-header">
-                    LAB BIOMEDIS STEI ITB
-                </div>
-
-                <div class="qr-container">
-                    @if($item->qr_code && \Illuminate\Support\Facades\Storage::disk('public')->exists($item->qr_code))
-                        {{-- Use existing QR code --}}
-                        <img src="{{ public_path('storage/' . $item->qr_code) }}" alt="QR Code">
-                    @else
-                        {{-- Generate QR code inline --}}
-                        <img src="data:image/svg+xml;base64,{{ base64_encode(QrCode::format('svg')->size(200)->generate($item->serial_number)) }}"
-                            alt="QR Code">
-                    @endif
-                </div>
-
-                <div class="item-info">
-                    <div class="item-name">
-                        {{ \Illuminate\Support\Str::limit($item->name, 40, '...') }}
+            <div class="label-wrapper">
+                <div class="label">
+                    <div class="header">
+                        Lab Biomedis STEI
                     </div>
 
-                    <div class="item-code">
-                        SN: {{ $item->serial_number }}
+                    <div class="qr-box">
+                        @if($item->qr_code && file_exists(public_path('storage/' . $item->qr_code)))
+                            <img src="{{ public_path('storage/' . $item->qr_code) }}" class="qr-img" alt="QR">
+                        @else
+                            {{-- Inline Base64 SVG --}}
+                            <img src="data:image/svg+xml;base64,{{ base64_encode(SimpleSoftwareIO\QrCode\Facades\QrCode::format('svg')->size(150)->generate($item->serial_number)) }}"
+                                class="qr-img" alt="QR">
+                        @endif
                     </div>
 
-                    @if($item->asset_number)
-                        <div class="item-code">
-                            Asset: {{ $item->asset_number }}
+                    <div class="info">
+                        <div class="name">
+                            {{ $item->name }}
                         </div>
-                    @endif
-
-                    @if($item->room)
-                        <div class="item-location">
-                            📍 {{ $item->room->name }}
+                        <div class="meta">
+                            SN: {{$item->serial_number}}<br>
+                            @if($item->asset_number) Asset: {{$item->asset_number}} @endif
                         </div>
-                    @endif
-                </div>
-
-                <div class="label-footer">
-                    Inventaris Lab Biomedis {{ date('Y') }}
+                        <div class="footer">
+                            {{ $item->room->name ?? '-' }}
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            {{-- Page break after every 15 labels (5 rows x 3 columns) --}}
-            @if(($loop->iteration % 15 == 0) && !$loop->last)
-                <div style="page-break-after: always;"></div>
+            @if($loop->iteration % 15 == 0 && !$loop->last)
+                <div class="page-break"></div>
             @endif
         @endforeach
     </div>
