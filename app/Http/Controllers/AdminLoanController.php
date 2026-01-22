@@ -33,25 +33,25 @@ class AdminLoanController extends Controller
     {
         $loan = null;
         $item = null;
-        
+
         // Transaction untuk data integrity
         DB::transaction(function () use ($id, &$loan, &$item) {
             $loan = Loan::where('id', $id)->lockForUpdate()->firstOrFail();
             $item = Item::where('id', $loan->item_id)->lockForUpdate()->firstOrFail();
-            
+
             if ($loan->status !== 'pending') {
                 throw new \Exception('Status peminjaman sudah bukan pending.');
             }
-            
+
             if ($item->quantity < $loan->quantity) {
                 throw new \Exception('Stok barang tidak cukup saat ini.');
             }
-            
+
             $loan->update([
                 'status' => 'active',
                 'admin_note' => 'Approved by Admin',
             ]);
-            
+
             Borrowing::create([
                 'user_id' => $loan->user_id,
                 'item_id' => $loan->item_id,
@@ -60,15 +60,16 @@ class AdminLoanController extends Controller
                 'return_date' => $loan->return_date,
                 'status' => 'borrowed',
                 'notes' => $loan->purpose,
+                'penanggung_jawab' => $loan->penanggung_jawab,
             ]);
-            
+
             $item->decrement('quantity', $loan->quantity);
-            
+
             if ($item->fresh()->quantity == 0) {
                 $item->update(['status' => 'borrowed']);
             }
         });
-        
+
         ActivityLog::create([
             'user_id' => auth()->id(),
             'action' => 'approve_loan',
@@ -77,7 +78,7 @@ class AdminLoanController extends Controller
             'description' => "Approved loan request ID {$loan->id} for {$loan->user->name} - Item: {$item->name} (Qty: {$loan->quantity})",
             'ip_address' => request()->ip(),
         ]);
-        
+
         return redirect()->route('admin.loans.pending')
             ->with('success', 'Permintaan peminjaman berhasil di-APPROVE dan masuk ke Peminjaman Aktif.');
     }
@@ -89,18 +90,18 @@ class AdminLoanController extends Controller
         $request->validate([
             'reason' => 'nullable|string'
         ]);
-        
+
         $loan = Loan::with('user')->findOrFail($id);
-        
+
         if ($loan->status !== 'pending') {
             return back()->with('error', 'Peminjaman sudah diproses sebelumnya.');
         }
-        
+
         $loan->update([
             'status' => 'rejected',
             'admin_note' => $request->input('reason', 'Ditolak oleh Admin'),
         ]);
-        
+
         ActivityLog::create([
             'user_id' => auth()->id(),
             'action' => 'reject_loan',
@@ -109,7 +110,7 @@ class AdminLoanController extends Controller
             'description' => "Rejected loan request ID {$loan->id} for {$loan->user->name}. Reason: " . ($request->input('reason') ?? 'No reason provided'),
             'ip_address' => request()->ip(),
         ]);
-        
+
         return redirect()->route('admin.loans.pending')
             ->with('success', 'Permintaan peminjaman berhasil di-TOLAK.');
     }

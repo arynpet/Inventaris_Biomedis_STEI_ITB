@@ -92,4 +92,8 @@ class Item extends Model
     {
         return $this->hasMany(Maintenance::class)->orderBy('scheduled_date', 'desc');
     }
+    public function borrowings()
+    {
+        return $this->hasMany(Borrowing::class)->orderBy('borrow_date', 'desc');
+    }
 }

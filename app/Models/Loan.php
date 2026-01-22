@@ -18,6 +18,7 @@ class Loan extends Model
         'return_date',
         'status',
         'admin_note',
+        'penanggung_jawab',
     ];
 
     protected $casts = [

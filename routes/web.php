@@ -25,6 +25,11 @@ use App\Http\Controllers\NaraController;
 
 Route::redirect('/', '/login');
 
+// Debug Route (Remove in production)
+Route::get('/debug-remote', function () {
+    return view('debug-remote');
+})->middleware('auth');
+
 // Public Catalog
 // Public Catalog
 Route::get('/katalog', [App\Http\Controllers\PublicCatalogController::class, 'index'])->name('public.catalog');
@@ -101,6 +106,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Bulk Actions & QR
     Route::post('items/regenerate-qr', [ItemController::class, 'regenerateAllQr'])->name('items.regenerate_qr');
     Route::post('items/bulk-action', [ItemController::class, 'bulkAction'])->name('items.bulk_action');
+    Route::post('items/bulk-update', [ItemController::class, 'bulkUpdate'])->name('items.bulk_update');
     Route::get('/items/{item}/qr-pdf', [ItemController::class, 'qrPdf'])->name('items.qr.pdf');
     Route::post('/items/print-bulk-qr', [ItemController::class, 'printBulkQr'])->name('items.print_bulk_qr');
     Route::get('/api/items/by-qr/{qr}', [ItemController::class, 'findByQr'])->middleware('throttle:60,1'); // API internal
@@ -112,6 +118,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('out/{item}', [ItemController::class, 'outStore'])->name('items.out.store');
         Route::get('out/{item}/pdf', [ItemController::class, 'outPdf'])->name('items.out.pdf');
     });
+
+    // Remote Camera / Scan to Upload
+    Route::get('/remote-upload/token', [App\Http\Controllers\RemoteUploadController::class, 'generateToken'])->name('remote.token');
 
     // Resource Items (Harus di bawah route custom items)
     Route::resource('items', ItemController::class);

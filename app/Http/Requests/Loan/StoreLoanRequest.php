@@ -26,6 +26,7 @@ class StoreLoanRequest extends FormRequest
             'borrow_date' => 'required|date|after_or_equal:today',
             'return_date' => 'required|date|after:borrow_date',
             'purpose' => 'required|string|max:500|min:10',
+            'penanggung_jawab' => 'required|string|max:255',
         ];
     }
 
@@ -47,6 +48,8 @@ class StoreLoanRequest extends FormRequest
             'purpose.required' => 'Keperluan peminjaman wajib diisi.',
             'purpose.min' => 'Keperluan minimal 10 karakter.',
             'purpose.max' => 'Keperluan maksimal 500 karakter.',
+            'penanggung_jawab.required' => 'Penanggung jawab / Pembimbing wajib diisi.',
+            'penanggung_jawab.max' => 'Penanggung jawab maksimal 255 karakter.',
         ];
     }
 
@@ -62,6 +65,7 @@ class StoreLoanRequest extends FormRequest
             'borrow_date' => $this->input('borrow_date'),
             'return_date' => $this->input('return_date'),
             'purpose' => $this->input('purpose'),
+            'penanggung_jawab' => $this->input('penanggung_jawab'),
             'status' => 'pending', // Default status
         ];
     }

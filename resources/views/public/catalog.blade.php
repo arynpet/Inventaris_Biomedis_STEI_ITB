@@ -43,6 +43,19 @@
             <span>ℹ️ {{ session('info') }}</span>
         </div>
     @endif
+    
+    {{-- GENERIC ERROR ALERT (Validation) --}}
+    @if ($errors->any())
+        <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 5000)"
+            class="fixed top-36 left-1/2 transform -translate-x-1/2 z-50 px-6 py-4 bg-red-500 text-white rounded-xl shadow-2xl flex flex-col items-center gap-1 text-sm animate-bounce-short text-center min-w-[300px]">
+            <span class="font-bold text-lg">⚠️ Gagal Mengajukan!</span>
+            <ul class="list-disc list-inside text-xs mt-1">
+                @foreach ($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
 
 
     {{-- STICKY HEADER --}}
@@ -286,13 +299,13 @@
                         <span class="font-semibold text-gray-900 text-right" x-text="activeItem?.type || '-'"></span>
                     </div>
                     <div class="bg-gray-50 px-4 py-2 flex justify-between items-center">
-                        <span class="text-gray-500">Kode Aset</span>
+                        <span class="text-gray-500">Kode Serial</span>
                         <span class="font-mono bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded text-xs border border-yellow-200" x-text="activeItem?.serial_number || '-'"></span>
                     </div>
                 </div>
 
                 <p class="text-xs text-center text-gray-500 mt-2">
-                    Tunjukkan kode aset kepada petugas lab saat ingin meminjam.
+                    Tunjukkan kode serial kepada petugas lab saat ingin meminjam.
                 </p>
 
                 {{-- Action if Logged In --}}
@@ -327,6 +340,11 @@
                             <div>
                                 <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Keperluan</label>
                                 <textarea name="purpose" rows="2" class="w-full rounded-lg border-gray-300 text-sm focus:ring-blue-500 focus:border-blue-500" placeholder="Contoh: Praktikum Modul 2" required></textarea>
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Penanggung Jawab / Pembimbing</label>
+                                <input type="text" name="penanggung_jawab" class="w-full rounded-lg border-gray-300 text-sm focus:ring-blue-500 focus:border-blue-500" placeholder="Contoh: Dr. Eng. Widih atau Pak Aslab" required>
                             </div>
 
                             <div class="flex gap-2 pt-2">

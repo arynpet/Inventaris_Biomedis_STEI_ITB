@@ -105,6 +105,12 @@ class BorrowingController extends Controller
                     ]);
                 }
 
+                // Sync Loan status (Student Request)
+                \App\Models\Loan::where('user_id', $borrow->user_id)
+                    ->where('item_id', $borrow->item_id)
+                    ->where('status', 'active')
+                    ->update(['status' => 'returned']);
+
                 // ✅ 3. LOG setiap borrowing yang di-return
                 ActivityLog::create([
                     'user_id' => auth()->id(),
@@ -286,6 +292,12 @@ class BorrowingController extends Controller
                 'status' => $newStatus,
                 'condition' => $condition
             ]);
+
+            // Sync Loan Status (Student Request)
+            \App\Models\Loan::where('user_id', $borrow->user_id)
+                ->where('item_id', $borrow->item_id)
+                ->where('status', 'active')
+                ->update(['status' => 'returned']);
 
             // ✅ B. LOG di dalam transaction
             ActivityLog::create([

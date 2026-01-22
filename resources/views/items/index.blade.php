@@ -464,6 +464,18 @@
             <div class="h-8 w-px bg-gray-300"></div>
 
             <div class="flex items-center gap-3 flex-1 justify-end">
+                {{-- Edit Massal --}}
+                <button @click="openEditModal" class="flex items-center gap-2 px-4 py-2 bg-amber-500 text-white hover:bg-amber-600 rounded-xl transition text-sm font-semibold shadow-md">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                    Edit Massal
+                </button>
+
+                {{-- Print QR --}}
+                <button @click="submitBulkAction('print_qr')" class="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white hover:bg-indigo-700 rounded-xl transition text-sm font-semibold shadow-md">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4h8v-4m-6-6h6m-6 0a2 2 0 00-2 2v6a2 2 0 002 2h2m0-8h6a2 2 0 012 2v6a2 2 0 01-2 2h-2m-6 0h2"></path></svg>
+                    Cetak QR
+                </button>
+
                 <button @click="submitBulkAction('copy')" class="flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded-xl transition text-sm font-semibold">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
                     Duplicate
@@ -473,6 +485,98 @@
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                     Hapus Terpilih
                 </button>
+            </div>
+        </div>
+
+        {{-- MODAL BULK EDIT --}}
+         <div x-show="showEditModal" x-cloak class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+            <div x-show="showEditModal" x-transition.opacity class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity backdrop-blur-sm"></div>
+
+            <div class="flex min-h-full items-center justify-center p-4 text-center">
+                <div x-show="showEditModal"
+                     x-transition:enter="ease-out duration-300"
+                     x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                     x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
+                     x-transition:leave="ease-in duration-200"
+                     x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
+                     x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                     @click.away="showEditModal = false"
+                     class="relative transform overflow-hidden rounded-2xl bg-white text-left shadow-xl transition-all sm:w-full sm:max-w-lg">
+                    
+                    <form action="{{ route('items.bulk_update') }}" method="POST">
+                        @csrf
+                        {{-- Hidden Selected IDs --}}
+                        <template x-for="id in selectedItems">
+                            <input type="hidden" name="selected_ids[]" :value="id">
+                        </template>
+
+                        <div class="bg-white px-4 pb-4 pt-5 sm:p-6 sm:pb-4">
+                            <div class="sm:flex sm:items-start">
+                                <div class="mx-auto flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-amber-100 sm:mx-0 sm:h-10 sm:w-10">
+                                    <svg class="h-6 w-6 text-amber-600" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
+                                    </svg>
+                                </div>
+                                <div class="mt-3 text-center sm:ml-4 sm:mt-0 sm:text-left w-full">
+                                    <h3 class="text-lg font-semibold leading-6 text-gray-900">Edit Massal</h3>
+                                    <div class="mt-2">
+                                        <p class="text-sm text-gray-500 mb-4">
+                                            Anda akan mengedit <span class="font-bold text-gray-800" x-text="selectedItems.length"></span> item terpilih.
+                                        </p>
+                                        
+                                        <div class="space-y-4">
+                                            {{-- Field Selection --}}
+                                            <div>
+                                                <label class="block text-sm font-medium text-gray-700 mb-1">Field yang ingin diubah</label>
+                                                <select name="field" x-model="editField" class="w-full rounded-lg border-gray-300 focus:ring-amber-500 focus:border-amber-500 shadow-sm">
+                                                    <option value="acquisition_year">Tahun Perolehan</option>
+                                                    <option value="condition">Kondisi</option>
+                                                    <option value="room_id">Ruangan</option>
+                                                </select>
+                                            </div>
+
+                                            {{-- Value Inputs based on Field --}}
+                                            
+                                            {{-- 1. Acquisition Year --}}
+                                            <div x-show="editField === 'acquisition_year'">
+                                                <label class="block text-sm font-medium text-gray-700 mb-1">Tahun Baru</label>
+                                                <input type="number" name="value" class="w-full rounded-lg border-gray-300 focus:ring-amber-500 focus:border-amber-500 shadow-sm" placeholder="Contoh: 2024" :disabled="editField !== 'acquisition_year'">
+                                            </div>
+
+                                            {{-- 2. Condition --}}
+                                            <div x-show="editField === 'condition'" style="display: none;">
+                                                <label class="block text-sm font-medium text-gray-700 mb-1">Kondisi Baru</label>
+                                                <select name="value" class="w-full rounded-lg border-gray-300 focus:ring-amber-500 focus:border-amber-500 shadow-sm" :disabled="editField !== 'condition'">
+                                                    <option value="good">Baik (Good)</option>
+                                                    <option value="damaged">Rusak Ringan (Damaged)</option>
+                                                    <option value="broken">Rusak Berat (Broken)</option>
+                                                </select>
+                                            </div>
+
+                                            {{-- 3. Room --}}
+                                            <div x-show="editField === 'room_id'" style="display: none;">
+                                                <label class="block text-sm font-medium text-gray-700 mb-1">Ruangan Baru</label>
+                                                <select name="value" class="w-full rounded-lg border-gray-300 focus:ring-amber-500 focus:border-amber-500 shadow-sm" :disabled="editField !== 'room_id'">
+                                                    @foreach($rooms as $room)
+                                                        <option value="{{ $room->id }}">{{ $room->name }}</option>
+                                                    @endforeach
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-gray-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
+                            <button type="submit" class="inline-flex w-full justify-center rounded-lg bg-amber-600 px-4 py-2 text-sm font-bold text-white shadow-sm hover:bg-amber-500 sm:ml-3 sm:w-auto transition">
+                                Simpan Perubahan
+                            </button>
+                            <button type="button" @click="showEditModal = false" class="mt-3 inline-flex w-full justify-center rounded-lg bg-white px-4 py-2 text-sm font-bold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto transition">
+                                Batal
+                            </button>
+                        </div>
+                    </form>
+                </div>
             </div>
         </div>
 
@@ -499,17 +603,23 @@
         function itemPage(pageIds = []) {
             return {
                 showModal: false,
+                showEditModal: false, // New state for Edit Bulk
+                editField: 'acquisition_year', // Default field
                 deleteUrl: '',
                 deleteName: '',
                 selectedItems: [],
                 pageIds: pageIds,
                 lastCheckedIndex: null,
-                activeQr: null, // New state for QR Zoom
+                activeQr: null, 
 
                 confirmDelete(id, name) {
                     this.showModal = true;
                     this.deleteName = name;
                     this.deleteUrl = `/items/${id}`;
+                },
+
+                openEditModal() {
+                    this.showEditModal = true;
                 },
 
                 toggleItem(id, index, event) {
@@ -543,6 +653,17 @@
                 },
 
                 submitBulkAction(type) {
+                    if (type === 'print_qr') {
+                        // Direct submit to print route
+                        const form = document.getElementById('bulkActionForm');
+                        const originalAction = form.action;
+                        form.action = "{{ route('items.print_bulk_qr') }}";
+                        form.submit();
+                        // Restore action in case user stays on page (download)
+                        setTimeout(() => form.action = originalAction, 1000);
+                        return;
+                    }
+
                     const message = type === 'delete' 
                         ? `Yakin ingin menghapus ${this.selectedItems.length} item yang dipilih?` 
                         : `Yakin ingin menduplikasi ${this.selectedItems.length} item yang dipilih?`;

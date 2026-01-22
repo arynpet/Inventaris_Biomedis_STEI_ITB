@@ -380,6 +380,115 @@
                     </div>
                 @endif
 
+                {{--
+                ================================================
+                SECTION: RIWAYAT PEMINJAMAN (HISTORY)
+                ================================================
+                --}}
+                @if($item->borrowings->count() > 0)
+                    <div class="mt-8 pt-8 border-t border-gray-200 col-span-1 lg:col-span-2">
+                        <div class="flex items-center gap-3 mb-6">
+                            <div class="p-2 bg-indigo-100 rounded-lg text-indigo-600">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                            </div>
+                            <h3 class="text-xl font-bold text-gray-800">Riwayat Peminjaman</h3>
+                        </div>
+
+                        <div class="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm">
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-left border-collapse">
+                                    <thead>
+                                        <tr class="bg-gray-50 border-b border-gray-200 text-xs uppercase tracking-wider text-gray-500 font-bold">
+                                            <th class="px-6 py-4">Peminjam</th>
+                                            <th class="px-6 py-4">Tanggal Pinjam</th>
+                                            <th class="px-6 py-4">Tanggal Kembali</th>
+                                            <th class="px-6 py-4">Durasi</th>
+                                            <th class="px-6 py-4">Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-gray-100">
+                                        @foreach($item->borrowings as $loan)
+                                            <tr class="hover:bg-gray-50/50 transition-colors">
+                                                {{-- Peminjam --}}
+                                                <td class="px-6 py-4">
+                                                    <div class="flex items-center gap-3">
+                                                        <div class="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-xs font-bold shadow-sm">
+                                                            {{ substr($loan->borrower->name ?? '?', 0, 2) }}
+                                                        </div>
+                                                        <div>
+                                                            <p class="text-sm font-bold text-gray-900">{{ $loan->borrower->name ?? 'Unknown User' }}</p>
+                                                            <p class="text-[10px] text-gray-500">{{ $loan->borrower->nim ?? '-' }}</p>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                
+                                                {{-- Tgl Pinjam --}}
+                                                <td class="px-6 py-4">
+                                                     <div class="flex flex-col">
+                                                         <span class="text-sm font-medium text-gray-700">{{ $loan->borrow_date->format('d M Y') }}</span>
+                                                         <span class="text-[10px] text-gray-400">{{ $loan->borrow_date->format('H:i') }} WIB</span>
+                                                     </div>
+                                                </td>
+
+                                                {{-- Tgl Kembali --}}
+                                                <td class="px-6 py-4">
+                                                    @if($loan->status == 'returned' && $loan->return_date)
+                                                        <div class="flex flex-col">
+                                                            <span class="text-sm font-medium text-emerald-700">{{ $loan->return_date->format('d M Y') }}</span>
+                                                            <span class="text-[10px] text-gray-400">Dikembalikan</span>
+                                                        </div>
+                                                    @elseif($loan->return_date)
+                                                        <span class="text-sm text-gray-500">{{ $loan->return_date->format('d M Y') }} (Rencana)</span>
+                                                    @else
+                                                        <span class="text-sm text-gray-400">-</span>
+                                                    @endif
+                                                </td>
+
+                                                {{-- Durasi --}}
+                                                <td class="px-6 py-4">
+                                                    @php
+                                                        $start = $loan->borrow_date; 
+                                                        $end = ($loan->status == 'returned' && $loan->return_date) ? $loan->return_date : \Carbon\Carbon::now();
+                                                        $diff = $start->diffInDays($end);
+                                                    @endphp
+                                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-600">
+                                                        {{ $diff == 0 ? 'Hari ini' : $diff . ' Hari' }}
+                                                    </span>
+                                                </td>
+
+                                                {{-- Status --}}
+                                                <td class="px-6 py-4">
+                                                    @if($loan->status == 'borrowed')
+                                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-700 border border-amber-200">
+                                                            <span class="w-1.5 h-1.5 bg-amber-500 rounded-full mr-1.5"></span>
+                                                            Sedang Dipinjam
+                                                        </span>
+                                                    @elseif($loan->status == 'returned')
+                                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-700 border border-emerald-200">
+                                                            Selesai
+                                                        </span>
+                                                    @elseif($loan->status == 'overdue')
+                                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-red-100 text-red-700 border border-red-200">
+                                                            Terlambat
+                                                        </span>
+                                                    @else
+                                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-gray-100 text-gray-600">
+                                                            {{ ucfirst($loan->status) }}
+                                                        </span>
+                                                    @endif
+                                                </td>
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                @endif
+
             </div>
 
             {{-- ACTION BUTTONS --}}

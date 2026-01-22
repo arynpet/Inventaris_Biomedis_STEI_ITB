@@ -101,6 +101,7 @@
                                                class="rounded border-gray-300 text-blue-600 focus:ring-blue-500 w-4 h-4 cursor-pointer">
                                     </th>
                                     <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Peminjam</th>
+                                    <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Penanggung Jawab</th>
                                     <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Barang</th>
                                     <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Tgl Pinjam</th>
                                     <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Tenggat</th>
@@ -133,6 +134,11 @@
                                                 </div>
                                                 <div class="text-sm font-semibold text-gray-900">{{ $b->borrower->name ?? 'User Dihapus' }}</div>
                                             </div>
+                                        </td>
+
+                                        {{-- PENANGGUNG JAWAB --}}
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="text-sm text-gray-600 font-medium">{{ $b->penanggung_jawab ?? '-' }}</div>
                                         </td>
 
                                         {{-- BARANG --}}

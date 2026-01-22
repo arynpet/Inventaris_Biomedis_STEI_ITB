@@ -43,6 +43,9 @@
                                         Qty: {{ $loan->quantity }} &middot; Tgl: {{ $loan->borrow_date->format('d M Y') }}
                                     </div>
                                     <div class="text-sm text-gray-600 mt-1 italic">"{{ $loan->purpose }}"</div>
+                                    <div class="text-xs text-gray-500 mt-1">
+                                        <span class="font-semibold">PJ:</span> {{ $loan->penanggung_jawab ?? '-' }}
+                                    </div>
                                 </div>
                                 <div class="text-right">
                                     @if($loan->status == 'pending')
@@ -52,6 +55,10 @@
                                     @elseif($loan->status == 'active')
                                         <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
                                             Disetujui (Aktif)
+                                        </span>
+                                    @elseif($loan->status == 'returned')
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                            Sudah Dikembalikan
                                         </span>
                                     @elseif($loan->status == 'rejected')
                                         <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">

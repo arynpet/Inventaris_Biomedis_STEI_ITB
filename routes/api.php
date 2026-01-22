@@ -46,6 +46,12 @@ Route::middleware(['auth:sanctum', 'throttle:60,1'])->group(function () {
 });
 
 // ====================================================
+// REMOTE UPLOAD (Public/Mobile)
+// ====================================================
+Route::post('/remote-upload', [App\Http\Controllers\RemoteUploadController::class, 'uploadFromMobile']);
+Route::get('/remote-check/{token}', [App\Http\Controllers\RemoteUploadController::class, 'checkStatus']);
+
+// ====================================================
 // FALLBACK: Unauthorized Access
 // ====================================================
 

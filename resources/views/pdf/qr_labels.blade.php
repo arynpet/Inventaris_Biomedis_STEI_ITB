@@ -35,7 +35,8 @@
         }
 
         .label {
-            border: 2px solid #333;
+            border: 1px dashed #999;
+            /* Dashed border as cutting guide */
             padding: 5mm;
             text-align: center;
             height: 100%;
@@ -100,7 +101,7 @@
             <div class="label-wrapper">
                 <div class="label">
                     <div class="header">
-                        Lab Biomedis STEI
+                        Lab Biomedis STEI ITB
                     </div>
 
                     <div class="qr-box">

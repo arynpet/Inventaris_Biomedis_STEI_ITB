@@ -200,7 +200,7 @@ class ItemController extends Controller
      */
     private function processImageUpload(Request $request, $existingPath = null)
     {
-        // 1. Cek File Upload (Prioritas Utama)
+        // 1. Cek File Upload (Prioritas Utama - dari Input File Local)
         if ($request->hasFile('image')) {
             // Hapus file lama jika ada (dan fisik lokal)
             if ($existingPath && !filter_var($existingPath, FILTER_VALIDATE_URL)) {
@@ -212,40 +212,59 @@ class ItemController extends Controller
             $file = $request->file('image');
             $filename = 'items/' . uniqid('img_', true) . '.jpg';
 
-            // Check if Intervention Image V2 Facade is working
-            // Note: In V2, Image::make is the static method.
             try {
                 // Resize (Intervention V2 Logic)
-                // Need to use the Facade 'Image::make($file)'
                 $image = Image::make($file);
-
-                // Scale & Crop 500x500
                 $image->fit(500, 500);
-
-                // Encode to JPG (Default quality 90 in v2 if not specified, 80 here)
                 $encoded = $image->encode('jpg', 80);
-
-                // Simpan ke Storage Public
                 Storage::disk('public')->put($filename, (string) $encoded);
                 return $filename;
-
             } catch (\Exception $e) {
-                // Fallback if resizing fails or class not found
-                // Log::error("Image Processing Failed: " . $e->getMessage()); // Optional logging
                 return $file->store('items', 'public');
             }
         }
 
-        // 2. Cek URL (Jika tidak ada file upload)
+        // 2. Cek URL (Remote Upload atau External)
         if ($request->filled('image_url')) {
-            // Jika user memasukkan URL baru, hapus file lama (jika itu file lokal)
-            // Agar tidak ada sampah file yang tidak terpakai
+            $url = $request->image_url;
+
+            // Logika baru: Cek apakah URL ini berasal dari folder 'temp' milik kita sendiri
+            // Contoh URL: http://localhost:8000/storage/temp/remote_123.jpg
+            if (str_contains($url, '/storage/temp/')) {
+                try {
+                    // Ekstrak nama file dari URL
+                    $basename = basename($url);
+                    $tempPath = 'temp/' . $basename;
+                    $newFilename = 'items/' . time() . '_' . $basename;
+
+                    // Cek apakah file ada di storage temp
+                    if (Storage::disk('public')->exists($tempPath)) {
+                        // Pindahkan file dari temp ke items (Move)
+                        Storage::disk('public')->move($tempPath, $newFilename);
+
+                        // Hapus file lama item ini jika ada
+                        if ($existingPath && !filter_var($existingPath, FILTER_VALIDATE_URL)) {
+                            if (Storage::disk('public')->exists($existingPath)) {
+                                Storage::disk('public')->delete($existingPath);
+                            }
+                        }
+
+                        // Kembalikan relative path baru untuk disimpan di DB
+                        return $newFilename;
+                    }
+                } catch (\Exception $e) {
+                    \Illuminate\Support\Facades\Log::error("Gagal memindahkan file remote: " . $e->getMessage());
+                    // Jika gagal move, fallback pakai URL aslinya saja (risiko hilang kalau temp dibersihkan)
+                }
+            }
+
+            // Jika External URL murni (Pixabay dll) atau gagal move
             if ($existingPath && !filter_var($existingPath, FILTER_VALIDATE_URL)) {
                 if (Storage::disk('public')->exists($existingPath)) {
                     Storage::disk('public')->delete($existingPath);
                 }
             }
-            return $request->image_url;
+            return $url;
         }
 
         return $existingPath; // Return old path if no new input
@@ -270,6 +289,8 @@ class ItemController extends Controller
     // =========================
     public function show(Item $item)
     {
+        // Eager load relationships for history view
+        $item->load(['borrowings.borrower', 'maintenances', 'room', 'categories']);
         return view('items.show', compact('item'));
     }
 
@@ -339,7 +360,38 @@ class ItemController extends Controller
     // =========================
     // BULK ACTION (Fitur Local)
     // =========================
-// =========================
+    // =========================
+    // BULK UPDATE (EDIT MASSAL)
+    // =========================
+    public function bulkUpdate(Request $request)
+    {
+        $validated = $request->validate([
+            'selected_ids' => 'required|array|min:1',
+            'selected_ids.*' => 'exists:items,id',
+            'field' => 'required|in:acquisition_year,condition,room_id',
+            'value' => 'required',
+        ]);
+
+        $ids = $validated['selected_ids'];
+        $field = $validated['field'];
+        $value = $validated['value'];
+
+        // Perform Update
+        $count = Item::whereIn('id', $ids)->update([$field => $value]);
+
+        // Logging
+        ActivityLog::create([
+            'user_id' => auth()->id(),
+            'action' => 'bulk_update',
+            'model' => 'Item',
+            'description' => "Bulk update: {$count} items. Field '{$field}' changed to '{$value}'",
+            'ip_address' => request()->ip(),
+        ]);
+
+        return redirect()->route('items.index')->with('success', "Berhasil mengupdate {$count} item.");
+    }
+
+    // =========================
     // BULK ACTION (DENGAN UNDO)
     // =========================
     public function bulkAction(Request $request)

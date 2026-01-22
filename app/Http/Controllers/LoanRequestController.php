@@ -49,7 +49,17 @@ class LoanRequestController extends Controller
             }
 
             // Create loan request with SECURE data mapping
-            Loan::create($request->safeLoanData());
+            $loan = Loan::create($request->safeLoanData());
+
+            // LOG STUDENT ACTIVITY
+            \App\Models\ActivityLog::create([
+                'user_id' => auth('student')->id(),
+                'action' => 'request_loan',
+                'model' => 'Loan',
+                'model_id' => $loan->id,
+                'description' => "Student " . auth('student')->user()->name . " requested loan for item: {$item->name} (Qty: {$request->quantity})",
+                'ip_address' => request()->ip(),
+            ]);
         });
 
         return redirect()->route('student.loans.index')

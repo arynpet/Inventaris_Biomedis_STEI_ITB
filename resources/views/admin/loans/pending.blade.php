@@ -39,6 +39,9 @@
                                             class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                             Tujuan</th>
                                         <th
+                                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Penanggung Jawab</th>
+                                        <th
                                             class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                                             Aksi</th>
                                     </tr>
@@ -62,6 +65,10 @@
                                             </td>
                                             <td class="px-6 py-4 text-sm text-gray-500">
                                                 {{ Str::limit($loan->purpose, 30) }}
+                                                <div class="text-xs text-gray-400 mt-1">Full: {{ $loan->purpose }}</div>
+                                            </td>
+                                            <td class="px-6 py-4 text-sm text-gray-700 font-medium">
+                                                {{ $loan->penanggung_jawab ?? '-' }}
                                             </td>
                                             <td
                                                 class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium flex justify-end gap-2">
