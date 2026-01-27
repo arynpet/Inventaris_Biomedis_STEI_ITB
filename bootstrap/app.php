@@ -13,7 +13,7 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->web(append: [
-            \App\Http\Middleware\EnableDebugbar::class,
+            // \App\Http\Middleware\EnableDebugbar::class, // REMOVED
         ]);
         $middleware->alias([
             'superadmin' => \App\Http\Middleware\IsSuperAdmin::class,

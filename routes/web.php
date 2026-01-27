@@ -89,6 +89,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/impersonate/{userId}', [App\Http\Controllers\DevController::class, 'impersonate'])->name('impersonate');
     });
 
+    // Stop Impersonation (General Auth Access)
+    Route::get('/stop-impersonate', [App\Http\Controllers\DevController::class, 'stopImpersonate'])->name('impersonate.stop');
+
     // ====================================================
     // 2.6. REPORTS & EXPORTS
     // ====================================================
@@ -182,6 +185,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // ====================================================
     Route::get('/prints/history', [PrintController::class, 'history'])->name('prints.history');
     Route::get('/prints/{id}/file', [PrintController::class, 'downloadFile'])->name('prints.file');
+    Route::get('/prints/{id}/stl', [PrintController::class, 'downloadStl'])->name('prints.file_stl');
     Route::resource('prints', PrintController::class);
     Route::post('/printers/bulk-action', [PrinterController::class, 'bulkAction'])->name('printers.bulk_action');
     Route::resource('printers', PrinterController::class);

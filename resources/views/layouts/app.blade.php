@@ -204,6 +204,20 @@
 
 <body class="antialiased" x-data="{ sidebarOpen: true }">
 
+    @if(session()->has('impersonate_original_id'))
+        <div
+            class="bg-red-600 text-white text-center py-2 px-4 shadow-md relative z-[100] flex justify-center items-center gap-4 animate-pulse">
+            <div class="flex items-center gap-2 font-bold text-sm">
+                <i class="fas fa-user-secret text-lg"></i>
+                <span>MODE PENYAMARAN AKTIF: Anda sedang login sebagai {{ auth()->user()->name }}</span>
+            </div>
+            <a href="{{ route('impersonate.stop') }}"
+                class="bg-white text-red-600 px-3 py-1 rounded-full text-xs font-bold hover:bg-gray-100 transition shadow-sm uppercase border border-red-800">
+                KEMBALI KE ADMIN
+            </a>
+        </div>
+    @endif
+
     <div class="flex min-h-screen relative">
         @include('layouts.sidebar')
 

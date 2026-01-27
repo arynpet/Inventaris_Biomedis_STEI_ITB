@@ -32,12 +32,34 @@ class DevController extends Controller
             abort(403, 'Unauthorized action.');
         }
 
+        $originalUserId = auth()->id();
         $user = \App\Models\User::findOrFail($userId);
+
+        // Simpan ID asli ke session
+        session()->put('impersonate_original_id', $originalUserId);
 
         // Login sebagai user target
         \Illuminate\Support\Facades\Auth::login($user);
 
         return redirect('/dashboard')->with('success', "Mode Penyamaran Aktif! Anda sekarang login sebagai: {$user->name} ({$user->role})");
+    }
+
+    /**
+     * Stop Impersonation
+     */
+    public function stopImpersonate()
+    {
+        if (session()->has('impersonate_original_id')) {
+            $originalUserId = session()->pull('impersonate_original_id');
+            $originalUser = \App\Models\User::find($originalUserId);
+
+            if ($originalUser) {
+                \Illuminate\Support\Facades\Auth::login($originalUser);
+                return redirect()->route('dev.index')->with('success', 'Welcome back, Admin!');
+            }
+        }
+
+        return redirect('/dashboard');
     }
 
     /**

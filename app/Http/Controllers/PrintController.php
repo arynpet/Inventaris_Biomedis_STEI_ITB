@@ -394,6 +394,17 @@ class PrintController extends Controller
         return Storage::disk('public')->download($print->file_path, $print->file_name);
     }
 
+    public function downloadStl($id)
+    {
+        $print = Print3D::findOrFail($id);
+
+        if (!$print->stl_path || !Storage::disk('public')->exists($print->stl_path)) {
+            abort(404, 'File STL/3D tidak ditemukan');
+        }
+
+        return Storage::disk('public')->download($print->stl_path);
+    }
+
     /**
      * ✅ M5 FIX: Extracted print schedule overlap checking logic
      * Check if printer has overlapping print schedules
