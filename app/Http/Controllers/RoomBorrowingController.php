@@ -45,15 +45,11 @@ class RoomBorrowingController extends Controller
             'start_time' => 'required|date',
             'end_time' => 'required|date|after:start_time',
             'surat_peminjaman' => [
-                'required',
-                'file',
-                'mimes:pdf',
-                'max:2048',
-                function ($attribute, $value, $fail) {
-                    if ($value->getMimeType() !== 'application/pdf') {
-                        $fail('File harus PDF valid (bukan hanya extension .pdf).');
-                    }
-                }
+                'required', // TODO: Make optional if using remote URL, handle in manual check or simple rule 'nullable' if we trust processFileUpload handles it. 
+                // Actually, let's allow images too now.
+                // 'file', // removed to allow string URL
+                // 'mimes:pdf', // removed to allow images
+                // 'max:2048', 
             ],
             'purpose' => 'required|string|max:255',
             'notes' => 'nullable|string',
@@ -73,13 +69,12 @@ class RoomBorrowingController extends Controller
         $data = $request->only(['room_id', 'user_id', 'start_time', 'end_time', 'purpose', 'notes']);
 
         // 2. SET DEFAULT STATUS
-        // Karena di form create biasanya tidak ada input status, kita set default 'pending'
         $data['status'] = 'pending';
 
-        // 3. LOGIKA UPLOAD FILE
-        if ($request->hasFile('surat_peminjaman')) {
-            $filePath = $request->file('surat_peminjaman')->store('surat_ruangan', 'public');
-            $data['surat_peminjaman'] = $filePath;
+        // 3. LOGIKA UPLOAD FILE (Hybrid)
+        $fileData = $this->processFileUpload($request, 'surat_peminjaman', 'surat_ruangan');
+        if ($fileData) {
+            $data['surat_peminjaman'] = $fileData['path'];
         }
 
         RoomBorrowing::create($data);
@@ -108,17 +103,7 @@ class RoomBorrowingController extends Controller
             'user_id' => 'required|exists:peminjam_users,id',
             'start_time' => 'required|date',
             'end_time' => 'required|date|after:start_time',
-            'surat_peminjaman' => [
-                'nullable',
-                'file',
-                'mimes:pdf',
-                'max:2048',
-                function ($attribute, $value, $fail) {
-                    if ($value && $value->getMimeType() !== 'application/pdf') {
-                        $fail('File harus PDF valid (bukan hanya extension .pdf).');
-                    }
-                }
-            ],
+            'surat_peminjaman' => 'nullable', // Allow hybrid
             'purpose' => 'required|string|max:255',
             'status' => 'required|in:pending,approved,rejected,finished',
             'notes' => 'nullable|string',
@@ -139,12 +124,13 @@ class RoomBorrowingController extends Controller
         $data = $request->except('surat_peminjaman');
 
         // LOGIKA GANTI FILE
-        if ($request->hasFile('surat_peminjaman')) {
+        $fileData = $this->processFileUpload($request, 'surat_peminjaman', 'surat_ruangan');
+        if ($fileData) {
+            // Hapus file lama
             if ($roomBorrowing->surat_peminjaman && Storage::disk('public')->exists($roomBorrowing->surat_peminjaman)) {
                 Storage::disk('public')->delete($roomBorrowing->surat_peminjaman);
             }
-            $filePath = $request->file('surat_peminjaman')->store('surat_ruangan', 'public');
-            $data['surat_peminjaman'] = $filePath;
+            $data['surat_peminjaman'] = $fileData['path'];
         }
 
         $roomBorrowing->update($data);
@@ -185,7 +171,7 @@ class RoomBorrowingController extends Controller
             'description' => "Returned room: {$borrowing->room->name} (Booking ID: {$borrowing->id})",
             'ip_address' => request()->ip(),
         ]);
-        
+
         // Update status menjadi finished
         $borrowing->update([
             'status' => 'finished'
@@ -227,7 +213,7 @@ class RoomBorrowingController extends Controller
             'description' => 'Menyetujui peminjaman ruangan dengan ID ' . $borrowing->id,
             'ip_address' => request()->ip(),
         ]);
-        
+
         $borrowing->update(['status' => 'approved']);
 
         return back()->with('success', 'Peminjaman ruangan berhasil disetujui. Status kini Approved.');
@@ -268,5 +254,50 @@ class RoomBorrowingController extends Controller
         }
 
         return back()->with('error', 'Aksi tidak valid.');
+    }
+
+    /**
+     * Helper to process file upload (Direct or Remote URL)
+     * Returns ['path' => ..., 'name' => ...] or null
+     */
+    private function processFileUpload(Request $request, $inputName, $targetFolder)
+    {
+        // 1. Direct File Upload
+        if ($request->hasFile($inputName)) {
+            $file = $request->file($inputName);
+            $originalName = $file->getClientOriginalName();
+            $extension = $file->extension();
+            $safeName = \Illuminate\Support\Str::slug(pathinfo($originalName, PATHINFO_FILENAME));
+            $fileName = time() . '_' . $safeName . '.' . $extension;
+            $path = $file->storeAs($targetFolder, $fileName, 'public');
+
+            return ['path' => $path, 'name' => $fileName];
+        }
+
+        // 2. Remote URL (scan from HP)
+        // Hidden input format name: "inputName_url" (e.g., file_upload_url)
+        $urlInput = $inputName . '_url';
+        if ($request->filled($urlInput)) {
+            $url = $request->input($urlInput);
+
+            // Check if it's from our temp storage
+            if (str_contains($url, '/storage/temp/')) {
+                try {
+                    $basename = basename($url);
+                    $tempPath = 'temp/' . $basename;
+                    $newFileName = time() . '_remote_' . $basename;
+                    $newPath = $targetFolder . '/' . $newFileName;
+
+                    if (Storage::disk('public')->exists($tempPath)) {
+                        Storage::disk('public')->move($tempPath, $newPath);
+                        return ['path' => $newPath, 'name' => $newFileName];
+                    }
+                } catch (\Exception $e) {
+                    \Illuminate\Support\Facades\Log::error("Failed to move remote file: " . $e->getMessage());
+                }
+            }
+        }
+
+        return null; // No file uploaded
     }
 }

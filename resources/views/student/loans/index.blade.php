@@ -44,6 +44,7 @@
                                     </div>
                                     <div class="text-sm text-gray-600 mt-1 italic">"{{ $loan->purpose }}"</div>
                                     <div class="text-xs text-gray-500 mt-1">
+                                        <span class="font-semibold">Ruang:</span> {{ $loan->ruang_pakai ?? '-' }} &middot; 
                                         <span class="font-semibold">PJ:</span> {{ $loan->penanggung_jawab ?? '-' }}
                                     </div>
                                 </div>

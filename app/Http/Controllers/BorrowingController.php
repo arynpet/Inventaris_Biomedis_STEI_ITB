@@ -58,6 +58,31 @@ class BorrowingController extends Controller
     }
 
     // ==========================================
+    // FOLLOW UP ITEMS (NEW PAGE)
+    // ==========================================
+    public function followUps(Request $request)
+    {
+        $search = $request->input('search');
+
+        $borrowings = Borrowing::with(['item', 'borrower'])
+            ->whereNotNull('follow_up')
+            ->where('follow_up', '!=', '')
+            ->where(function ($q) use ($search) {
+                if ($search) {
+                    $q->whereHas('borrower', function ($b) use ($search) {
+                        $b->where('name', 'like', "%{$search}%");
+                    })->orWhereHas('item', function ($i) use ($search) {
+                        $i->where('name', 'like', "%{$search}%");
+                    });
+                }
+            })
+            ->orderBy('return_date', 'desc')
+            ->paginate(10);
+
+        return view('borrowings.follow_ups', compact('borrowings'));
+    }
+
+    // ==========================================
     // BULK RETURN (FITUR BARU)
     // ==========================================
     public function bulkReturn(Request $request)
@@ -148,6 +173,7 @@ class BorrowingController extends Controller
             'borrow_date' => 'required|date',
             'return_date' => 'nullable|date|after_or_equal:borrow_date',
             'notes' => 'nullable|string',
+            'ruang_pakai' => 'nullable|string',
         ]);
 
         DB::transaction(function () use ($validated) {
@@ -167,6 +193,7 @@ class BorrowingController extends Controller
                 'borrow_date' => $validated['borrow_date'],
                 'return_date' => $validated['return_date'] ?? null,
                 'notes' => $validated['notes'] ?? null,
+                'ruang_pakai' => $validated['ruang_pakai'] ?? null,
                 'status' => 'borrowed',
             ]);
 
@@ -227,7 +254,7 @@ class BorrowingController extends Controller
                 $newItem->update(['status' => 'borrowed']);
             }
 
-            $borrowing->update($request->only(['item_id', 'user_id', 'borrow_date', 'return_date', 'status', 'notes']));
+            $borrowing->update($request->only(['item_id', 'user_id', 'borrow_date', 'return_date', 'status', 'notes', 'ruang_pakai']));
         });
 
         return redirect()->route('borrowings.index')
@@ -263,6 +290,8 @@ class BorrowingController extends Controller
     {
         $validated = $request->validate([
             'condition' => 'required|in:good,damaged,broken',
+            'follow_up' => 'nullable|string|required_if:condition,damaged,broken',
+            'evidence_photo' => 'nullable|string',
         ]);
 
         $borrow = Borrowing::with('item')->findOrFail($id);
@@ -273,12 +302,34 @@ class BorrowingController extends Controller
 
         DB::transaction(function () use ($borrow, $validated) {
             $condition = $validated['condition'];
+            $followUp = $validated['follow_up'] ?? null;
+
+            $evidencePath = null;
+
+            // Handle Evidence Photo (From Remote Upload)
+            if (!empty($validated['evidence_photo'])) {
+                $url = $validated['evidence_photo'];
+                $filename = basename($url);
+                $tempPath = public_path('storage/temp/' . $filename);
+
+                if (file_exists($tempPath)) {
+                    $targetDir = public_path('storage/evidence');
+                    if (!file_exists($targetDir)) {
+                        mkdir($targetDir, 0755, true);
+                    }
+
+                    rename($tempPath, $targetDir . '/' . $filename);
+                    $evidencePath = 'evidence/' . $filename;
+                }
+            }
 
             // A. Update Peminjaman
             $borrow->update([
                 'status' => 'returned',
                 'return_date' => now(),
                 'return_condition' => $condition,
+                'follow_up' => $followUp,
+                'evidence_photo' => $evidencePath,
             ]);
 
             $newStatus = ($condition === 'good') ? 'available' : 'maintenance';
@@ -305,7 +356,7 @@ class BorrowingController extends Controller
                 'action' => 'return_item',
                 'model' => 'Borrowing',
                 'model_id' => $borrow->id,
-                'description' => "Returned '{$borrow->item->name}' (Condition: {$condition})",
+                'description' => "Returned '{$borrow->item->name}' (Condition: {$condition})" . ($followUp ? " - Follow up: $followUp" : ""),
                 'ip_address' => request()->ip(),
             ]);
         });

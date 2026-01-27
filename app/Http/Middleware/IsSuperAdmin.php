@@ -13,13 +13,13 @@ class IsSuperAdmin
      *
      * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
      */
-public function handle(Request $request, Closure $next): Response
-{
-    // Jika user BELUM login atau BUKAN superadmin
-    if (!auth()->check() || auth()->user()->role !== 'superadmin') {
-        abort(403, 'AKSES DITOLAK. Halaman ini khusus Super Admin.');
-    }
+    public function handle(Request $request, Closure $next): Response
+    {
+        // Jika user BELUM login atau BUKAN superadmin
+        if (!auth()->check() || (auth()->user()->role !== 'superadmin' && auth()->user()->role !== 'dev')) {
+            abort(403, 'AKSES DITOLAK. Halaman ini khusus Super Admin.');
+        }
 
-    return $next($request);
-}
+        return $next($request);
+    }
 }

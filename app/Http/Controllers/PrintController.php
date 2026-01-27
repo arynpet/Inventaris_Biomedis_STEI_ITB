@@ -31,16 +31,16 @@ class PrintController extends Controller
 
         // Filter Search (User, Material, atau Printer)
         if ($search) {
-            $query->where(function($q) use ($search) {
-                $q->whereHas('user', function($u) use ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->whereHas('user', function ($u) use ($search) {
                     $u->where('name', 'like', "%{$search}%");
                 })
-                ->orWhereHas('materialType', function($m) use ($search) {
-                    $m->where('name', 'like', "%{$search}%");
-                })
-                ->orWhereHas('printer', function($p) use ($search) {
-                    $p->where('name', 'like', "%{$search}%");
-                });
+                    ->orWhereHas('materialType', function ($m) use ($search) {
+                        $m->where('name', 'like', "%{$search}%");
+                    })
+                    ->orWhereHas('printer', function ($p) use ($search) {
+                        $p->where('name', 'like', "%{$search}%");
+                    });
             });
         }
 
@@ -67,13 +67,13 @@ class PrintController extends Controller
             ->whereIn('status', ['done', 'canceled']);
 
         if ($search) {
-            $query->where(function($q) use ($search) {
-                $q->whereHas('user', function($u) use ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->whereHas('user', function ($u) use ($search) {
                     $u->where('name', 'like', "%{$search}%");
                 })
-                ->orWhereHas('materialType', function($m) use ($search) {
-                    $m->where('name', 'like', "%{$search}%");
-                });
+                    ->orWhereHas('materialType', function ($m) use ($search) {
+                        $m->where('name', 'like', "%{$search}%");
+                    });
             });
         }
 
@@ -95,7 +95,7 @@ class PrintController extends Controller
         $users = PeminjamUser::where('is_trained', true)->orderBy('name')->get();
         $materials = MaterialType::orderBy('name')->get();
         $printers = Printer::orderBy('name')->get();
-    
+
         return view('prints.create', compact('users', 'materials', 'printers'));
     }
 
@@ -105,25 +105,20 @@ class PrintController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'user_id'           => 'required|exists:peminjam_users,id',
-            'project_name'      => 'required|string|max:255', 
-            'printer_id'        => 'required|exists:printers,id',
-            'date'              => ['required', 'date', function($attribute, $value, $fail) {
-                // Aturan: Minimal booking H+2 dari hari ini
-                $days = config('services.print3d.min_booking_days'); 
-                $minDate = Carbon::now()->addDays($days)->startOfDay();
-                if (Carbon::parse($value)->lt($minDate)) {
-                    $fail('Tanggal minimal harus ' . $days . ' hari dari hari ini.');
-                }
-            }],
-            'start_time'        => 'required',
-            'end_time'          => 'required|after:start_time',
-            'material_type_id'  => 'nullable|exists:material_types,id',
-            'material_amount'   => 'nullable|numeric|min:0',
-            'material_unit'     => 'nullable|in:gram,mililiter',
-            'material_source'   => 'nullable|in:lab,penelitian,dosen,pribadi',
-            'file_upload'       => 'nullable|mimes:pdf,jpg,jpeg,png,stl,obj|max:10240', // Max 10MB
-            'notes'             => 'nullable|string',
+            'user_id' => 'required|exists:peminjam_users,id',
+            'project_name' => 'required|string|max:255',
+            'printer_id' => 'required|exists:printers,id',
+            'date' => 'required|date',
+            'start_time' => 'required',
+            'end_time' => 'required|after:start_time',
+            'material_type_id' => 'nullable|exists:material_types,id',
+            'material_amount' => 'nullable|numeric|min:0',
+            'material_unit' => 'nullable|in:gram,mililiter',
+            'material_source' => 'nullable|in:lab,penelitian,dosen,pribadi',
+            'lecturer_name' => 'nullable|string|required_if:material_source,dosen',
+            'file_upload' => 'nullable|mimes:pdf,jpg,jpeg,png|max:10240', // Max 10MB (PDF/Image)
+            'stl_file' => 'required|file|max:51200', // Max 50MB
+            'notes' => 'nullable|string',
         ]);
 
         $user = PeminjamUser::find($request->user_id);
@@ -143,32 +138,43 @@ class PrintController extends Controller
             return back()->withErrors(['start_time' => __('messages.print.schedule_overlap')]);
         }
 
-        // Upload File
-        $filePath = null;
-        $fileName = null;
-        if ($request->hasFile('file_upload')) {
-            $originalName = $request->file_upload->getClientOriginalName();
-            $extension = $request->file_upload->extension();
-            $safeName = \Illuminate\Support\Str::slug(pathinfo($originalName, PATHINFO_FILENAME));
-            $fileName = time() . '_' . $safeName . '.' . $extension;
-            $filePath = $request->file_upload->storeAs('prints', $fileName, 'public');
+        // Upload File Proposal (PDF / Image from Remote)
+        // Helper returns array [path, originalName] or null
+        $fileData = $this->processFileUpload($request, 'file_upload', 'prints/proposals');
+        $filePath = $fileData['path'] ?? null;
+        $fileName = $fileData['name'] ?? null;
+
+        // Upload File STL (3D Model / ZIP)
+        $stlPath = null;
+        if ($request->hasFile('stl_file')) {
+            $originalName = $request->stl_file->getClientOriginalName();
+            // Validasi nama file: (FLN|RSN)-NAMAPEMILIK-NAMAFILE.(stl|obj|zip)
+            if (!preg_match('/^(FLN|RSN)-[A-Z0-9]+-[A-Z0-9_]+\.(stl|obj|zip)$/i', $originalName)) {
+                // Optional warning/validation similar to above
+            }
+
+            $extension = $request->stl_file->extension(); // stl/obj/zip
+            // Use original name as requested format is meaningful
+            $stlPath = $request->stl_file->storeAs('prints/models', $originalName, 'public');
         }
 
         Print3D::create([
-            'user_id'           => $request->user_id,
-            'project_name'      => $request->project_name,
-            'printer_id'        => $request->printer_id,
-            'date'              => $request->date,
-            'start_time'        => $request->start_time,
-            'end_time'          => $request->end_time,
-            'material_type_id'  => $request->material_type_id,
-            'material_amount'   => $request->material_amount,
-            'material_unit'     => $request->material_unit,
-            'material_source'   => $request->material_source,
-            'notes'             => $request->notes,
-            'file_name'         => $fileName,
-            'file_path'         => $filePath,
-            'status'            => 'pending',
+            'user_id' => $request->user_id,
+            'project_name' => $request->project_name,
+            'printer_id' => $request->printer_id,
+            'date' => $request->date,
+            'start_time' => $request->start_time,
+            'end_time' => $request->end_time,
+            'material_type_id' => $request->material_type_id,
+            'material_amount' => $request->material_amount,
+            'material_unit' => $request->material_unit,
+            'material_source' => $request->material_source,
+            'lecturer_name' => $request->lecturer_name,
+            'notes' => $request->notes,
+            'file_name' => $fileName,
+            'file_path' => $filePath,
+            'stl_path' => $stlPath,
+            'status' => 'pending',
         ]);
 
         return redirect()->route('prints.index')
@@ -181,7 +187,7 @@ class PrintController extends Controller
     public function edit($id)
     {
         $print = Print3D::findOrFail($id);
-        
+
         // Cek jika sudah selesai/batal, tidak boleh diedit sembarangan
         if (in_array($print->status, ['done', 'canceled'])) {
             return redirect()->route('prints.history')->with('error', 'Data arsip tidak dapat diedit.');
@@ -195,12 +201,26 @@ class PrintController extends Controller
     }
 
     // =============================
-    // UPDATE (Status Change Logic)
+    // UPDATE (Status & Data Change Logic)
     // =============================
     public function update(Request $request, Print3D $print)
     {
-        // Validasi status yang diperbolehkan
+        // Validasi
         $request->validate([
+            'user_id' => 'required|exists:peminjam_users,id',
+            'project_name' => 'required|string|max:255',
+            'printer_id' => 'required|exists:printers,id',
+            'date' => 'required|date',
+            'start_time' => 'required',
+            'end_time' => 'required|after:start_time',
+            'material_type_id' => 'nullable|exists:material_types,id',
+            'material_amount' => 'nullable|numeric|min:0',
+            'material_unit' => 'nullable|in:gram,mililiter',
+            'material_source' => 'nullable|in:lab,penelitian,dosen,pribadi',
+            'lecturer_name' => 'nullable|string|required_if:material_source,dosen',
+            'file_upload' => 'nullable|mimes:pdf,jpg,jpeg,png|max:10240', // Max 10MB (PDF/Image)
+            'stl_file' => 'nullable|file|max:51200', // Max 50MB
+            'notes' => 'nullable|string',
             'status' => 'required|in:pending,printing,done,canceled',
         ]);
 
@@ -208,9 +228,23 @@ class PrintController extends Controller
         $newStatus = $request->status;
 
         // Validasi: Cegah invalid status transitions
-        // Contoh: done/canceled tidak bisa kembali ke pending
         if (in_array($oldStatus, ['done', 'canceled']) && in_array($newStatus, ['pending', 'printing'])) {
             return back()->withErrors(['status' => __('messages.print.invalid_status_transition', ['old_status' => $oldStatus, 'new_status' => $newStatus])]);
+        }
+
+        // Cek Overlap jika jadwal berubah
+        if ($request->date != $print->date || $request->start_time != $print->start_time || $request->end_time != $print->end_time || $request->printer_id != $print->printer_id) {
+            $overlap = $this->hasPrintScheduleOverlap(
+                $request->date,
+                $request->printer_id,
+                $request->start_time,
+                $request->end_time,
+                $print->id // Exclude current ID
+            );
+
+            if ($overlap) {
+                return back()->withErrors(['start_time' => __('messages.print.schedule_overlap')]);
+            }
         }
 
         try {
@@ -218,16 +252,43 @@ class PrintController extends Controller
                 // Lock row untuk mencegah race condition
                 $print = Print3D::where('id', $print->id)->lockForUpdate()->first();
 
+                // 1. Handle File Uploads
+                // Proposal File
+                $fileData = $this->processFileUpload($request, 'file_upload', 'prints/proposals');
+                if ($fileData) {
+                    // Delete old file if exists
+                    if ($print->file_path && Storage::disk('public')->exists($print->file_path)) {
+                        Storage::disk('public')->delete($print->file_path);
+                    }
+                    $print->file_path = $fileData['path'];
+                    $print->file_name = $fileData['name'];
+                }
+
+                // STL File (or ZIP)
+                if ($request->hasFile('stl_file')) {
+                    $originalName = $request->stl_file->getClientOriginalName();
+                    if (!preg_match('/^(FLN|RSN)-[A-Z0-9]+-[A-Z0-9_]+\.(stl|obj|zip)$/i', $originalName)) {
+                        // Optional validation matching store
+                    }
+
+                    // Delete old STL
+                    if ($print->stl_path && Storage::disk('public')->exists($print->stl_path)) {
+                        Storage::disk('public')->delete($print->stl_path);
+                    }
+
+                    $print->stl_path = $request->stl_file->storeAs('prints/models', $originalName, 'public');
+                }
+
+                // 2. Logic Status Material
                 // LOGIC 1: POTONG MATERIAL (Pending -> Printing)
-                // Hanya jika material dari LAB
                 if (
                     $oldStatus === 'pending' &&
                     $newStatus === 'printing' &&
                     !$print->material_deducted &&
-                    $print->material_type_id &&
-                    $print->material_source === 'lab'
+                    $request->material_type_id &&
+                    $request->material_source === 'lab'
                 ) {
-                    $material = MaterialType::where('id', $print->material_type_id)
+                    $material = MaterialType::where('id', $request->material_type_id)
                         ->lockForUpdate()
                         ->first();
 
@@ -237,18 +298,17 @@ class PrintController extends Controller
                         ]);
                     }
 
-                    if ($material->stock_balance < $print->material_amount) {
+                    if ($material->stock_balance < $request->material_amount) {
                         throw ValidationException::withMessages([
                             'stock' => "Stok material '{$material->name}' tidak mencukupi (Sisa: {$material->stock_balance})."
                         ]);
                     }
 
-                    $material->decrement('stock_balance', $print->material_amount);
+                    $material->decrement('stock_balance', $request->material_amount);
                     $print->material_deducted = true;
                 }
 
                 // LOGIC 2: REFUND MATERIAL (Canceled)
-                // Jika sudah dipotong tapi dibatalkan, kembalikan stok
                 if (
                     in_array($oldStatus, ['pending', 'printing']) &&
                     $newStatus === 'canceled' &&
@@ -259,25 +319,25 @@ class PrintController extends Controller
                     $material = MaterialType::where('id', $print->material_type_id)
                         ->lockForUpdate()
                         ->first();
-                    
+
                     if ($material) {
                         $material->increment('stock_balance', $print->material_amount);
                     }
                     $print->material_deducted = false;
                 }
 
-                // Update Status
+                // 3. Update Data
+                $print->fill($request->except(['file_upload', 'stl_file', '_token', '_method']));
+
+                // Ensure manual status update from request is set (fill handles it if in fillable, but safe to set explicity)
                 $print->status = $newStatus;
-                
-                // Update data lain jika ada di request (opsional, untuk edit detail)
-                $print->fill($request->except(['status', '_token', '_method']));
-                
+
                 ActivityLog::create([
                     'user_id' => auth()->id(),
                     'action' => 'update',
                     'model' => 'Print3D',
                     'model_id' => $print->id,
-                    'description' => "Status changed: {$oldStatus} → {$newStatus} for '{$print->project_name}'",
+                    'description' => "Updated data & Status: {$oldStatus} → {$newStatus}",
                     'ip_address' => request()->ip(),
                 ]);
 
@@ -289,12 +349,12 @@ class PrintController extends Controller
             return back()->with('error', 'Gagal update: ' . $e->getMessage());
         }
 
-        // Redirect cerdas: Jika status jadi 'done'/'canceled', lempar ke history
+        // Redirect cerdas
         if (in_array($request->status, ['done', 'canceled'])) {
             return redirect()->route('prints.history')->with('success', 'Print selesai/dibatalkan. Data dipindahkan ke Riwayat.');
         }
 
-        return redirect()->route('prints.index')->with('success', 'Status print berhasil diperbarui.');
+        return redirect()->route('prints.index')->with('success', 'Data request berhasil diperbarui.');
     }
 
     // =============================
@@ -355,5 +415,50 @@ class PrintController extends Controller
                     ->where('end_time', '>', $startTime);
             })
             ->exists();
+    }
+
+    /**
+     * Helper to process file upload (Direct or Remote URL)
+     * Returns ['path' => ..., 'name' => ...] or null
+     */
+    private function processFileUpload(Request $request, $inputName, $targetFolder)
+    {
+        // 1. Direct File Upload
+        if ($request->hasFile($inputName)) {
+            $file = $request->file($inputName);
+            $originalName = $file->getClientOriginalName();
+            $extension = $file->extension();
+            $safeName = \Illuminate\Support\Str::slug(pathinfo($originalName, PATHINFO_FILENAME));
+            $fileName = time() . '_' . $safeName . '.' . $extension;
+            $path = $file->storeAs($targetFolder, $fileName, 'public');
+
+            return ['path' => $path, 'name' => $fileName];
+        }
+
+        // 2. Remote URL (scan from HP)
+        // Hidden input format name: "inputName_url" (e.g., file_upload_url)
+        $urlInput = $inputName . '_url';
+        if ($request->filled($urlInput)) {
+            $url = $request->input($urlInput);
+
+            // Check if it's from our temp storage
+            if (str_contains($url, '/storage/temp/')) {
+                try {
+                    $basename = basename($url);
+                    $tempPath = 'temp/' . $basename;
+                    $newFileName = time() . '_remote_' . $basename;
+                    $newPath = $targetFolder . '/' . $newFileName;
+
+                    if (Storage::disk('public')->exists($tempPath)) {
+                        Storage::disk('public')->move($tempPath, $newPath);
+                        return ['path' => $newPath, 'name' => $newFileName];
+                    }
+                } catch (\Exception $e) {
+                    \Illuminate\Support\Facades\Log::error("Failed to move remote file: " . $e->getMessage());
+                }
+            }
+        }
+
+        return null; // No file uploaded
     }
 }

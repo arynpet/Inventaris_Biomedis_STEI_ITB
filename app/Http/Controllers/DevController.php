@@ -9,14 +9,35 @@ class DevController extends Controller
     /**
      * Display the Developer Dashboard.
      */
+    /**
+     * Display the Developer Dashboard.
+     */
     public function index()
     {
-        // Security Check
-        if (!auth()->user()->is_dev_mode) {
-            abort(403, 'Developer Mode is not active.');
+        // Ambil semua user untuk impersonation list
+        $users = \App\Models\User::all();
+        // Opsional: Jika mau PeminjamUser juga
+        // $peminjamUsers = \App\Models\PeminjamUser::all(); 
+
+        return view('dev.index', compact('users'));
+    }
+
+    /**
+     * User Impersonation Logic
+     */
+    public function impersonate($userId)
+    {
+        // Double check security
+        if (auth()->user()->role !== 'dev' && !auth()->user()->isSuperAdmin() && !auth()->user()->is_dev_mode) {
+            abort(403, 'Unauthorized action.');
         }
 
-        return view('dev.index');
+        $user = \App\Models\User::findOrFail($userId);
+
+        // Login sebagai user target
+        \Illuminate\Support\Facades\Auth::login($user);
+
+        return redirect('/dashboard')->with('success', "Mode Penyamaran Aktif! Anda sekarang login sebagai: {$user->name} ({$user->role})");
     }
 
     /**
@@ -24,11 +45,6 @@ class DevController extends Controller
      */
     public function resetDatabase(Request $request)
     {
-        // Security Check
-        if (!auth()->user()->is_dev_mode) {
-            abort(403, 'Developer Mode is not active.');
-        }
-
         // Increase memory limit and execution time for heavy tasks
         ini_set('memory_limit', '-1');
         set_time_limit(300);

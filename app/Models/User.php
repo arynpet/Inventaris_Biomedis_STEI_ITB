@@ -31,7 +31,7 @@ class User extends Authenticatable
     // Helper untuk cek apakah dia superadmin (Opsional, biar kodingan rapi)
     public function isSuperAdmin()
     {
-        return $this->role === 'superadmin';
+        return in_array($this->role, ['superadmin', 'dev']);
     }
 
     /**

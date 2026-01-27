@@ -39,6 +39,10 @@ Route::post('/student/login', [App\Http\Controllers\StudentAuthController::class
 Route::post('/student/register', [App\Http\Controllers\StudentAuthController::class, 'store'])->name('student.register');
 Route::post('/student/logout', [App\Http\Controllers\StudentAuthController::class, 'logout'])->name('student.logout');
 
+// Mobile Return Upload (Public Magic Link)
+Route::get('/m/upload/{token}', [App\Http\Controllers\RemoteUploadController::class, 'showMobileUploadForm'])->name('mobile.upload.show');
+Route::post('/m/upload', [App\Http\Controllers\RemoteUploadController::class, 'handleMobileUpload'])->name('mobile.upload.handle');
+
 /*
 |--------------------------------------------------------------------------
 | Dashboard & Protected Routes (All Authenticated Users)
@@ -72,15 +76,17 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/', [ProfileController::class, 'edit'])->name('profile.edit');
         Route::patch('/', [ProfileController::class, 'update'])->name('profile.update');
         Route::patch('/dev-mode', [ProfileController::class, 'updateDevMode'])->name('profile.dev_mode'); // <--- Toggle Dev Mode
+        Route::post('/upgrade-dev', [ProfileController::class, 'upgradeDev'])->name('profile.upgrade_dev'); // <--- Easter Egg Route
         Route::delete('/', [ProfileController::class, 'destroy'])->name('profile.destroy');
     });
 
     // ====================================================
     // 2.5. DEVELOPER TOOLS
     // ====================================================
-    Route::prefix('dev')->name('dev.')->group(function () {
+    Route::middleware(['dev.mode'])->prefix('dev-tools')->name('dev.')->group(function () {
         Route::get('/dashboard', [App\Http\Controllers\DevController::class, 'index'])->name('index');
         Route::post('/reset-database', [App\Http\Controllers\DevController::class, 'resetDatabase'])->name('reset_db');
+        Route::post('/impersonate/{userId}', [App\Http\Controllers\DevController::class, 'impersonate'])->name('impersonate');
     });
 
     // ====================================================
@@ -121,6 +127,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Remote Camera / Scan to Upload
     Route::get('/remote-upload/token', [App\Http\Controllers\RemoteUploadController::class, 'generateToken'])->name('remote.token');
+    Route::get('/remote-upload/return-qr', [App\Http\Controllers\RemoteUploadController::class, 'generateReturnQr'])->name('remote.return_qr');
 
     // Resource Items (Harus di bawah route custom items)
     Route::resource('items', ItemController::class);
@@ -155,6 +162,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/borrowings/bulk-return', [BorrowingController::class, 'bulkReturn'])->name('borrowings.bulk_return');
     Route::get('/borrowings/history', [BorrowingController::class, 'history'])->name('borrowings.history');
     Route::get('/borrowings/history/pdf', [BorrowingController::class, 'historyPdf'])->name('borrowings.historyPdf');
+    Route::get('/borrowings/follow-ups', [BorrowingController::class, 'followUps'])->name('borrowings.follow_ups');
     Route::put('/borrowings/{id}/return', [BorrowingController::class, 'returnItem'])->name('borrowings.return');
     Route::post('/borrowings/scan-qr', [BorrowingController::class, 'scan'])->name('borrowings.scan')->middleware('throttle:60,1');
     Route::get('/borrowings/{id}/pdf', [BorrowingController::class, 'pdf'])->name('borrowings.pdf');

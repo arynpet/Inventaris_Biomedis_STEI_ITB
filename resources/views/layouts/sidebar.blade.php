@@ -190,7 +190,7 @@
             </div>
             <div x-show="!sidebarOpen" class="h-px mx-2 my-2 {{ $dividerClass }}"></div>
 
-            @if(auth()->check() && auth()->user()->role === 'superadmin')
+            @if(auth()->check() && auth()->user()->isSuperAdmin())
                 <a href="{{ route('superadmin.users.index') }}" :class="sidebarOpen ? 'justify-start' : 'justify-center'"
                     class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group {{ dynamicActive('superadmin/users', $isDash) }}">
                     <div class="relative flex-shrink-0">

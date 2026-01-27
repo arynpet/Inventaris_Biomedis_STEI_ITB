@@ -28,6 +28,10 @@
                 </div>
                 
                 <div class="flex gap-3">
+                    <a href="{{ route('borrowings.follow_ups') }}" class="inline-flex items-center px-4 py-2.5 bg-white border border-red-300 rounded-lg font-semibold text-xs text-red-700 uppercase hover:bg-red-50 shadow-sm transition">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                        Tindak Lanjut
+                    </a>
                     <a href="{{ route('borrowings.history') }}" class="inline-flex items-center px-4 py-2.5 bg-white border border-gray-300 rounded-lg font-semibold text-xs text-gray-700 uppercase hover:bg-gray-50 shadow-sm transition">
                         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                         Riwayat
@@ -103,6 +107,7 @@
                                     <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Peminjam</th>
                                     <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Penanggung Jawab</th>
                                     <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Barang</th>
+                                    <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Ruang</th>
                                     <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Tgl Pinjam</th>
                                     <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Tenggat</th>
                                     <th class="px-6 py-4 text-right text-xs font-bold text-gray-500 uppercase tracking-wider">Aksi</th>
@@ -145,6 +150,11 @@
                                         <td class="px-6 py-4">
                                             <div class="text-sm font-medium text-gray-900">{{ $b->item->name ?? 'Item Dihapus' }}</div>
                                             <div class="text-xs text-gray-500 font-mono">{{ $b->item->serial_number ?? '-' }}</div>
+                                        </td>
+
+                                        {{-- RUANG --}}
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="text-sm text-gray-700">{{ $b->ruang_pakai ?? '-' }}</div>
                                         </td>
 
                                         {{-- TGL PINJAM --}}
@@ -271,11 +281,44 @@
                         @csrf @method('PUT')
                         <div class="mb-6">
                             <label class="block text-sm font-bold text-gray-700 mb-2">Kondisi Barang</label>
-                            <select name="condition" class="w-full rounded-xl border-gray-300 focus:ring-emerald-500 focus:border-emerald-500 shadow-sm">
+                            <select name="condition" x-model="selectedCondition" class="w-full rounded-xl border-gray-300 focus:ring-emerald-500 focus:border-emerald-500 shadow-sm">
                                 <option value="good">✨ Baik (Layak Pakai)</option>
                                 <option value="damaged">⚠️ Rusak Ringan</option>
                                 <option value="broken">❌ Rusak Berat</option>
                             </select>
+                        </div>
+                        
+                        {{-- BUKTI FOTO (QR UPLOAD - POPUP STYLE) --}}
+                        <div class="mb-6" @remote-image-selected.window="evidenceUrl = $event.detail.url">
+                            <label class="block text-sm font-bold text-gray-700 mb-2">Bukti Foto (Opsional)</label>
+                            <input type="hidden" name="evidence_photo" x-model="evidenceUrl">
+                            
+                            {{-- 1. Trigger Button --}}
+                            <div x-show="!evidenceUrl">
+                                <button type="button" @click="$dispatch('open-remote-upload')"
+                                        class="flex flex-col items-center justify-center w-full h-32 border-2 border-blue-300 border-dashed rounded-xl bg-blue-50 hover:bg-blue-100 transition text-blue-700 gap-2">
+                                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path></svg>
+                                    <span class="font-bold">Scan QR Upload</span>
+                                    <span class="text-xs opacity-70">Klik untuk membuka scanner</span>
+                                </button>
+                            </div>
+
+                            {{-- 2. Success Preview State --}}
+                            <div x-show="evidenceUrl" class="relative group rounded-xl overflow-hidden border border-emerald-200 bg-emerald-50 p-2 flex items-center gap-3">
+                                <img :src="evidenceUrl" class="w-16 h-16 object-cover rounded-lg shadow-sm">
+                                <div class="flex-1">
+                                    <p class="text-sm font-bold text-emerald-800">Foto Terupload!</p>
+                                    <p class="text-xs text-emerald-600">Klik 'Proses' untuk menyimpan.</p>
+                                </div>
+                                <button type="button" @click="evidenceUrl = null" class="absolute top-2 right-2 bg-white text-red-500 rounded-full p-1 shadow hover:bg-red-50">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-6" x-show="selectedCondition !== 'good'" x-transition>
+                            <label class="block text-sm font-bold text-gray-700 mb-2">Tindak Lanjut <span class="text-red-500">*</span></label>
+                            <input type="text" name="follow_up" class="w-full rounded-xl border-gray-300 focus:ring-emerald-500 focus:border-emerald-500 shadow-sm" placeholder="Contoh: Perlu dibawa ke servis luar, atau bisa diperbaiki sendiri">
                         </div>
                         <div class="flex justify-end gap-3">
                             <button type="button" @click="showReturnModal = false" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200">Batal</button>
@@ -330,6 +373,7 @@
                 returnId: null,
                 returnItemName: '',
                 returnBorrower: '',
+                selectedCondition: 'good',
 
                 // Bulk Return State
                 showBulkModal: false,
@@ -339,15 +383,24 @@
                     this.returnId = id;
                     this.returnItemName = itemName;
                     this.returnBorrower = borrower;
+                    this.selectedCondition = 'good';
+                    // Reset QR
+                    this.evidenceUrl = null;
+                    this.qrCodeSvg = null;
+                    if(this.pollInterval) clearInterval(this.pollInterval);
+                    
                     this.showReturnModal = true;
                 },
 
-                // Logic Submit Bulk
+                // QR Logic (Moved to remoteUploadComponent)
+                evidenceUrl: null,
+
                 submitBulkReturn() {
                     const condition = document.getElementById('bulkConditionSelect').value;
                     document.getElementById('bulkReturnCondition').value = condition;
                     document.getElementById('bulkActionForm').submit();
                 },
+
 
                 // Checkbox Logic (Shift-Click Support)
                 toggleItem(id, index, event) {
@@ -368,5 +421,128 @@
                 }
             }
         }
+    </script>
+
+    {{-- REMOTE UPLOAD COMPONENT (SAME AS ROOM BORROWING) --}}
+    <div x-data="remoteUploadComponent" @open-remote-upload.window="openModal()" class="z-50 relative">
+        <div x-show="isOpen" class="fixed inset-0 z-50 overflow-y-auto" style="display: none;"
+            x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0"
+            x-transition:enter-end="opacity-100" x-transition:leave="transition ease-in duration-200"
+            x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
+            
+            <div class="fixed inset-0 transition-opacity" aria-hidden="true">
+                <div class="absolute inset-0 bg-gray-500 opacity-75"></div>
+            </div>
+
+            <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+                <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+
+                <div @click.away="closeModal()" class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                    <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                        <div class="sm:flex sm:items-start">
+                            <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
+                                <h3 class="text-lg leading-6 text-gray-900 font-bold">Scan QR untuk Upload</h3>
+                                <div class="mt-4 flex flex-col items-center justify-center space-y-4">
+                                    {{-- Loading --}}
+                                    <div x-show="loading" class="flex flex-col items-center text-gray-500">
+                                        <svg class="animate-spin h-8 w-8 text-indigo-500 mb-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                                        Generating Token & QR...
+                                    </div>
+                                    {{-- QR --}}
+                                    <div x-show="!loading && qrCodeSvg" class="p-4 bg-white border rounded">
+                                        <div x-html="qrCodeSvg"></div>
+                                    </div>
+                                    {{-- Instructions --}}
+                                    <div x-show="!loading" class="text-sm text-gray-500 text-center">
+                                        <p class="mb-2">1. Buka kamera HP Anda / Aplikasi Scanner.</p>
+                                        <p class="mb-2">2. Scan QR Code di atas.</p>
+                                        <p class="mb-2">3. Upload foto melalui halaman di HP.</p>
+                                        <p class="text-xs text-gray-400 mt-2">(Halaman akan otomatis refresh saat foto diterima)</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                        <button type="button" @click="closeModal()" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+                            Batal
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('alpine:init', () => {
+            Alpine.data('remoteUploadComponent', () => ({
+                isOpen: false,
+                loading: false,
+                qrCodeSvg: '',
+                token: null,
+                pollInterval: null,
+                pollAttempts: 0,
+                maxAttempts: 300,
+
+                async openModal() {
+                    this.isOpen = true;
+                    this.loading = true;
+                    this.qrCodeSvg = '';
+                    this.token = null;
+                    this.pollAttempts = 0;
+
+                    try {
+                        // Use remote.token to match items/create & room_borrowings logic
+                        const response = await fetch("{{ route('remote.token') }}");
+                        if (!response.ok) throw new Error('Network response was not ok');
+                        const data = await response.json();
+
+                        if (data.token) {
+                            this.token = data.token;
+                            if (data.qr_code) this.qrCodeSvg = data.qr_code;
+                            this.loading = false;
+                            this.startPolling();
+                        } else { throw new Error("Token not found"); }
+                    } catch (error) {
+                        console.error(error);
+                        alert('Gagal membuat sesi upload.');
+                        this.closeModal();
+                    }
+                },
+
+                startPolling() {
+                    if (!this.token) return;
+                    if (this.pollInterval) clearInterval(this.pollInterval);
+
+                    this.pollInterval = setInterval(async () => {
+                        if (this.pollAttempts >= this.maxAttempts) {
+                            alert('Sesi upload habis. Silakan scan ulang.');
+                            this.closeModal();
+                            return;
+                        }
+                        this.pollAttempts++;
+
+                        try {
+                            const res = await fetch(`{{ url('/api/remote-check') }}/${this.token}`);
+                            if (!res.ok) return;
+                            const statusData = await res.json();
+
+                            if (statusData.status === 'found' && statusData.url) {
+                                this.closeModal();
+                                window.dispatchEvent(new CustomEvent('remote-image-selected', {
+                                    detail: { url: statusData.url }
+                                }));
+                            }
+                        } catch (e) { console.error(e); }
+                    }, 2000);
+                },
+
+                closeModal() {
+                    this.isOpen = false;
+                    this.token = null;
+                    if (this.pollInterval) clearInterval(this.pollInterval);
+                }
+            }));
+        });
     </script>
 </x-app-layout>

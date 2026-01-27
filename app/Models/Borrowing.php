@@ -20,7 +20,10 @@ class Borrowing extends Model
         'return_condition',
         'status',
         'notes',
+        'ruang_pakai',
         'penanggung_jawab',
+        'follow_up',
+        'evidence_photo',
     ];
 
     protected $casts = [

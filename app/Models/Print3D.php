@@ -9,11 +9,11 @@ use App\Traits\LogsActivity; // <--- Import Trait
 
 class Print3D extends Model
 {
-        use LogsActivity; // <--- Pasang CCTV disini
+    use LogsActivity; // <--- Pasang CCTV disini
     protected $table = 'prints';
 
     use HasFactory;
-    
+
     protected $fillable = [
         'user_id',
         'project_name', // <--- TAMBAHKAN INI
@@ -23,16 +23,19 @@ class Print3D extends Model
         'end_time',
         'status',
         'file_name',
+        'file_name',
         'file_path',
+        'stl_path', // ⬅ NEW
         'notes',
         'material_type_id',
         'material_amount',
         'material_unit',
         'material_source',
-                'material_deducted', // ⬅ WAJIB
+        'lecturer_name',
+        'material_deducted', // ⬅ WAJIB
     ];
 
-        protected $casts = [
+    protected $casts = [
         'material_deducted' => 'boolean',
     ];
 
@@ -59,7 +62,7 @@ class Print3D extends Model
         }
 
         $start = Carbon::parse($this->start_time);
-        $end   = Carbon::parse($this->end_time);
+        $end = Carbon::parse($this->end_time);
 
         return $start->diffInMinutes($end);
     }

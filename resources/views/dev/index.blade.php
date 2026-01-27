@@ -67,17 +67,71 @@
                             </form>
                         </div>
 
-                        {{-- 2. Placeholder for other tools --}}
-                        <div
-                            class="border border-gray-200 rounded-xl p-6 bg-gray-50 flex flex-col justify-center items-center text-center opacity-75">
-                            <svg class="w-12 h-12 text-gray-400 mb-3" fill="none" stroke="currentColor"
-                                viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M19.428 15.428a2 2 0 00-1.022-.547l-2.384-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z">
-                                </path>
-                            </svg>
-                            <h4 class="font-bold text-gray-600">More Tools Coming Soon</h4>
-                            <p class="text-xs text-gray-500 mt-1">Logs Cleaner, User Impersonation, etc.</p>
+                        {{-- 2. USER IMPERSONATION --}}
+                        <div class="border border-gray-200 rounded-xl bg-white shadow-sm md:col-span-2">
+                            <div class="p-4 border-b bg-gray-50 flex justify-between items-center">
+                                <h3 class="font-bold text-gray-800 flex items-center gap-2">
+                                    <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor"
+                                        viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z">
+                                        </path>
+                                    </svg>
+                                    User Impersonation (Login Sebagai)
+                                </h3>
+                                <span class="text-xs px-2 py-1 bg-blue-100 text-blue-700 rounded-full font-bold">Total:
+                                    {{ $users->count() }} Users</span>
+                            </div>
+                            <div class="overflow-x-auto">
+                                <table class="min-w-full text-sm divide-y divide-gray-100">
+                                    <thead class="bg-gray-50 text-gray-700">
+                                        <tr>
+                                            <th class="px-4 py-3 text-left">ID</th>
+                                            <th class="px-4 py-3 text-left">Nama</th>
+                                            <th class="px-4 py-3 text-left">Email</th>
+                                            <th class="px-4 py-3 text-left">Role</th>
+                                            <th class="px-4 py-3 text-right">Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-gray-100">
+                                        @foreach($users as $u)
+                                                                            <tr class="hover:bg-gray-50">
+                                                                                <td class="px-4 py-3 text-gray-500">#{{ $u->id }}</td>
+                                                                                <td class="px-4 py-3 font-medium text-gray-900">{{ $u->name }}</td>
+                                                                                <td class="px-4 py-3 text-gray-600">{{ $u->email }}</td>
+                                                                                <td class="px-4 py-3">
+                                                                                    <span
+                                                                                        class="px-2 py-1 text-xs rounded-full 
+                                                                                            {{ $u->role === 'dev' ? 'bg-purple-100 text-purple-700' :
+                                            ($u->role === 'superadmin' ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-700') }}">
+                                                                                        {{ ucfirst($u->role) }}
+                                                                                    </span>
+                                                                                </td>
+                                                                                <td class="px-4 py-3 text-right">
+                                                                                    @if($u->id !== auth()->id())
+                                                                                        <form action="{{ route('dev.impersonate', $u->id) }}" method="POST">
+                                                                                            @csrf
+                                                                                            <button type="submit"
+                                                                                                class="text-xs bg-blue-600 text-white px-3 py-1.5 rounded hover:bg-blue-700 transition shadow-sm font-bold flex items-center gap-1 justify-end ml-auto">
+                                                                                                <svg class="w-3 h-3" fill="none" stroke="currentColor"
+                                                                                                    viewBox="0 0 24 24">
+                                                                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                                                                        stroke-width="2"
+                                                                                                        d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1">
+                                                                                                    </path>
+                                                                                                </svg>
+                                                                                                Login As
+                                                                                            </button>
+                                                                                        </form>
+                                                                                    @else
+                                                                                        <span class="text-xs text-gray-400 italic">Current User</span>
+                                                                                    @endif
+                                                                                </td>
+                                                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
 
                     </div>

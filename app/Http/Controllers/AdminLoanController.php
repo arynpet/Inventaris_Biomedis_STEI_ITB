@@ -60,6 +60,7 @@ class AdminLoanController extends Controller
                 'return_date' => $loan->return_date,
                 'status' => 'borrowed',
                 'notes' => $loan->purpose,
+                'ruang_pakai' => $loan->ruang_pakai,
                 'penanggung_jawab' => $loan->penanggung_jawab,
             ]);
 

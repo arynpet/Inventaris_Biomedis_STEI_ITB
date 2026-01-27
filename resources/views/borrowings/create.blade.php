@@ -38,8 +38,12 @@
                                     <label class="block text-sm font-bold text-gray-700">
                                         Nama Peminjam <span class="text-red-500">*</span>
                                     </label>
-                                    <a href="{{ route('peminjam-users.create') }}" target="_blank" class="text-xs bg-green-100 text-green-700 py-1 px-2 rounded hover:bg-green-200 transition flex items-center">
-                                        <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                                    <a href="{{ route('peminjam-users.create') }}" target="_blank"
+                                        class="text-xs bg-green-100 text-green-700 py-1 px-2 rounded hover:bg-green-200 transition flex items-center">
+                                        <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M12 4v16m8-8H4"></path>
+                                        </svg>
                                         + Peminjam Baru
                                     </a>
                                 </div>
@@ -211,6 +215,16 @@
                                 <textarea name="notes"
                                     class="block w-full px-4 py-3 border-gray-300 rounded-xl focus:ring-blue-500 focus:border-blue-500 text-sm shadow-sm h-32 resize-none"
                                     placeholder="Contoh: Digunakan untuk praktikum Fisika Dasar..."></textarea>
+                            </div>
+
+                            {{-- 6. RUANG PAKAI --}}
+                            <div>
+                                <label class="block text-sm font-bold text-gray-700 mb-2">
+                                    Ruang Pakai <span class="text-xs font-normal text-gray-500">(Opsional)</span>
+                                </label>
+                                <input type="text" name="ruang_pakai"
+                                    class="block w-full px-4 py-3 border-gray-300 rounded-xl focus:ring-blue-500 focus:border-blue-500 text-sm shadow-sm"
+                                    placeholder="Contoh: Lab Biomedis 1">
                             </div>
 
                         </div>

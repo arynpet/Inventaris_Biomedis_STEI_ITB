@@ -64,6 +64,8 @@
                                                 {{ $loan->quantity }}
                                             </td>
                                             <td class="px-6 py-4 text-sm text-gray-500">
+                                                <span class="font-semibold text-blue-600 block mb-1">Ruang:
+                                                    {{ $loan->ruang_pakai ?? '-' }}</span>
                                                 {{ Str::limit($loan->purpose, 30) }}
                                                 <div class="text-xs text-gray-400 mt-1">Full: {{ $loan->purpose }}</div>
                                             </td>

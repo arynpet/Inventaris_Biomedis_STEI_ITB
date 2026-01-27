@@ -12,8 +12,12 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->web(append: [
+            \App\Http\Middleware\EnableDebugbar::class,
+        ]);
         $middleware->alias([
             'superadmin' => \App\Http\Middleware\IsSuperAdmin::class,
+            'dev.mode' => \App\Http\Middleware\CheckDevMode::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

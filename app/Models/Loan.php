@@ -14,6 +14,7 @@ class Loan extends Model
         'item_id',
         'quantity',
         'purpose',
+        'ruang_pakai',
         'borrow_date',
         'return_date',
         'status',

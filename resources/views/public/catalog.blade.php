@@ -343,6 +343,11 @@
                             </div>
 
                             <div>
+                                <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Ruang Pakai</label>
+                                <input type="text" name="ruang_pakai" class="w-full rounded-lg border-gray-300 text-sm focus:ring-blue-500 focus:border-blue-500" placeholder="Contoh: Lab Dasar 1" required>
+                            </div>
+
+                            <div>
                                 <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Penanggung Jawab / Pembimbing</label>
                                 <input type="text" name="penanggung_jawab" class="w-full rounded-lg border-gray-300 text-sm focus:ring-blue-500 focus:border-blue-500" placeholder="Contoh: Dr. Eng. Widih atau Pak Aslab" required>
                             </div>

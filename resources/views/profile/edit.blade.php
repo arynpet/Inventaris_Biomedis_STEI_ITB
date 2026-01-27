@@ -188,4 +188,99 @@
             </div>
         </div>
     </div>
+    <div class="py-6 text-center text-xs text-gray-400">
+        <p>&copy; {{ date('Y') }} Biomedis All Rights Reserved. Created by Raden <span id="secret-trigger"
+                class="cursor-default hover:text-gray-500 transition duration-300">Satya</span> and Aryan Veda.</p>
+    </div>
+
+    {{-- EASTER EGG SCRIPT --}}
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const trigger = document.getElementById('secret-trigger');
+            let clickCount = 0;
+            let resetTimer;
+
+            if (trigger) {
+                trigger.addEventListener('click', function () {
+                    clickCount++;
+
+                    // Reset timer on every click (debounce)
+                    clearTimeout(resetTimer);
+                    resetTimer = setTimeout(() => {
+                        clickCount = 0; // Reset if inactive for 2 seconds
+                    }, 2000);
+
+                    console.log('Click:', clickCount); // Debugging
+
+                    if (clickCount >= 6) {
+                        clickCount = 0; // Reset immediately to prevent multiple triggers
+
+                        const isSuperAdmin = @json(auth()->user()->isSuperAdmin());
+
+                        if (isSuperAdmin) {
+                            // CASE 1: SUPERADMIN (Langsung Konfirmasi)
+                            Swal.fire({
+                                title: 'Activate Developer Mode?',
+                                text: 'Superadmin detected. Enable Dev Mode instantly?',
+                                icon: 'warning',
+                                showCancelButton: true,
+                                confirmButtonText: 'Yes, Activate!',
+                                showLoaderOnConfirm: true,
+                                preConfirm: () => {
+                                    return fetch('{{ route("profile.upgrade_dev") }}', {
+                                        method: 'POST',
+                                        headers: {
+                                            'Content-Type': 'application/json',
+                                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                                        }
+                                        // No password needed for superadmin (handled by backend)
+                                    })
+                                        .then(response => response.json())
+                                        .catch(error => Swal.showValidationMessage(`Request failed: ${error}`))
+                                }
+                            }).then(handleResult);
+                        } else {
+                            // CASE 2: USER BIASA (Butuh Password)
+                            Swal.fire({
+                                title: 'Developer Access',
+                                input: 'password',
+                                inputLabel: 'Enter Secret Key',
+                                inputPlaceholder: 'Type password...',
+                                showCancelButton: true,
+                                confirmButtonText: 'Unlock',
+                                showLoaderOnConfirm: true,
+                                preConfirm: (password) => {
+                                    return fetch('{{ route("profile.upgrade_dev") }}', {
+                                        method: 'POST',
+                                        headers: {
+                                            'Content-Type': 'application/json',
+                                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                                        },
+                                        body: JSON.stringify({ password: password })
+                                    })
+                                        .then(response => {
+                                            if (!response.ok) throw new Error(response.statusText);
+                                            return response.json();
+                                        })
+                                        .catch(error => Swal.showValidationMessage(`Request failed: ${error}`))
+                                }
+                            }).then(handleResult);
+                        }
+
+                        function handleResult(result) {
+                            if (result.isConfirmed) {
+                                if (result.value && result.value.success) {
+                                    Swal.fire('Access Granted!', result.value.message, 'success')
+                                        .then(() => window.location.reload());
+                                } else {
+                                    Swal.fire('Error', 'Invalid Password or unauthorized.', 'error');
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        });
+    </script>
 </x-app-layout>
