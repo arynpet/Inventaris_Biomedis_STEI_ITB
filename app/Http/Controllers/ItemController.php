@@ -363,32 +363,93 @@ class ItemController extends Controller
     // =========================
     // BULK UPDATE (EDIT MASSAL)
     // =========================
+    // =========================
+    // BULK UPDATE (EDIT MASSAL - MULTI FIELD)
+    // =========================
     public function bulkUpdate(Request $request)
     {
-        $validated = $request->validate([
+        $request->validate([
             'selected_ids' => 'required|array|min:1',
             'selected_ids.*' => 'exists:items,id',
-            'field' => 'required|in:acquisition_year,condition,room_id',
-            'value' => 'required',
+            // Fields are optional
+            'room_id' => 'nullable|exists:rooms,id',
+            'status' => 'nullable|in:available,borrowed,maintenance,dikeluarkan',
+            'condition' => 'nullable|in:good,damaged,broken',
+            'acquisition_year' => 'nullable|numeric',
         ]);
 
-        $ids = $validated['selected_ids'];
-        $field = $validated['field'];
-        $value = $validated['value'];
+        $ids = $request->selected_ids;
+        $count = count($ids);
+        $updates = [];
+        $logDetails = [];
 
-        // Perform Update
-        $count = Item::whereIn('id', $ids)->update([$field => $value]);
+        // 1. Standard Fields (Direct SQL Update)
+        $allowedFields = [
+            'brand',
+            'type',
+            'fiscal_group',
+            'source',
+            'acquisition_year',
+            'placed_in_service_at',
+            'status',
+            'condition',
+            'room_id'
+        ];
+
+        foreach ($allowedFields as $field) {
+            if ($request->filled($field)) {
+                $updates[$field] = $request->input($field);
+                $logDetails[] = $field;
+            }
+        }
+
+        if (!empty($updates)) {
+            Item::whereIn('id', $ids)->update($updates);
+        }
+
+        // 2. Serial Number Pattern (Loop Logic)
+        if ($request->filled('serial_number_pattern')) {
+            $pattern = $request->serial_number_pattern;
+            $currentSeq = (int) ($request->sn_manual_start ?? 1);
+
+            // Get items ordered by ID to ensure stable sequence application
+            $items = Item::whereIn('id', $ids)->orderBy('id')->get();
+
+            foreach ($items as $item) {
+                if (strpos($pattern, '@') !== false) {
+                    $seqStr = str_pad($currentSeq, 3, '0', STR_PAD_LEFT);
+                    $newSn = str_replace('@', $seqStr, $pattern);
+                    $currentSeq++;
+                } else {
+                    $newSn = $pattern; // Direct overwrite
+                }
+
+                $item->serial_number = $newSn;
+                try {
+                    $item->save();
+                    $this->generateAndSaveQr($item);
+                } catch (\Exception $e) {
+                    // Ignore dupes to prevent crash
+                }
+            }
+            $logDetails[] = 'serial_number';
+        }
+
+        if (empty($updates) && !$request->filled('serial_number_pattern')) {
+            return back()->with('error', 'Tidak ada perubahan yang disimpan (semua kolom kosong).');
+        }
 
         // Logging
+        $changesStr = implode(', ', $logDetails);
         ActivityLog::create([
             'user_id' => auth()->id(),
             'action' => 'bulk_update',
             'model' => 'Item',
-            'description' => "Bulk update: {$count} items. Field '{$field}' changed to '{$value}'",
+            'description' => "Bulk update {$count} items. Fields: {$changesStr}",
             'ip_address' => request()->ip(),
         ]);
 
-        return redirect()->route('items.index')->with('success', "Berhasil mengupdate {$count} item.");
+        return redirect()->route('items.index')->with('success', "Berhasil memperbarui data untuk {$count} item.");
     }
 
     // =========================

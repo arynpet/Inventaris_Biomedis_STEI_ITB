@@ -262,8 +262,17 @@
                         {{-- Params Generator --}}
                         <div>
                             <label class="text-xs font-bold text-gray-500 uppercase">Prefix</label>
-                            <input type="text" x-model="catCode" @input="fetchSequence()"
+                            <select x-model="catCode" @change="fetchSequence()"
                                 class="w-full rounded-lg border-gray-300 text-sm font-bold text-center uppercase">
+                                <option value="B">B (Biomedis)</option>
+                                <option value="I">I (Instrumentasi)</option>
+                                <option value="K">K (Komponen)</option>
+                                <option value="P">P (Pc)</option>
+                                <option value="EK">EK (Elektronika Kantor)</option>
+                                <option value="M">M (Mekanikal)</option>
+                                <option value="C">C (Cabel)</option>
+                                <option value="A">A (Atk)</option>
+                            </select>
                         </div>
                         <div>
                             <label class="text-xs font-bold text-gray-500 uppercase">Abbr</label>
@@ -278,10 +287,15 @@
                         </div>
                         <div>
                             <label class="text-xs font-bold text-gray-500 uppercase">Start Seq</label>
-                            <input type="text" x-model="startSeq" @input="previewSerials()"
+                            <input type="text" x-model="startSeq"
                                 class="w-full rounded-lg border-gray-300 text-sm font-bold text-center">
-                            <button type="button" @click="fetchSequence()"
-                                class="text-[10px] text-blue-500 underline text-center w-full mt-1">Check DB</button>
+                            <div class="flex gap-1 mt-1">
+                                <button type="button" @click="fetchSequence()"
+                                    class="text-[10px] text-blue-500 underline flex-1 text-center"
+                                    title="Cek seq terakhir di database">Check DB</button>
+                                <button type="button" @click="previewSerials()"
+                                    class="text-[10px] bg-blue-600 text-white px-2 py-0.5 rounded flex-1 text-center hover:bg-blue-700">Apply</button>
+                            </div>
                         </div>
                     </div>
 
@@ -442,7 +456,7 @@
                 mode: 'single',
                 autoGen: false,
                 itemName: '',
-                catCode: 'E',
+                catCode: 'B',
                 abbr: 'XXXX',
                 year: '{{ date('y') }}',
                 startSeq: '001',
@@ -467,9 +481,22 @@
                 },
 
                 updateCatCode(e) {
-                    let text = e.target.options[e.target.selectedIndex].text;
-                    this.catCode = text.charAt(0).toUpperCase();
-                    this.fetchSequence();
+                    // Get latest selected option
+                    let options = e.target.options;
+                    let selectedOption = null;
+
+                    // Iterate to find the last selected one or just use selectedIndex
+                    if (e.target.selectedIndex !== -1) {
+                        let text = options[e.target.selectedIndex].text.toUpperCase();
+
+                        // Smart Mapping
+                        if (text.includes('ELEKTRONIKA')) {
+                            this.catCode = 'EK';
+                        } else {
+                            this.catCode = text.charAt(0);
+                        }
+                        this.fetchSequence();
+                    }
                 },
 
                 fetchSequence() {

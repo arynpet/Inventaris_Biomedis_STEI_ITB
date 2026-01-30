@@ -522,46 +522,103 @@
                                     <div class="mt-2">
                                         <p class="text-sm text-gray-500 mb-4">
                                             Anda akan mengedit <span class="font-bold text-gray-800" x-text="selectedItems.length"></span> item terpilih.
+                                            <span class="text-amber-600 italic block mt-1">Biarkan kolom kosong jika tidak ingin mengubah data tersebut.</span>
                                         </p>
                                         
-                                        <div class="space-y-4">
-                                            {{-- Field Selection --}}
-                                            <div>
-                                                <label class="block text-sm font-medium text-gray-700 mb-1">Field yang ingin diubah</label>
-                                                <select name="field" x-model="editField" class="w-full rounded-lg border-gray-300 focus:ring-amber-500 focus:border-amber-500 shadow-sm">
-                                                    <option value="acquisition_year">Tahun Perolehan</option>
-                                                    <option value="condition">Kondisi</option>
-                                                    <option value="room_id">Ruangan</option>
-                                                </select>
-                                            </div>
-
-                                            {{-- Value Inputs based on Field --}}
+                                        <div class="space-y-4 text-left max-h-[60vh] overflow-y-auto px-1 scrollbar-hide">
                                             
-                                            {{-- 1. Acquisition Year --}}
-                                            <div x-show="editField === 'acquisition_year'">
-                                                <label class="block text-sm font-medium text-gray-700 mb-1">Tahun Baru</label>
-                                                <input type="number" name="value" class="w-full rounded-lg border-gray-300 focus:ring-amber-500 focus:border-amber-500 shadow-sm" placeholder="Contoh: 2024" :disabled="editField !== 'acquisition_year'">
+                                            {{-- Group 1: Identitas --}}
+                                            <div class="grid grid-cols-2 gap-4">
+                                                <div>
+                                                    <label class="block text-xs font-bold text-gray-500 uppercase">Merk / Brand</label>
+                                                    <input type="text" name="brand" class="w-full rounded-lg border-gray-300 text-sm focus:ring-amber-500 focus:border-amber-500" placeholder="--- Tetap ---">
+                                                </div>
+                                                <div>
+                                                    <label class="block text-xs font-bold text-gray-500 uppercase">Tipe / Model</label>
+                                                    <input type="text" name="type" class="w-full rounded-lg border-gray-300 text-sm focus:ring-amber-500 focus:border-amber-500" placeholder="--- Tetap ---">
+                                                </div>
                                             </div>
 
-                                            {{-- 2. Condition --}}
-                                            <div x-show="editField === 'condition'" style="display: none;">
-                                                <label class="block text-sm font-medium text-gray-700 mb-1">Kondisi Baru</label>
-                                                <select name="value" class="w-full rounded-lg border-gray-300 focus:ring-amber-500 focus:border-amber-500 shadow-sm" :disabled="editField !== 'condition'">
-                                                    <option value="good">Baik (Good)</option>
-                                                    <option value="damaged">Rusak Ringan (Damaged)</option>
-                                                    <option value="broken">Rusak Berat (Broken)</option>
-                                                </select>
+                                            <div class="grid grid-cols-2 gap-4">
+                                                <div>
+                                                    <label class="block text-xs font-bold text-gray-500 uppercase">Fiscal Group</label>
+                                                    <input type="text" name="fiscal_group" class="w-full rounded-lg border-gray-300 text-sm focus:ring-amber-500 focus:border-amber-500" placeholder="--- Tetap ---">
+                                                </div>
+                                                <div>
+                                                    <label class="block text-xs font-bold text-gray-500 uppercase">Sumber Perolehan</label>
+                                                    <input type="text" name="source" class="w-full rounded-lg border-gray-300 text-sm focus:ring-amber-500 focus:border-amber-500" placeholder="--- Tetap ---">
+                                                </div>
                                             </div>
 
-                                            {{-- 3. Room --}}
-                                            <div x-show="editField === 'room_id'" style="display: none;">
-                                                <label class="block text-sm font-medium text-gray-700 mb-1">Ruangan Baru</label>
-                                                <select name="value" class="w-full rounded-lg border-gray-300 focus:ring-amber-500 focus:border-amber-500 shadow-sm" :disabled="editField !== 'room_id'">
+                                            {{-- Group 2: Waktu --}}
+                                            <div class="grid grid-cols-2 gap-4">
+                                                <div>
+                                                    <label class="block text-xs font-bold text-gray-500 uppercase">Tahun Perolehan</label>
+                                                    <input type="number" name="acquisition_year" class="w-full rounded-lg border-gray-300 text-sm focus:ring-amber-500 focus:border-amber-500" placeholder="YYYY">
+                                                </div>
+                                                <div>
+                                                    <label class="block text-xs font-bold text-gray-500 uppercase">Tgl Digunakan</label>
+                                                    <input type="date" name="placed_in_service_at" class="w-full rounded-lg border-gray-300 text-sm focus:ring-amber-500 focus:border-amber-500">
+                                                </div>
+                                            </div>
+
+                                            {{-- Group 3: Status & Lokasi --}}
+                                            <div>
+                                                <label class="block text-xs font-bold text-gray-500 uppercase">Ruangan</label>
+                                                <select name="room_id" class="w-full rounded-lg border-gray-300 text-sm focus:ring-amber-500 focus:border-amber-500">
+                                                    <option value="">--- Tidak Berubah ---</option>
                                                     @foreach($rooms as $room)
                                                         <option value="{{ $room->id }}">{{ $room->name }}</option>
                                                     @endforeach
                                                 </select>
                                             </div>
+
+                                            <div class="grid grid-cols-2 gap-4">
+                                                <div>
+                                                    <label class="block text-xs font-bold text-gray-500 uppercase">Status</label>
+                                                    <select name="status" class="w-full rounded-lg border-gray-300 text-sm focus:ring-amber-500 focus:border-amber-500">
+                                                        <option value="">--- Tetap ---</option>
+                                                        <option value="available">Available</option>
+                                                        <option value="borrowed">Borrowed</option>
+                                                        <option value="maintenance">Maintenance</option>
+                                                    </select>
+                                                </div>
+                                                <div>
+                                                    <label class="block text-xs font-bold text-gray-500 uppercase">Kondisi</label>
+                                                    <select name="condition" class="w-full rounded-lg border-gray-300 text-sm focus:ring-amber-500 focus:border-amber-500">
+                                                        <option value="">--- Tetap ---</option>
+                                                        <option value="good">Baik</option>
+                                                        <option value="damaged">Rusak Ringan</option>
+                                                        <option value="broken">Rusak Berat</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+
+                                            {{-- Group 4: Serial Number Generator --}}
+                                            <div class="pt-4 border-t border-gray-100">
+                                                <div x-data="{ showSn: false }">
+                                                    <button type="button" @click="showSn = !showSn" class="flex items-center gap-1 text-xs font-bold text-amber-600 hover:text-amber-800 uppercase tracking-wide mb-2">
+                                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path></svg>
+                                                        Advanced: Regenerate Serial Number
+                                                    </button>
+                                                    
+                                                    <div x-show="showSn" class="bg-amber-50 p-3 rounded-lg border border-amber-100 space-y-3">
+                                                        <div>
+                                                            <label class="block text-xs font-bold text-gray-600 uppercase">Pattern</label>
+                                                            <input type="text" name="serial_number_pattern" 
+                                                                   class="w-full rounded-lg border-amber-300 focus:ring-amber-500 focus:border-amber-500 text-sm font-mono" 
+                                                                   placeholder="SN-202X-@">
+                                                            <p class="text-[10px] text-gray-500 mt-1">Gunakan <strong>@</strong> untuk auto-increment. Kosongkan jika tidak ingin ubah SN.</p>
+                                                        </div>
+                                                        <div>
+                                                            <label class="block text-xs font-bold text-gray-600 uppercase">Start Seq</label>
+                                                            <input type="number" name="sn_manual_start" value="1" 
+                                                                   class="w-24 rounded-lg border-amber-300 focus:ring-amber-500 focus:border-amber-500 text-sm">
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
                                         </div>
                                     </div>
                                 </div>

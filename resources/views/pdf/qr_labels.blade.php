@@ -12,80 +12,102 @@
         }
 
         body {
-            font-family: sans-serif;
-            font-size: 9pt;
+            font-family: "Helvetica", "Arial", sans-serif;
+            margin: 0;
+            padding: 0;
         }
 
-        .items-container {
+        table.main-grid {
             width: 100%;
+            border-collapse: separate;
+            border-spacing: 5px;
+            /* Very tight gap */
+            table-layout: fixed;
+            margin: 0;
         }
 
-        .label-wrapper {
-            float: left;
-            width: 32%;
-            /* 3 columns roughly */
-            margin-right: 1.3%;
-            margin-bottom: 10mm;
-            height: 90mm;
+        td.grid-cell {
+            width: 20%;
+            /* 5 Columns */
+            vertical-align: top;
+            padding: 0;
         }
 
-        .label-wrapper:nth-child(3n) {
-            margin-right: 0;
-            clear: right;
-        }
-
-        .label {
-            border: 1px dashed #999;
-            /* Dashed border as cutting guide */
-            padding: 5mm;
-            text-align: center;
-            height: 100%;
+        /* Compact Vertical Asset Tag */
+        .label-box {
+            border: 1px solid #ccc;
+            border-radius: 4px;
             background: #fff;
+            height: 140px;
+            /* Shorter fixed height */
             box-sizing: border-box;
+            position: relative;
+            overflow: hidden;
+            text-align: center;
         }
 
-        .header {
+        /* Compact Header */
+        .label-header {
+            background-color: #2c3e50;
+            color: #ffffff;
+            font-size: 6.5pt;
+            /* Smaller font */
             font-weight: bold;
-            font-size: 10pt;
-            color: #000;
-            border-bottom: 2px solid #000;
-            padding-bottom: 5px;
-            margin-bottom: 10px;
             text-transform: uppercase;
+            padding: 4px 2px;
+            line-height: 1.1;
+            min-height: 22px;
+
+            /* Center vertically/horizontally */
+            display: block;
+            white-space: normal;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .label-content {
+            padding: 4px;
+        }
+
+        /* Smaller QR */
+        .qr-box {
+            margin: 4px auto;
+            width: 55px;
+            height: 55px;
         }
 
         .qr-img {
-            width: 45mm;
-            height: 45mm;
-            margin: 0 auto;
+            width: 100%;
+            height: 100%;
             display: block;
         }
 
-        .info {
-            margin-top: 10px;
-            border-top: 1px solid #ccc;
-            padding-top: 5px;
+        /* Details */
+        .info-area {
+            margin-top: 4px;
         }
 
-        .name {
+        .sn-text {
+            font-family: "Courier New", Courier, monospace;
+            font-size: 7.5pt;
             font-weight: bold;
-            font-size: 9pt;
-            margin-bottom: 5px;
-            overflow: hidden;
-            height: 30px;
+            color: #333;
+            margin-bottom: 2px;
+            word-wrap: break-word;
         }
 
-        .meta {
-            font-family: monospace;
-            font-size: 8pt;
-            color: #333;
+        .meta-text {
+            font-size: 7pt;
+            color: #666;
+            margin-bottom: 2px;
         }
 
         .footer {
-            font-size: 7pt;
-            color: #777;
+            font-size: 4.5pt;
+            color: #aaa;
+            text-transform: uppercase;
             margin-top: 5px;
-            font-style: italic;
+            letter-spacing: 0.5px;
         }
 
         .page-break {
@@ -96,44 +118,54 @@
 </head>
 
 <body>
-    <div class="items-container">
-        @foreach($items as $item)
-            <div class="label-wrapper">
-                <div class="label">
-                    <div class="header">
-                        Lab Biomedis STEI ITB
-                    </div>
 
-                    <div class="qr-box">
-                        @if($item->qr_code && file_exists(public_path('storage/' . $item->qr_code)))
-                            <img src="{{ public_path('storage/' . $item->qr_code) }}" class="qr-img" alt="QR">
-                        @else
-                            {{-- Inline Base64 SVG --}}
-                            <img src="data:image/svg+xml;base64,{{ base64_encode(SimpleSoftwareIO\QrCode\Facades\QrCode::format('svg')->size(150)->generate($item->serial_number)) }}"
-                                class="qr-img" alt="QR">
-                        @endif
-                    </div>
+    <table class="main-grid">
+        @foreach($items->chunk(5) as $chunk)
+            <tr>
+                @foreach($chunk as $item)
+                    <td class="grid-cell">
+                        <div class="label-box">
+                            <!-- Header: Asset Name -->
+                            <div class="label-header">
+                                {{ Str::limit($item->name, 35) }}
+                            </div>
 
-                    <div class="info">
-                        <div class="name">
-                            {{ $item->name }}
-                        </div>
-                        <div class="meta">
-                            SN: {{$item->serial_number}}<br>
-                            @if($item->asset_number) Asset: {{$item->asset_number}} @endif
-                        </div>
-                        <div class="footer">
-                            {{ $item->room->name ?? '-' }}
-                        </div>
-                    </div>
-                </div>
-            </div>
+                            <div class="label-content">
+                                <!-- QR Code Centered -->
+                                <div class="qr-box">
+                                    @if($item->qr_code && file_exists(public_path('storage/' . $item->qr_code)))
+                                        <img src="{{ public_path('storage/' . $item->qr_code) }}" class="qr-img" alt="QR">
+                                    @else
+                                        <img src="data:image/svg+xml;base64,{{ base64_encode(SimpleSoftwareIO\QrCode\Facades\QrCode::format('svg')->size(100)->errorCorrection('H')->generate($item->serial_number)) }}"
+                                            class="qr-img" alt="QR">
+                                    @endif
+                                </div>
 
-            @if($loop->iteration % 15 == 0 && !$loop->last)
+                                <!-- Stacked Info -->
+                                <div class="info-area">
+                                    <div class="sn-text">{{ $item->serial_number }}</div>
+                                    <div class="footer">Lab Biomedis</div>
+                                </div>
+                            </div>
+                        </div>
+                    </td>
+                @endforeach
+
+                {{-- Fill empty cells --}}
+                @for($i = $chunk->count(); $i < 5; $i++)
+                    <td class="grid-cell"></td>
+                @endfor
+            </tr>
+
+            {{-- Page Break Logic: 7 rows = 35 items per page --}}
+            @if($loop->iteration % 7 == 0 && !$loop->last)
+                </table>
                 <div class="page-break"></div>
+                <table class="main-grid">
             @endif
         @endforeach
-    </div>
+    </table>
+
 </body>
 
 </html>
