@@ -8,7 +8,9 @@
     <title>{{ config('app.name', 'NARA SYSTEM') }}</title>
 
     <script src="https://unpkg.com/lucide@latest"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+        integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA=="
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=figtree:300,400,500,600&display=swap" rel="stylesheet" />
 
@@ -326,8 +328,47 @@
                 log.innerHTML += `<div style="color: red; font-size: 12px; text-align: center;">Gagal terhubung ke NARA.</div>`;
             }
             log.scrollTop = log.scrollHeight;
+            log.scrollTop = log.scrollHeight;
         }
-    </script>
-</body>
 
-</html>
+        // ==========================================
+        // 4. SCREEN TIME TRACKER (GAMIFICATION)
+        // ==========================================
+        // ==========================================
+        // 4. SCREEN TIME TRACKER (GAMIFICATION)
+        // ==========================================
+        document.addEventListener("DOMContentLoaded", () => {
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+
+            if (csrfToken) {
+                setInterval(() => {
+                    // 1. Check if tab is focused (Not idle/minimized)
+                    if (!document.hidden) {
+                        fetch("{{ route('user.heartbeat') }}", {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': csrfToken
+                            },
+                            body: JSON.stringify({})
+                        })
+                            .then(res => res.json())
+                            .then(data => {
+                                if (data.status === 'pumped') {
+                                    console.log(`Heartbeat [OK]. Total Seconds: ${data.val}`);
+                                } else if (data.status === 'guest') {
+                                    console.log("Heartbeat: Guest (Not logged in)");
+                                } else {
+                                    console.error("Heartbeat Error:", data);
+                                }
+                            })
+                            .catch(err => console.error("Heartbeat Network/JSON Error:", err));
+                    } else {
+                        console.log("Heartbeat skipped (Idle/Hidden)");
+                    }
+                }, 10000); // 10s
+            }
+        });
+</body >
+
+</html >

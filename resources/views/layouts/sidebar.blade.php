@@ -65,7 +65,7 @@
 
             <button @click="sidebarOpen = !sidebarOpen"
                 class="w-8 h-8 rounded-lg flex items-center justify-center transition-colors {{ $isDash ? 'hover:bg-cyan-900/30 text-cyan-500' : 'hover:bg-gray-100 text-gray-500' }}">
-                <i :data-lucide="sidebarOpen ? 'chevron-left' : 'chevron-right'" class="w-4 h-4"></i>
+                <i class="fa-solid" :class="sidebarOpen ? 'fa-chevron-left' : 'fa-chevron-right'"></i>
             </button>
         </div>
 
@@ -73,8 +73,14 @@
 
             <a href="/dashboard" :class="sidebarOpen ? 'justify-start' : 'justify-center'"
                 class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 mb-4 {{ dynamicActive('dashboard') }}">
-                <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
+                <i class="fa-solid fa-tachometer-alt w-5 h-5 flex items-center justify-center"></i>
                 <span x-show="sidebarOpen" class="text-sm font-semibold">Dashboard</span>
+            </a>
+
+            <a href="/gamification" :class="sidebarOpen ? 'justify-start' : 'justify-center'"
+                class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 mb-4 {{ dynamicActive('gamification') }}">
+                <i class="fa-solid fa-trophy w-5 h-5 flex items-center justify-center text-yellow-500"></i>
+                <span x-show="sidebarOpen" class="text-sm font-semibold">Leaderboard</span>
             </a>
 
             <div x-show="sidebarOpen" x-transition class="px-3 pt-2 pb-2">
@@ -85,7 +91,7 @@
             <a href="/items" :class="sidebarOpen ? 'justify-start' : 'justify-center'"
                 class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group {{ dynamicActive('items') }}">
                 <div class="relative flex-shrink-0">
-                    <i data-lucide="package" class="w-5 h-5"></i>
+                    <i class="fa-solid fa-box w-5 h-5 flex items-center justify-center"></i>
                     @if (request()->is('items*')) <span
                         class="absolute -top-0.5 -right-0.5 w-2 h-2 bg-blue-600 rounded-full"></span>
                     @endif
@@ -96,7 +102,7 @@
             <a href="/rooms" :class="sidebarOpen ? 'justify-start' : 'justify-center'"
                 class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group {{ dynamicActive('rooms') }}">
                 <div class="relative flex-shrink-0">
-                    <i data-lucide="door-open" class="w-5 h-5"></i>
+                    <i class="fa-solid fa-door-open w-5 h-5 flex items-center justify-center"></i>
                     @if (request()->is('rooms*')) <span
                         class="absolute -top-0.5 -right-0.5 w-2 h-2 bg-blue-600 rounded-full"></span>
                     @endif
@@ -107,7 +113,7 @@
             <a href="/materials" :class="sidebarOpen ? 'justify-start' : 'justify-center'"
                 class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group {{ dynamicActive('materials') }}">
                 <div class="relative flex-shrink-0">
-                    <i data-lucide="container" class="w-5 h-5"></i>
+                    <i class="fa-solid fa-boxes-stacked w-5 h-5 flex items-center justify-center"></i>
                 </div>
                 <span x-show="sidebarOpen" x-transition class="text-sm font-medium truncate">Stok Material</span>
             </a>
@@ -115,7 +121,7 @@
             <a href="/categories" :class="sidebarOpen ? 'justify-start' : 'justify-center'"
                 class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group {{ dynamicActive('categories') }}">
                 <div class="relative flex-shrink-0">
-                    <i data-lucide="tags" class="w-5 h-5"></i>
+                    <i class="fa-solid fa-tags w-5 h-5 flex items-center justify-center"></i>
                 </div>
                 <span x-show="sidebarOpen" x-transition class="text-sm font-medium truncate">Kategori</span>
             </a>
@@ -123,7 +129,7 @@
             <a href="/printers" :class="sidebarOpen ? 'justify-start' : 'justify-center'"
                 class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group {{ dynamicActive('printers') }}">
                 <div class="relative flex-shrink-0">
-                    <i data-lucide="printer" class="w-5 h-5"></i>
+                    <i class="fa-solid fa-print w-5 h-5 flex items-center justify-center"></i>
                 </div>
                 <span x-show="sidebarOpen" x-transition class="text-sm font-medium truncate">Mesin 3D</span>
             </a>
@@ -136,7 +142,7 @@
             <a href="/borrowings" :class="sidebarOpen ? 'justify-start' : 'justify-center'"
                 class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group {{ dynamicActive('borrowings') }}">
                 <div class="relative flex-shrink-0">
-                    <i data-lucide="zap" class="w-5 h-5"></i>
+                    <i class="fa-solid fa-bolt w-5 h-5 flex items-center justify-center"></i>
                 </div>
                 <span x-show="sidebarOpen" x-transition class="text-sm font-medium truncate">Pinjam Alat</span>
             </a>
@@ -144,7 +150,7 @@
             <a href="/room_borrowings" :class="sidebarOpen ? 'justify-start' : 'justify-center'"
                 class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group {{ dynamicActive('room_borrowings') }}">
                 <div class="relative flex-shrink-0">
-                    <i data-lucide="calendar-clock" class="w-5 h-5"></i>
+                    <i class="fa-solid fa-calendar-check w-5 h-5 flex items-center justify-center"></i>
                 </div>
                 <span x-show="sidebarOpen" x-transition class="text-sm font-medium truncate">Booking Ruangan</span>
             </a>
@@ -152,7 +158,7 @@
             <a href="/prints" :class="sidebarOpen ? 'justify-start' : 'justify-center'"
                 class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group {{ dynamicActive('prints') }}">
                 <div class="relative flex-shrink-0">
-                    <i data-lucide="layers" class="w-5 h-5"></i>
+                    <i class="fa-solid fa-layer-group w-5 h-5 flex items-center justify-center"></i>
                 </div>
                 <span x-show="sidebarOpen" x-transition class="text-sm font-medium truncate">Request Print</span>
             </a>
@@ -166,7 +172,7 @@
                 <a href="{{ route('dev.index') }}" :class="sidebarOpen ? 'justify-start' : 'justify-center'"
                     class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group {{ dynamicActive('dev/dashboard') }}">
                     <div class="relative flex-shrink-0">
-                        <i data-lucide="code-2" class="w-5 h-5 text-red-500"></i>
+                        <i class="fa-solid fa-code w-5 h-5 flex items-center justify-center text-red-500"></i>
                     </div>
                     <span x-show="sidebarOpen" x-transition class="text-sm font-medium truncate text-red-600">Dev
                         Dashboard</span>
@@ -182,8 +188,7 @@
                 <a href="{{ route('superadmin.users.index') }}" :class="sidebarOpen ? 'justify-start' : 'justify-center'"
                     class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group {{ dynamicActive('superadmin/users') }}">
                     <div class="relative flex-shrink-0">
-                        <i data-lucide="shield-check"
-                            class="w-5 h-5 text-indigo-600"></i>
+                        <i class="fa-solid fa-user-shield w-5 h-5 flex items-center justify-center text-indigo-600"></i>
                     </div>
                     <span x-show="sidebarOpen" x-transition class="text-sm font-medium truncate">Kelola Admin</span>
                 </a>
@@ -191,7 +196,7 @@
                 <a href="{{ route('superadmin.logs.index') }}" :class="sidebarOpen ? 'justify-start' : 'justify-center'"
                     class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group {{ dynamicActive('superadmin/logs') }}">
                     <div class="relative flex-shrink-0">
-                        <i data-lucide="activity" class="w-5 h-5 text-amber-600"></i>
+                        <i class="fa-solid fa-chart-line w-5 h-5 flex items-center justify-center text-amber-600"></i>
                     </div>
                     <span x-show="sidebarOpen" x-transition class="text-sm font-medium truncate">Activity Logs</span>
                 </a>
@@ -199,8 +204,7 @@
                 <a href="{{ route('superadmin.backup.index') }}" :class="sidebarOpen ? 'justify-start' : 'justify-center'"
                     class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group {{ dynamicActive('superadmin/backup') }}">
                     <div class="relative flex-shrink-0">
-                        <i data-lucide="database"
-                            class="w-5 h-5 text-emerald-600"></i>
+                        <i class="fa-solid fa-database w-5 h-5 flex items-center justify-center text-emerald-600"></i>
                     </div>
                     <span x-show="sidebarOpen" x-transition class="text-sm font-medium truncate">Backup Data</span>
                 </a>
@@ -209,7 +213,7 @@
             <a href="/peminjam-users" :class="sidebarOpen ? 'justify-start' : 'justify-center'"
                 class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group {{ dynamicActive('peminjam-users') }}">
                 <div class="relative flex-shrink-0">
-                    <i data-lucide="users" class="w-5 h-5"></i>
+                    <i class="fa-solid fa-users w-5 h-5 flex items-center justify-center"></i>
                 </div>
                 <span x-show="sidebarOpen" x-transition class="text-sm font-medium truncate">Data Peminjam</span>
             </a>
@@ -218,15 +222,15 @@
                 <button @click="expanded = !expanded" x-show="sidebarOpen"
                     class="flex items-center justify-between w-full gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 text-gray-600 hover:bg-gray-50">
                     <div class="flex items-center gap-3">
-                        <i data-lucide="database" class="w-5 h-5"></i>
+                        <i class="fa-solid fa-database w-5 h-5 flex items-center justify-center"></i>
                         <span class="text-sm font-medium">Master Data</span>
                     </div>
-                    <i :data-lucide="expanded ? 'chevron-down' : 'chevron-right'" class="w-4 h-4"></i>
+                    <i class="fa-solid" :class="expanded ? 'fa-chevron-down' : 'fa-chevron-right'"></i>
                 </button>
 
                 <a href="#" x-show="!sidebarOpen"
                     class="flex justify-center px-3 py-2.5 rounded-xl text-gray-600 hover:bg-gray-50">
-                    <i data-lucide="database" class="w-5 h-5"></i>
+                    <i class="fa-solid fa-database w-5 h-5 flex items-center justify-center"></i>
                 </a>
 
                 <div x-show="expanded && sidebarOpen" x-collapse class="pl-4 space-y-1 mt-1">
@@ -258,7 +262,7 @@
             <a href="{{ route('guide.index') }}" :class="sidebarOpen ? 'justify-start' : 'justify-center'"
                 class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group {{ dynamicActive('tutorial') }}">
                 <div class="relative flex-shrink-0">
-                    <i data-lucide="book-open" class="w-5 h-5 text-pink-600"></i>
+                    <i class="fa-solid fa-book-open w-5 h-5 flex items-center justify-center text-pink-600"></i>
                 </div>
                 <span x-show="sidebarOpen" x-transition class="text-sm font-medium truncate">Panduan Sistem</span>
             </a>
@@ -267,10 +271,10 @@
                 :class="sidebarOpen ? 'justify-start' : 'justify-center'"
                 class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group text-gray-600 hover:bg-gray-50 hover:text-gray-900">
                 <div class="relative flex-shrink-0">
-                    <i data-lucide="globe" class="w-5 h-5 text-green-600"></i>
+                    <i class="fa-solid fa-globe w-5 h-5 flex items-center justify-center text-green-600"></i>
                 </div>
                 <span x-show="sidebarOpen" x-transition class="text-sm font-medium truncate">Katalog Publik</span>
-                <i x-show="sidebarOpen" data-lucide="external-link" class="w-3 h-3 ml-auto opacity-50"></i>
+                <i x-show="sidebarOpen" class="fa-solid fa-external-link-alt w-3 h-3 ml-auto opacity-50"></i>
             </a>
 
         </nav>

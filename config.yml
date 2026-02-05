@@ -1,0 +1,11 @@
+tunnel: biomed-tunnel
+credentials-file: C:\Users\satya\.cloudflared\331d721c-4d2b-490e-948f-53791dbbb6a9.json
+
+ingress:
+  # Hostname tanpa subdomain (langsung domain utama)
+  - hostname: aorukudomain.my.id
+    service: http://localhost:80
+    originRequest:
+      httpHostHeader: biomed.local
+
+  - service: http_status:404

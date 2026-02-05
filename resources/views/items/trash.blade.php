@@ -8,14 +8,15 @@
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-6">
-                
+
                 {{-- JUDUL HALAMAN --}}
                 <div class="flex justify-between items-center mb-6 border-b pb-4">
                     <div>
                         <h3 class="text-2xl font-bold text-red-600">Barang Dihapus (Trash)</h3>
                         <p class="text-sm text-gray-500">Kelola data yang telah dihapus sementara.</p>
                     </div>
-                    <a href="{{ route('items.index') }}" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-md font-bold text-xs uppercase hover:bg-gray-300 transition">
+                    <a href="{{ route('items.index') }}"
+                        class="px-4 py-2 bg-gray-200 text-gray-700 rounded-md font-bold text-xs uppercase hover:bg-gray-300 transition">
                         &larr; Kembali ke Index
                     </a>
                 </div>
@@ -29,20 +30,22 @@
                             <input type="hidden" name="direction" value="{{ request('direction') }}">
                         @endif
 
-                        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
-                            
+                        <div class="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
+
                             {{-- 1. Search Box --}}
                             <div class="md:col-span-1">
                                 <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Pencarian</label>
-                                <input type="text" name="search" value="{{ request('search') }}" 
-                                       placeholder="Nama / No Seri / Aset..." 
-                                       class="w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring focus:ring-red-200 text-sm">
+                                <input type="text" name="search" value="{{ request('search') }}"
+                                    placeholder="Nama / No Seri / Aset..."
+                                    class="w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring focus:ring-red-200 text-sm">
                             </div>
 
                             {{-- 2. Filter Kategori --}}
                             <div>
-                                <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Filter Kategori</label>
-                                <select name="category_id" class="w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring focus:ring-red-200 text-sm">
+                                <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Filter
+                                    Kategori</label>
+                                <select name="category_id"
+                                    class="w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring focus:ring-red-200 text-sm">
                                     <option value="">-- Semua Kategori --</option>
                                     @foreach($categories as $cat)
                                         <option value="{{ $cat->id }}" {{ request('category_id') == $cat->id ? 'selected' : '' }}>
@@ -53,9 +56,11 @@
                             </div>
 
                             {{-- 3. Filter Ruangan --}}
-                            <div>
-                                <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Filter Ruangan</label>
-                                <select name="room_id" class="w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring focus:ring-red-200 text-sm">
+                            <div class="md:col-span-1">
+                                <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Filter
+                                    Ruangan</label>
+                                <select name="room_id"
+                                    class="w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring focus:ring-red-200 text-sm">
                                     <option value="">-- Semua Ruangan --</option>
                                     @foreach($rooms as $room)
                                         <option value="{{ $room->id }}" {{ request('room_id') == $room->id ? 'selected' : '' }}>
@@ -65,13 +70,33 @@
                                 </select>
                             </div>
 
+                            {{-- 3.5 Filter Jumlah Per Halaman --}}
+                            <div class="md:col-span-1">
+                                <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Per Halaman</label>
+                                <select name="per_page"
+                                    class="w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring focus:ring-red-200 text-sm">
+                                    <option value="10" {{ request('per_page') == 10 ? 'selected' : '' }}>10 Item</option>
+                                    <option value="20" {{ request('per_page') == 20 ? 'selected' : '' }}>20 Item</option>
+                                    <option value="50" {{ request('per_page') == 50 ? 'selected' : '' }}>50 Item</option>
+                                    <option value="100" {{ request('per_page') == 100 ? 'selected' : '' }}>100 Item
+                                    </option>
+                                    <option value="200" {{ request('per_page') == 200 ? 'selected' : '' }}>200 Item
+                                    </option>
+                                    <option value="all" {{ request('per_page') == 'all' ? 'selected' : '' }}>Semua
+                                    </option>
+                                </select>
+                            </div>
+
                             {{-- 4. Tombol Action --}}
                             <div class="flex gap-2">
-                                <button type="submit" class="bg-red-600 text-white px-4 py-2 rounded-md font-bold text-sm hover:bg-red-700 transition w-full">
+                                <button type="submit"
+                                    class="bg-red-600 text-white px-4 py-2 rounded-md font-bold text-sm hover:bg-red-700 transition w-full">
                                     FILTER
                                 </button>
                                 @if(request()->has('search') || request()->has('category_id') || request()->has('room_id'))
-                                    <a href="{{ route('items.trash') }}" class="bg-gray-500 text-white px-3 py-2 rounded-md font-bold text-sm hover:bg-gray-600 transition" title="Reset Filter">
+                                    <a href="{{ route('items.trash') }}"
+                                        class="bg-gray-500 text-white px-3 py-2 rounded-md font-bold text-sm hover:bg-gray-600 transition"
+                                        title="Reset Filter">
                                         &#x2715;
                                     </a>
                                 @endif
@@ -81,33 +106,51 @@
                 </div>
 
                 {{-- AREA TOMBOL BULK ACTION (Muncul via JS) --}}
-                <div id="bulk-action-container" style="display: none;" class="mb-4 p-3 bg-gray-50 border border-gray-200 rounded-lg flex justify-between items-center animate-pulse shadow-sm">
+                <div id="bulk-action-container" style="display: none;"
+                    class="mb-4 p-3 bg-gray-50 border border-gray-200 rounded-lg flex justify-between items-center animate-pulse shadow-sm">
                     <span class="text-sm text-gray-800 font-bold flex items-center gap-2">
-                        <svg class="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
-                        <span id="count-selected" class="bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full">0</span> item terpilih
+                        <svg class="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2">
+                            </path>
+                        </svg>
+                        <span id="count-selected"
+                            class="bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full">0</span> item terpilih
                     </span>
                     <div class="flex gap-2">
                         {{-- Restore Button --}}
-                        <button id="btn-bulk-restore" class="px-4 py-2 bg-green-600 text-white rounded-md font-bold text-xs uppercase hover:bg-green-700 transition shadow-sm flex items-center gap-1">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                        <button id="btn-bulk-restore"
+                            class="px-4 py-2 bg-green-600 text-white rounded-md font-bold text-xs uppercase hover:bg-green-700 transition shadow-sm flex items-center gap-1">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15">
+                                </path>
+                            </svg>
                             Pulihkan
                         </button>
                         {{-- Terminate Button --}}
                         @if(auth()->user()->role === 'superadmin')
-                        <button id="btn-bulk-terminate" class="px-4 py-2 bg-red-600 text-white rounded-md font-bold text-xs uppercase hover:bg-red-700 transition shadow-sm flex items-center gap-1">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                            Hapus Permanen
-                        </button>
+                            <button id="btn-bulk-terminate"
+                                class="px-4 py-2 bg-red-600 text-white rounded-md font-bold text-xs uppercase hover:bg-red-700 transition shadow-sm flex items-center gap-1">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16">
+                                    </path>
+                                </svg>
+                                Hapus Permanen
+                            </button>
                         @endif
                     </div>
                 </div>
 
                 {{-- ALERT MESSAGES --}}
                 @if(session('success'))
-                    <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-4 text-sm font-medium">{{ session('success') }}</div>
+                    <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-4 text-sm font-medium">
+                        {{ session('success') }}</div>
                 @endif
                 @if(session('error'))
-                    <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-4 text-sm font-medium">{{ session('error') }}</div>
+                    <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-4 text-sm font-medium">
+                        {{ session('error') }}</div>
                 @endif
 
                 {{-- TABEL DATA --}}
@@ -116,21 +159,22 @@
                         <thead class="bg-gray-100">
                             <tr>
                                 <th class="px-4 py-3 text-left w-10">
-                                    <input type="checkbox" id="select-all" class="rounded border-gray-300 text-red-600 focus:ring-red-500">
+                                    <input type="checkbox" id="select-all"
+                                        class="rounded border-gray-300 text-red-600 focus:ring-red-500">
                                 </th>
-                                
+
                                 {{-- HELPER SORTING --}}
                                 @php
-                                    $sortLink = function($col, $label) {
+                                    $sortLink = function ($col, $label) {
                                         $currSort = request('sort');
                                         $currDir = request('direction');
-                                        
+
                                         // Tentukan arah sort berikutnya
                                         $nextDir = ($currSort == $col && $currDir == 'asc') ? 'desc' : 'asc';
-                                        
+
                                         // Icon logic
                                         $icon = '<svg class="w-3 h-3 text-gray-400 inline ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"></path></svg>'; // Icon default (atas bawah)
-                                        
+
                                         if ($currSort == $col) {
                                             if ($currDir == 'asc') {
                                                 $icon = '<svg class="w-3 h-3 text-red-600 inline ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path></svg>'; // Panah Atas
@@ -140,7 +184,7 @@
                                         }
 
                                         $url = request()->fullUrlWithQuery(['sort' => $col, 'direction' => $nextDir]);
-                                        return '<a href="'.$url.'" class="group inline-flex items-center text-xs font-bold text-gray-600 uppercase tracking-wider hover:text-red-600 transition">'.$label.$icon.'</a>';
+                                        return '<a href="' . $url . '" class="group inline-flex items-center text-xs font-bold text-gray-600 uppercase tracking-wider hover:text-red-600 transition">' . $label . $icon . '</a>';
                                     };
                                 @endphp
 
@@ -149,66 +193,109 @@
                                 <th class="px-4 py-3 text-left">{!! $sortLink('asset_number', 'No. Aset') !!}</th>
                                 <th class="px-4 py-3 text-left hidden md:table-cell">Kategori / Ruang</th>
                                 <th class="px-4 py-3 text-left">{!! $sortLink('deleted_at', 'Dihapus') !!}</th>
-                                <th class="px-4 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Aksi</th>
+                                <th
+                                    class="px-4 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">
+                                    Aksi</th>
                             </tr>
                         </thead>
                         <tbody class="bg-white divide-y divide-gray-200">
                             @forelse($deletedItems as $item)
-                            <tr class="hover:bg-red-50 transition duration-150">
-                                <td class="px-4 py-3">
-                                    <input type="checkbox" class="item-checkbox rounded border-gray-300 text-red-600 focus:ring-red-500" value="{{ $item->id }}">
-                                </td>
-                                <td class="px-4 py-3 font-semibold text-gray-800">{{ $item->name }}</td>
-                                <td class="px-4 py-3 text-sm text-gray-600">{{ $item->serial_number ?? '-' }}</td>
-                                <td class="px-4 py-3 text-sm text-gray-600">{{ $item->asset_number ?? '-' }}</td>
-                                <td class="px-4 py-3 text-sm text-gray-500 hidden md:table-cell">
-                                    <div class="flex flex-col">
-                                        <span class="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full w-fit mb-1">{{ $item->category->name ?? 'No Cat' }}</span>
-                                        <span class="text-xs text-gray-500">{{ $item->room->name ?? 'No Room' }}</span>
-                                    </div>
-                                </td>
-                                <td class="px-4 py-3 text-sm text-red-500">
-                                    {{ $item->deleted_at->format('d M y H:i') }}
-                                </td>
-                                <td class="px-4 py-3 text-sm font-medium whitespace-nowrap">
-                                    {{-- RESTORE (GET METHOD) --}}
-                                    <a href="{{ route('items.restore', $item->id) }}" 
-                                       class="text-green-600 hover:text-green-800 font-bold mr-3 hover:underline">
-                                        Pulihkan
-                                    </a>
+                                <tr class="hover:bg-red-50 transition duration-150">
+                                    <td class="px-4 py-3">
+                                        <input type="checkbox"
+                                            class="item-checkbox rounded border-gray-300 text-red-600 focus:ring-red-500"
+                                            value="{{ $item->id }}">
+                                    </td>
+                                    <td class="px-4 py-3 font-semibold text-gray-800">{{ $item->name }}</td>
+                                    <td class="px-4 py-3 text-sm text-gray-600">{{ $item->serial_number ?? '-' }}</td>
+                                    <td class="px-4 py-3 text-sm text-gray-600">{{ $item->asset_number ?? '-' }}</td>
+                                    <td class="px-4 py-3 text-sm text-gray-500 hidden md:table-cell">
+                                        <div class="flex flex-col">
+                                            <span
+                                                class="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full w-fit mb-1">{{ $item->category->name ?? 'No Cat' }}</span>
+                                            <span class="text-xs text-gray-500">{{ $item->room->name ?? 'No Room' }}</span>
+                                        </div>
+                                    </td>
+                                    <td class="px-4 py-3 text-sm text-red-500">
+                                        {{ $item->deleted_at->format('d M y H:i') }}
+                                    </td>
+                                    <td class="px-4 py-3 text-sm font-medium whitespace-nowrap">
+                                        {{-- RESTORE (GET METHOD) --}}
+                                        <a href="{{ route('items.restore', $item->id) }}"
+                                            class="text-green-600 hover:text-green-800 font-bold mr-3 hover:underline">
+                                            Pulihkan
+                                        </a>
 
-                                    {{-- TERMINATE (DELETE METHOD) --}}
-                                    @if(auth()->user()->role === 'superadmin')
-                                    <form action="{{ route('items.terminate', $item->id) }}" method="POST" class="inline-block" onsubmit="return confirm('PERINGATAN KERAS:\nData ini akan dihapus PERMANEN dari database dan TIDAK BISA kembali.\n\nLanjutkan?');">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="text-red-600 hover:text-red-900 font-bold hover:underline">
-                                            HAPUS
-                                        </button>
-                                    </form>
-                                    @endif
-                                </td>
-                            </tr>
-                            @empty
-                            <tr>
-                                <td colspan="7" class="px-6 py-10 text-center">
-                                    <div class="flex flex-col items-center justify-center text-gray-400">
-                                        <svg class="w-12 h-12 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                                        <p class="text-lg font-medium">Tong sampah kosong.</p>
-                                        @if(request('search') || request('category_id'))
-                                            <p class="text-sm">Atau tidak ditemukan data sesuai filter.</p>
+                                        {{-- TERMINATE (DELETE METHOD) --}}
+                                        @if(auth()->user()->role === 'superadmin')
+                                            <form action="{{ route('items.terminate', $item->id) }}" method="POST"
+                                                class="inline-block"
+                                                onsubmit="return confirm('PERINGATAN KERAS:\nData ini akan dihapus PERMANEN dari database dan TIDAK BISA kembali.\n\nLanjutkan?');">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit"
+                                                    class="text-red-600 hover:text-red-900 font-bold hover:underline">
+                                                    HAPUS
+                                                </button>
+                                            </form>
                                         @endif
-                                    </div>
-                                </td>
-                            </tr>
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="7" class="px-6 py-10 text-center">
+                                        <div class="flex flex-col items-center justify-center text-gray-400">
+                                            <svg class="w-12 h-12 mb-3" fill="none" stroke="currentColor"
+                                                viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16">
+                                                </path>
+                                            </svg>
+                                            <p class="text-lg font-medium">Tong sampah kosong.</p>
+                                            @if(request('search') || request('category_id'))
+                                                <p class="text-sm">Atau tidak ditemukan data sesuai filter.</p>
+                                            @endif
+                                        </div>
+                                    </td>
+                                </tr>
                             @endforelse
                         </tbody>
                     </table>
                 </div>
 
                 {{-- PAGINATION --}}
-                <div class="mt-4">
-                    {{ $deletedItems->links() }}
+                {{-- PAGINATION & BOTTOM CONTROLS --}}
+                <div class="mt-4 flex flex-col md:flex-row justify-between items-center gap-4">
+                    <div class="w-full">
+                        @if($deletedItems instanceof \Illuminate\Pagination\LengthAwarePaginator)
+                            {{ $deletedItems->links() }}
+                        @elseif($deletedItems instanceof \Illuminate\Database\Eloquent\Collection)
+                            <div class="text-sm text-gray-500 bg-gray-50 px-4 py-2 rounded-md border border-gray-200 inline-block">
+                                Menampilkan semua <b>{{ $deletedItems->count() }}</b> data item yang dihapus.
+                            </div>
+                        @endif
+                    </div>
+
+                    {{-- Bottom Per Page Selector --}}
+                    @if($deletedItems instanceof \Illuminate\Pagination\LengthAwarePaginator || $deletedItems instanceof \Illuminate\Database\Eloquent\Collection)
+                    <form action="{{ route('items.trash') }}" method="GET" class="flex items-center gap-2 whitespace-nowrap">
+                        {{-- Keep other filters --}}
+                        @foreach(request()->except(['per_page', 'page']) as $key => $value)
+                            <input type="hidden" name="{{ $key }}" value="{{ $value }}">
+                        @endforeach
+                        
+                        <label class="text-xs font-bold text-gray-500 uppercase hidden sm:block">Tampilkan:</label>
+                        <select name="per_page" onchange="this.form.submit()" 
+                                class="rounded-md border-gray-300 shadow-sm text-sm focus:border-red-500 focus:ring focus:ring-red-200 py-1 pl-2 pr-8 cursor-pointer bg-white">
+                            <option value="10" {{ request('per_page', 10) == 10 ? 'selected' : '' }}>10 Baris</option>
+                            <option value="20" {{ request('per_page') == 20 ? 'selected' : '' }}>20 Baris</option>
+                            <option value="50" {{ request('per_page') == 50 ? 'selected' : '' }}>50 Baris</option>
+                            <option value="100" {{ request('per_page') == 100 ? 'selected' : '' }}>100 Baris</option>
+                            <option value="200" {{ request('per_page') == 200 ? 'selected' : '' }}>200 Baris</option>
+                            <option value="all" {{ request('per_page') == 'all' ? 'selected' : '' }}>Semua</option>
+                        </select>
+                    </form>
+                    @endif
                 </div>
             </div>
         </div>
@@ -241,7 +328,7 @@
                 return selectedIds;
             }
 
-            selectAll.addEventListener('change', function() {
+            selectAll.addEventListener('change', function () {
                 checkboxes.forEach(cb => cb.checked = selectAll.checked);
                 updateUI();
             });
@@ -249,8 +336,8 @@
             checkboxes.forEach(cb => cb.addEventListener('change', updateUI));
 
             // RESTORE
-            btnBulkRestore.addEventListener('click', function() {
-                let ids = updateUI(); 
+            btnBulkRestore.addEventListener('click', function () {
+                let ids = updateUI();
                 if (ids.length === 0) return;
                 if (confirm('Pulihkan ' + ids.length + ' item terpilih?')) {
                     window.location.href = bulkRestoreUrl + '?ids=' + ids.join(',');
@@ -259,11 +346,11 @@
 
             // TERMINATE (NEW)
             if (btnBulkTerminate) {
-                btnBulkTerminate.addEventListener('click', function() {
+                btnBulkTerminate.addEventListener('click', function () {
                     let ids = updateUI();
                     if (ids.length === 0) return;
                     if (confirm('PERINGATAN KERAS:\n\nAnda akan menghapus PERMANEN ' + ids.length + ' data terpilih.\nData yang dihapus TIDAK DAPAT DIKEMBALIKAN.\n\nLanjutkan penghapusan?')) {
-                        
+
                         // Create Toggle form for DELETE request
                         let form = document.createElement('form');
                         form.method = 'POST';

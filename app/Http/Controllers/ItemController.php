@@ -54,10 +54,15 @@ class ItemController extends Controller
         }
 
         // Default: tampilan list biasa
-        if ($request->get('show_all') == '1') {
+        // Default: tampilan list biasa
+        $perPage = $request->input('per_page', 10);
+
+        if ($perPage === 'all' || $request->get('show_all') == '1') {
             $items = $query->orderBy('id', 'DESC')->get();
         } else {
-            $items = $query->orderBy('id', 'DESC')->paginate(10)->withQueryString();
+            // Validate per_page to avoid abuse (defaults to 10 if invalid)
+            $perPage = in_array($perPage, [10, 20, 50, 100, 200]) ? $perPage : 10;
+            $items = $query->orderBy('id', 'DESC')->paginate($perPage)->withQueryString();
         }
         $rooms = Room::orderBy('name')->get();
 
@@ -407,15 +412,37 @@ class ItemController extends Controller
             Item::whereIn('id', $ids)->update($updates);
         }
 
-        // 2. Serial Number Pattern (Loop Logic)
-        if ($request->filled('serial_number_pattern')) {
+        // 2. Serial Number Pattern OR Manual Map
+        if ($request->has('manual_serial_numbers') && is_array($request->manual_serial_numbers)) {
+            // A. Manual Map (Prioritas Tinggi - Dari Dynamic Grouping Frontend)
+            foreach ($request->manual_serial_numbers as $id => $sn) {
+                // Pastikan ID ada di selected_ids agar aman
+                if (in_array($id, $ids) && !empty($sn)) {
+                    $item = Item::find($id);
+                    if ($item) {
+                        $item->serial_number = $sn;
+                        try {
+                            $item->save();
+                            $this->generateAndSaveQr($item);
+                        } catch (\Exception $e) { /* Ignore duplicate error */
+                        }
+                    }
+                }
+            }
+            $logDetails[] = 'serial_number (manual map)';
+
+        } elseif ($request->filled('serial_number_pattern')) {
+            // B. Single Pattern (Legacy / Simple Mode)
             $pattern = $request->serial_number_pattern;
             $currentSeq = (int) ($request->sn_manual_start ?? 1);
 
             // Get items ordered by ID to ensure stable sequence application
+            // Important: Re-fetch to guarantee order matches sequence intuition
             $items = Item::whereIn('id', $ids)->orderBy('id')->get();
 
             foreach ($items as $item) {
+                /** @var Item $item */
+
                 if (strpos($pattern, '@') !== false) {
                     $seqStr = str_pad($currentSeq, 3, '0', STR_PAD_LEFT);
                     $newSn = str_replace('@', $seqStr, $pattern);
@@ -432,7 +459,7 @@ class ItemController extends Controller
                     // Ignore dupes to prevent crash
                 }
             }
-            $logDetails[] = 'serial_number';
+            $logDetails[] = 'serial_number (pattern)';
         }
 
         if (empty($updates) && !$request->filled('serial_number_pattern')) {
@@ -476,6 +503,8 @@ class ItemController extends Controller
                     $deletedIds = []; // Array untuk menampung ID yang dihapus
 
                     foreach ($items as $item) {
+                        /** @var Item $item */
+
                         // HAPUS bagian Storage::delete agar file QR tidak hilang fisik
                         // if ($item->qr_code && Storage::disk('public')->exists($item->qr_code)) { ... }
 
@@ -506,6 +535,8 @@ class ItemController extends Controller
                 if ($action === 'copy') {
                     $items = Item::whereIn('id', $ids)->orderBy('id')->get();
                     foreach ($items as $item) {
+                        /** @var Item $item */
+
                         $newItem = $item->replicate();
                         $newItem->name = $this->generateIncrementedName($item->name);
                         // Serial number unik
@@ -570,6 +601,8 @@ class ItemController extends Controller
             ->take(min($limit, $remaining))
             ->chunk(50, function ($items) use (&$count) {
                 foreach ($items as $item) {
+                    /** @var Item $item */
+
                     $this->generateAndSaveQr($item);
                     $count++;
                 }
@@ -698,6 +731,8 @@ class ItemController extends Controller
         $items = Item::onlyTrashed()->whereIn('id', $ids)->get();
 
         foreach ($items as $item) {
+            /** @var Item $item */
+
             // Cek policy jika perlu: $this->authorize('terminate', $item);
 
             // Simpan log sebelum hapus
@@ -756,9 +791,19 @@ class ItemController extends Controller
             ->when($room_id, function ($query, $roomId) {
                 return $query->where('room_id', $roomId);
             })
-            ->orderBy($sort, $direction)
-            ->paginate(10)
-            ->withQueryString(); // Penting: agar filter tidak hilang saat ganti halaman
+            ->orderBy($sort, $direction);
+
+        // 4. Pagination Config
+        $perPage = $request->input('per_page', 10);
+        $validPerPages = [10, 20, 50, 100, 200];
+
+        if ($perPage === 'all') {
+            $deletedItems = $deletedItems->get(); // No pagination, get all
+        } else {
+            // Validate per_page (fallback to 10)
+            $perPage = in_array($perPage, $validPerPages) ? $perPage : 10;
+            $deletedItems = $deletedItems->paginate($perPage)->withQueryString();
+        }
 
         return view('items.trash', compact('deletedItems', 'categories', 'rooms'));
     }

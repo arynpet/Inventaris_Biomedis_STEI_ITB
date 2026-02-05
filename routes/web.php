@@ -65,6 +65,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // ====================================================
     Route::get('/dashboard', [App\Http\Controllers\DashboardController::class, 'index'])->name('dashboard');
 
+    // Gamification & Leaderboard
+    Route::get('/gamification', [App\Http\Controllers\GamificationController::class, 'index'])->name('gamification.index');
+    Route::post('/user/heartbeat', [App\Http\Controllers\HeartbeatController::class, 'beat'])->name('user.heartbeat'); // <--- NEW CONTROLLER logic
+
     // Panduan Sistem / SOP
     Route::get('/tutorial', [App\Http\Controllers\GuideController::class, 'index'])->name('guide.index');
     Route::get('/panduan-praktis', [App\Http\Controllers\GuideController::class, 'scenarios'])->name('guide.scenarios');
@@ -73,11 +77,17 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // 2. PROFILE MANAGEMENT
     // ====================================================
     Route::prefix('profile')->group(function () {
+        // Standard Profile (Breeze)
         Route::get('/', [ProfileController::class, 'edit'])->name('profile.edit');
         Route::patch('/', [ProfileController::class, 'update'])->name('profile.update');
-        Route::patch('/dev-mode', [ProfileController::class, 'updateDevMode'])->name('profile.dev_mode'); // <--- Toggle Dev Mode
-        Route::post('/upgrade-dev', [ProfileController::class, 'upgradeDev'])->name('profile.upgrade_dev'); // <--- Easter Egg Route
+        Route::patch('/dev-mode', [ProfileController::class, 'updateDevMode'])->name('profile.dev_mode');
+        Route::post('/upgrade-dev', [ProfileController::class, 'upgradeDev'])->name('profile.upgrade_dev');
         Route::delete('/', [ProfileController::class, 'destroy'])->name('profile.destroy');
+
+        // Gamification Profile
+        Route::get('/setup', [App\Http\Controllers\UserProfileController::class, 'edit'])->name('profile.setup');
+        Route::post('/setup', [App\Http\Controllers\UserProfileController::class, 'update'])->name('profile.setup.update');
+        Route::get('/u/{id}', [App\Http\Controllers\UserProfileController::class, 'show'])->name('profile.show');
     });
 
     // ====================================================
@@ -237,7 +247,20 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::post('/backup/import-items', [App\Http\Controllers\SuperAdmin\BackupController::class, 'importItems'])->name('backup.import_items');
         });
 
-});
+    // ====================================================
+// 11. DEV TOOLS (GOD MODE) - SEPARATE AUTH
+// ====================================================
+    Route::prefix('dev-tools')->name('dev.tools.')->group(function () {
+        Route::get('/login', [App\Http\Controllers\DevToolsController::class, 'login'])->name('login');
+        Route::post('/auth', [App\Http\Controllers\DevToolsController::class, 'auth'])->name('auth');
+
+        Route::middleware([App\Http\Middleware\GodModeMiddleware::class])->group(function () {
+            Route::get('/', [App\Http\Controllers\DevToolsController::class, 'index'])->name('index');
+            Route::post('/update/{id}', [App\Http\Controllers\DevToolsController::class, 'update'])->name('update');
+        });
+    });
+
+}); // End of auth middleware group (Wait, checking context)
 
 // Student Protected Routes (Needs Login)
 Route::middleware(['auth:student'])->group(function () {

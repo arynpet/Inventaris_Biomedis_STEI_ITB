@@ -12,12 +12,16 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->trustProxies(at: '*');
         $middleware->web(append: [
             // \App\Http\Middleware\EnableDebugbar::class, // REMOVED
         ]);
         $middleware->alias([
             'superadmin' => \App\Http\Middleware\IsSuperAdmin::class,
             'dev.mode' => \App\Http\Middleware\CheckDevMode::class,
+        ]);
+        $middleware->validateCsrfTokens(except: [
+            '/user/heartbeat',
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

@@ -26,6 +26,11 @@ class User extends Authenticatable
         'password',
         'role', // <--- Tambahkan ini
         'is_dev_mode', // <--- Developer Mode Toggle
+        'bonus_xp', // <--- God Mode
+        'total_seconds_online', // <--- God Mode
+        'avatar_path',
+        'bio',
+        'equipped_badge',
     ];
 
     // Helper untuk cek apakah dia superadmin (Opsional, biar kodingan rapi)

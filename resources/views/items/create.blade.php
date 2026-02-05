@@ -372,7 +372,7 @@
                     {{-- Categories --}}
                     <div>
                         <label class="block mb-2 font-bold text-gray-700">Kategori</label>
-                        <select name="categories[]" multiple @change="updateCatCode($event)"
+                        <select name="categories[]" multiple
                             class="w-full rounded-xl border-gray-300 focus:ring-blue-500 focus:border-blue-500 px-4 py-2 h-[120px] text-sm">
                             @foreach($categories as $category)
                                 <option value="{{ $category->id }}" {{ (collect(old('categories'))->contains($category->id)) ? 'selected' : '' }}>
@@ -480,24 +480,6 @@
                     this.fetchSequence();
                 },
 
-                updateCatCode(e) {
-                    // Get latest selected option
-                    let options = e.target.options;
-                    let selectedOption = null;
-
-                    // Iterate to find the last selected one or just use selectedIndex
-                    if (e.target.selectedIndex !== -1) {
-                        let text = options[e.target.selectedIndex].text.toUpperCase();
-
-                        // Smart Mapping
-                        if (text.includes('ELEKTRONIKA')) {
-                            this.catCode = 'EK';
-                        } else {
-                            this.catCode = text.charAt(0);
-                        }
-                        this.fetchSequence();
-                    }
-                },
 
                 fetchSequence() {
                     if (!this.autoGen) return;
