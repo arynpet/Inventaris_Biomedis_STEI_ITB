@@ -25,6 +25,11 @@ use App\Http\Controllers\NaraController;
 
 Route::redirect('/', '/login');
 
+// Presentasi Progres (Februari 2026)
+Route::get('/presentasi/progress-feb', function () {
+    return view('presentasi.februari');
+})->name('presentasi.februari');
+
 // Debug Route (Remove in production)
 Route::get('/debug-remote', function () {
     return view('debug-remote');
@@ -144,6 +149,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Resource Items (Harus di bawah route custom items)
     Route::resource('items', ItemController::class);
+
+    // Grouping Paket Praktikum
+    Route::resource('item-packages', App\Http\Controllers\ItemPackageController::class);
+
+    // Peminjaman Paket Praktikum
+    Route::resource('practicum-borrowings', App\Http\Controllers\PracticumBorrowingController::class);
 
     // ====================================================
     // 3.5. MAINTENANCE & CALIBRATION

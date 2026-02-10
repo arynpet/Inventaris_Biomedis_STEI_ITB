@@ -27,9 +27,18 @@ class HeartbeatController extends Controller
                 // Return current value for UI
                 $current = DB::table('users')->where('id', $id)->value('total_seconds_online');
 
+                // TWEAK: Passive XP Farming
+                // Every 10 minutes (600 seconds), award 5 Bonus XP
+                $xpAwarded = false;
+                if ($current > 0 && $current % 600 === 0) {
+                    DB::update("UPDATE users SET bonus_xp = bonus_xp + 5 WHERE id = ?", [$id]);
+                    $xpAwarded = true;
+                }
+
                 return response()->json([
                     'status' => 'pumped',
-                    'val' => $current
+                    'val' => $current,
+                    'xp_gain' => $xpAwarded
                 ]);
             } catch (\Exception $e) {
                 return response()->json(['status' => 'error'], 500);

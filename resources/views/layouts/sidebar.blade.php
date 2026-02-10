@@ -126,6 +126,14 @@
                 <span x-show="sidebarOpen" x-transition class="text-sm font-medium truncate">Kategori</span>
             </a>
 
+            <a href="{{ route('item-packages.index') }}" :class="sidebarOpen ? 'justify-start' : 'justify-center'"
+                class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group {{ dynamicActive('item-packages') }}">
+                <div class="relative flex-shrink-0">
+                    <i class="fa-solid fa-cubes w-5 h-5 flex items-center justify-center text-purple-600"></i>
+                </div>
+                <span x-show="sidebarOpen" x-transition class="text-sm font-medium truncate">Paket Praktikum</span>
+            </a>
+
             <a href="/printers" :class="sidebarOpen ? 'justify-start' : 'justify-center'"
                 class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group {{ dynamicActive('printers') }}">
                 <div class="relative flex-shrink-0">
@@ -145,6 +153,15 @@
                     <i class="fa-solid fa-bolt w-5 h-5 flex items-center justify-center"></i>
                 </div>
                 <span x-show="sidebarOpen" x-transition class="text-sm font-medium truncate">Pinjam Alat</span>
+            </a>
+
+            <a href="{{ route('practicum-borrowings.index') }}"
+                :class="sidebarOpen ? 'justify-start' : 'justify-center'"
+                class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group {{ dynamicActive('practicum-borrowings') }}">
+                <div class="relative flex-shrink-0">
+                    <i class="fa-solid fa-flask w-5 h-5 flex items-center justify-center text-teal-600"></i>
+                </div>
+                <span x-show="sidebarOpen" x-transition class="text-sm font-medium truncate">Pinjam Praktikum</span>
             </a>
 
             <a href="/room_borrowings" :class="sidebarOpen ? 'justify-start' : 'justify-center'"
@@ -285,22 +302,30 @@
 
                 <div class="flex items-center gap-3 min-w-0">
                     <div
-                        class="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 shadow-sm font-bold {{ $avatarClass }}">
-                        {{ substr(auth()->user()->name, 0, 1) }}
+                        class="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 shadow-sm font-bold overflow-hidden {{ $avatarClass }}">
+                        @if(auth()->user()->avatar_path)
+                            <img src="{{ Storage::url(auth()->user()->avatar_path) }}" class="w-full h-full object-cover">
+                        @else
+                            {{ substr(auth()->user()->name, 0, 1) }}
+                        @endif
                     </div>
                     <div x-show="sidebarOpen" x-transition class="min-w-0 flex-1">
                         <p class="text-xs font-bold truncate {{ $isDash ? 'text-cyan-100' : 'text-gray-900' }}">
                             {{ auth()->user()->name }}
                         </p>
-                        <p
-                            class="text-[10px] uppercase tracking-wide font-medium {{ $isDash ? 'text-cyan-600' : 'text-gray-500' }}">
-                            {{ auth()->user()->role }}
-                        </p>
+                        <div
+                            class="flex items-center gap-1 text-[9px] mt-0.5 {{ $isDash ? 'text-cyan-600' : 'text-gray-500' }}">
+                            <span
+                                class="font-bold text-amber-500 bg-amber-50 px-1 py-0.5 rounded border border-amber-100">
+                                Lvl {{ auth()->user()->level }}
+                            </span>
+                            <span class="truncate font-medium">{{ auth()->user()->rank_name }}</span>
+                        </div>
                     </div>
                 </div>
 
                 <div x-show="sidebarOpen" x-transition class="flex-shrink-0">
-                    <a href="/profile"
+                    <a href="{{ route('profile.setup') }}"
                         class="transition {{ $isDash ? 'text-gray-500 hover:text-cyan-400' : 'text-gray-400 hover:text-blue-600' }}">
                         <i data-lucide="settings" class="w-4 h-4"></i>
                     </a>

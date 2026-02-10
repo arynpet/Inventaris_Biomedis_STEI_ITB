@@ -31,6 +31,13 @@ trait LogsActivity
             foreach ($changes as $key => $value) {
                 $oldValue = $original[$key] ?? '-';
 
+                // --- FIX ARRAY TO STRING ---
+                if (is_array($value))
+                    $value = json_encode($value);
+                if (is_array($oldValue))
+                    $oldValue = json_encode($oldValue);
+                // ---------------------------
+
                 // Format label: Ubah room_id jadi Ruangan
                 $label = str_replace('_', ' ', $key);
                 $label = ucfirst($label);

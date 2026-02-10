@@ -43,11 +43,15 @@
                     <div class="flex-1 text-center md:text-left mb-2">
                         <h1 class="text-3xl font-black text-gray-900 flex flex-col md:flex-row items-center gap-2">
                             {{ $user->name }}
-                            @if($user->equipped_badge)
-                                <span
-                                    class="px-3 py-1 bg-yellow-100 text-yellow-700 rounded-full text-xs font-bold border border-yellow-200 shadow-sm flex items-center gap-1">
-                                    <i class="fa-solid fa-medal"></i> {{ $user->equipped_badge }}
-                                </span>
+                            @if(!empty($user->equipped_badges))
+                                <div class="flex flex-wrap gap-2 mt-2 md:mt-0">
+                                    @foreach($user->equipped_badges as $b)
+                                        <span
+                                            class="px-3 py-1 bg-yellow-100 text-yellow-700 rounded-full text-xs font-bold border border-yellow-200 shadow-sm flex items-center gap-1">
+                                            <i class="fa-solid fa-medal"></i> {{ $b }}
+                                        </span>
+                                    @endforeach
+                                </div>
                             @endif
                         </h1>
                         <p class="text-gray-500 font-medium italic mt-1 max-w-xl">
@@ -116,13 +120,20 @@
                             <i class="fa-solid fa-award text-orange-500"></i> Trophy Case
                         </h3>
                         <div class="flex flex-wrap gap-2">
-                            <span
-                                class="px-3 py-1 bg-yellow-100 text-yellow-700 rounded-full text-xs font-bold border border-yellow-200 shadow-sm"
-                                title="Equipped">
-                                {{ $user->equipped_badge }}
-                            </span>
+                            @php $equipped = $user->equipped_badges ?? []; @endphp
+
+                            <!-- Equipped -->
+                            @foreach($equipped as $b)
+                                <span
+                                    class="px-3 py-1 bg-yellow-100 text-yellow-700 rounded-full text-xs font-bold border border-yellow-200 shadow-sm"
+                                    title="Equipped">
+                                    <i class="fa-solid fa-check text-[10px] mr-1"></i> {{ $b }}
+                                </span>
+                            @endforeach
+
+                            <!-- Other Unlocked -->
                             @foreach($stats->unlocked_badges as $badge)
-                                @if($badge !== $user->equipped_badge)
+                                @if(!in_array($badge, $equipped))
                                     <span
                                         class="px-3 py-1 bg-gray-50 text-gray-500 rounded-full text-xs font-medium border border-gray-100 opacity-75">
                                         {{ $badge }}

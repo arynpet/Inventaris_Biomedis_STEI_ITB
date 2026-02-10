@@ -60,22 +60,37 @@ class UserProfileController extends Controller
                 $rankName = $name;
         }
 
-        // Available Badges (Unlocked)
-        $unlockedBadges = ['Newbie']; // Default
-        if ($level >= 5)
-            $unlockedBadges[] = 'Rookie';
-        if ($level >= 10)
-            $unlockedBadges[] = 'Veteran';
-        if ($level >= 20)
-            $unlockedBadges[] = 'Elite';
-        if ($level >= 30)
-            $unlockedBadges[] = 'Master';
-        if ($level >= 50)
-            $unlockedBadges[] = 'Legend';
-        if ($creates >= 100)
-            $unlockedBadges[] = 'Architect';
-        if ($updates >= 200)
-            $unlockedBadges[] = 'Maintainer';
+        // Time
+        $seconds = $user->total_seconds_online ?? 0;
+        $hours = floor($seconds / 3600);
+        $minutes = floor(($seconds % 3600) / 60);
+
+        // All Badge Definitions
+        $allBadges = [
+            ['name' => 'Newbie', 'icon' => 'fa-user', 'color' => 'gray', 'desc' => 'Joined the system', 'unlocked' => true],
+            ['name' => 'Rookie', 'icon' => 'fa-seedling', 'color' => 'green', 'desc' => 'Reach Level 5', 'unlocked' => $level >= 5],
+            ['name' => 'Veteran', 'icon' => 'fa-shield-halved', 'color' => 'blue', 'desc' => 'Reach Level 10', 'unlocked' => $level >= 10],
+            ['name' => 'Elite', 'icon' => 'fa-gem', 'color' => 'indigo', 'desc' => 'Reach Level 20', 'unlocked' => $level >= 20],
+            ['name' => 'Master', 'icon' => 'fa-crown', 'color' => 'yellow', 'desc' => 'Reach Level 30', 'unlocked' => $level >= 30],
+            ['name' => 'Legend', 'icon' => 'fa-dragon', 'color' => 'red', 'desc' => 'Reach Level 50', 'unlocked' => $level >= 50],
+
+            ['name' => 'Builder', 'icon' => 'fa-hammer', 'color' => 'teal', 'desc' => 'Create 10 Items', 'unlocked' => $creates >= 10],
+            ['name' => 'Architect', 'icon' => 'fa-city', 'color' => 'emerald', 'desc' => 'Create 100 Items', 'unlocked' => $creates >= 100],
+            ['name' => 'Creator', 'icon' => 'fa-paintbrush', 'color' => 'pink', 'desc' => 'Create 500 Items', 'unlocked' => $creates >= 500],
+
+            ['name' => 'Editor', 'icon' => 'fa-pen-nib', 'color' => 'orange', 'desc' => 'Update 50 Items', 'unlocked' => $updates >= 50],
+            ['name' => 'Maintainer', 'icon' => 'fa-screwdriver-wrench', 'color' => 'amber', 'desc' => 'Update 200 Items', 'unlocked' => $updates >= 200],
+
+            ['name' => 'Cleaner', 'icon' => 'fa-broom', 'color' => 'slate', 'desc' => 'Delete 10 Items', 'unlocked' => $deletes >= 10],
+            ['name' => 'Destroyer', 'icon' => 'fa-bomb', 'color' => 'red', 'desc' => 'Delete 50 Items', 'unlocked' => $deletes >= 50],
+
+            ['name' => 'Time Traveler', 'icon' => 'fa-hourglass-start', 'color' => 'cyan', 'desc' => 'Online 1+ Hour', 'unlocked' => $hours >= 1],
+            ['name' => 'Time Lord', 'icon' => 'fa-clock', 'color' => 'violet', 'desc' => 'Online 10+ Hours', 'unlocked' => $hours >= 10],
+            ['name' => 'Chronos', 'icon' => 'fa-infinity', 'color' => 'fuchsia', 'desc' => 'Online 100+ Hours', 'unlocked' => $hours >= 100],
+        ];
+
+        // Extract simplified list for validation and existing views
+        $unlockedBadges = array_column(array_filter($allBadges, fn($b) => $b['unlocked']), 'name');
 
         // Level Progress
         $currentLevelBaseXp = 100 * pow($level, 2);
@@ -86,11 +101,6 @@ class UserProfileController extends Controller
         // Avoid division by zero
         $progressPercent = $xpForNext > 0 ? ($currentProgress / $xpForNext) * 100 : 100;
         $progressPercent = max(0, min(100, $progressPercent));
-
-        // Time
-        $seconds = $user->total_seconds_online ?? 0;
-        $hours = floor($seconds / 3600);
-        $minutes = floor(($seconds % 3600) / 60);
 
         // Advanced Stats
         $lastLog = DB::table($tableName)->where($userColumn, $user->id)->latest()->first();
@@ -109,6 +119,7 @@ class UserProfileController extends Controller
             'deletes' => $deletes,
             'time_online' => "{$hours}h {$minutes}m",
             'unlocked_badges' => $unlockedBadges,
+            'all_badges' => $allBadges, // <--- New Full List
             // New Fields
             'next_level_xp' => $nextLevelXpThreshold,
             'xp_needed' => $xpNeeded,
@@ -137,39 +148,49 @@ class UserProfileController extends Controller
 
     public function update(Request $request)
     {
+        /** @var \App\Models\User $user */
         $user = Auth::user();
 
         $request->validate([
             'bio' => 'nullable|string|max:255',
             'avatar' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-            'equipped_badge' => 'nullable|string'
+            'equipped_badges' => 'nullable|array|max:3',
+            'equipped_badges.*' => 'string'
         ]);
+
+        // Default to current badges if not present in request (though checkboxes usually send empty)
+        // Actually, for checkboxes, if none checked, it sends nothing? Or user clears them.
+        // We assume input is provided if it's a form submission.
+
+        $badgeInput = $request->input('equipped_badges', []);
 
         $data = [
             'bio' => $request->bio,
-            'equipped_badge' => $request->equipped_badge ?? $user->equipped_badge
         ];
 
         // Handle Avatar Upload
         if ($request->hasFile('avatar')) {
-            // Delete old avatar if exists (optional logic)
-            // if ($user->avatar_path) Storage::delete($user->avatar_path);
-
             // Store on 'public' disk. Path returned is 'avatars/filename.jpg'
             $path = $request->file('avatar')->store('avatars', 'public');
-
             $data['avatar_path'] = $path;
         }
 
-        // Verify Badge Ownership (Simple Check)
+        // Verify Badge Ownership
         $stats = $this->calculateStats($user);
-        if (!in_array($data['equipped_badge'], $stats->unlocked_badges)) {
-            // If they try to equip a locked badge, revert to current or default
-            $data['equipped_badge'] = $user->equipped_badge;
+        $validBadges = [];
+
+        foreach ($badgeInput as $badge) {
+            if (in_array($badge, $stats->unlocked_badges)) {
+                $validBadges[] = $badge;
+            }
         }
 
-        User::where('id', $user->id)->update($data);
+        // Enforce Limit (Max 3)
+        $data['equipped_badges'] = array_slice($validBadges, 0, 3);
 
-        return back()->with('success', 'Profile updated successfully!');
+        // Use Eloquent update to trigger Casts (array -> json)
+        $user->update($data);
+
+        return redirect()->route('profile.show', $user->id)->with('success', 'Profile updated successfully!');
     }
 }

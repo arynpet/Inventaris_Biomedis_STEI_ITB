@@ -227,6 +227,14 @@
             @include('layouts.navigation')
             <main class="p-8">
                 {{ $slot }}
+
+                @if(session('success'))
+                    <div x-data="{ show: true }" x-show="show" x-transition x-init="setTimeout(() => show = false, 3000)"
+                        class="fixed top-4 right-4 z-50 bg-green-500 text-white px-6 py-3 rounded-xl shadow-xl flex items-center gap-3 border-2 border-white/20">
+                        <i class="fa-solid fa-circle-check text-xl"></i>
+                        <span class="font-bold">{{ session('success') }}</span>
+                    </div>
+                @endif
             </main>
         </div>
     </div>

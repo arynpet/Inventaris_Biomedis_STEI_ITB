@@ -89,37 +89,26 @@ class GamificationController extends Controller
         $leaderboard = $allUsers->map(function ($user) use ($userStats) {
             $userId = $user->id;
 
-            // Get Base Stats from Activity Log or specific default
-            $stats = $userStats[$userId] ?? [
-                'xp' => 0,
-                'creates' => 0,
-                'updates' => 0,
-                'deletes' => 0
-            ];
+            // Get Base Stats
+            $stats = $userStats[$userId] ?? ['xp' => 0, 'creates' => 0, 'updates' => 0, 'deletes' => 0];
 
-            // Calculate Base XP + Bonus XP
             $baseXp = $stats['xp'];
             $bonusXp = (int) ($user->bonus_xp ?? 0);
             $totalXp = $baseXp + $bonusXp;
 
-            // If total XP is 0 (and no online time), we might want to skip or rank lowest
-            // For now, let's process everyone
-
-            // --- LEVELING ALGORITHM ---
+            // --- LEVELING ---
             $level = floor(sqrt($totalXp / 100));
             $level = max(1, $level);
 
             // Progress Config
             $currentLevelBaseXp = 100 * pow($level, 2);
             $nextLevelXpThreshold = 100 * pow($level + 1, 2);
-
             $xpNeeded = $nextLevelXpThreshold - $currentLevelBaseXp;
             $xpProgress = $totalXp - $currentLevelBaseXp;
-
             $progressPercent = $xpNeeded > 0 ? ($xpProgress / $xpNeeded) * 100 : 0;
             $progressPercent = min(100, max(0, $progressPercent));
 
-            // --- RANK TITLES ---
+            // --- RANKS (SYNCED) ---
             $ranks = [
                 0 => 'Novice',
                 5 => 'Apprentice',
@@ -138,43 +127,37 @@ class GamificationController extends Controller
                 90 => 'The System',
                 100 => 'Administrator of Universe'
             ];
-
             $rankName = 'Novice';
+            $rankIcon = 'fa-user'; // Default
+            $rankColor = 'text-gray-500'; // Default
+
+            // Map Ranks to Icons & Colors
+            $rankMeta = [
+                'Novice' => ['icon' => 'fa-user', 'color' => 'text-gray-500'],
+                'Apprentice' => ['icon' => 'fa-scroll', 'color' => 'text-blue-600'],
+                'Adept' => ['icon' => 'fa-book-open', 'color' => 'text-green-600'],
+                'Specialist' => ['icon' => 'fa-flask', 'color' => 'text-teal-600'],
+                'Expert' => ['icon' => 'fa-star', 'color' => 'text-indigo-600'],
+                'Elite' => ['icon' => 'fa-medal', 'color' => 'text-indigo-800'],
+                'Master' => ['icon' => 'fa-crown', 'color' => 'text-purple-600'],
+                'Grandmaster' => ['icon' => 'fa-chess-king', 'color' => 'text-purple-800'],
+                'Legend' => ['icon' => 'fa-dragon', 'color' => 'text-red-500'],
+                'Mythic' => ['icon' => 'fa-dungeon', 'color' => 'text-red-700'],
+                'Divine' => ['icon' => 'fa-sun', 'color' => 'text-yellow-600'],
+                'Immortal' => ['icon' => 'fa-infinity', 'color' => 'text-yellow-800'],
+                'Ascended' => ['icon' => 'fa-cloud-bolt', 'color' => 'text-cyan-600'],
+                'Godlike' => ['icon' => 'fa-bolt', 'color' => 'text-cyan-800'],
+                'The System' => ['icon' => 'fa-microchip', 'color' => 'text-gray-900'],
+                'Administrator of Universe' => ['icon' => 'fa-globe', 'color' => 'text-red-600']
+            ];
+
             foreach ($ranks as $lvlReq => $name) {
-                if ($level >= $lvlReq)
+                if ($level >= $lvlReq) {
                     $rankName = $name;
+                    $rankIcon = $rankMeta[$name]['icon'] ?? 'fa-user';
+                    $rankColor = $rankMeta[$name]['color'] ?? 'text-gray-500';
+                }
             }
-
-            // --- BADGES ---
-            $badges = [];
-            if ($stats['creates'] >= 10)
-                $badges[] = 'Builder 🥉';
-            if ($stats['creates'] >= 100)
-                $badges[] = 'Architect 🥈';
-            if ($stats['creates'] >= 500)
-                $badges[] = 'Creator 🥇';
-
-            if ($stats['updates'] >= 50)
-                $badges[] = 'Editor 🥉';
-            if ($stats['updates'] >= 200)
-                $badges[] = 'Maintainer 🥈';
-            if ($stats['updates'] >= 1000)
-                $badges[] = 'Polisher 🥇';
-
-            if ($stats['deletes'] >= 10)
-                $badges[] = 'Cleaner 🧹';
-            if ($stats['deletes'] >= 50)
-                $badges[] = 'Destroyer 💀';
-
-            if ($totalXp >= 10000)
-                $badges[] = 'High Roller 💎';
-            if ($totalXp >= 50000)
-                $badges[] = 'Elite Club 🎩';
-            if ($totalXp >= 100000)
-                $badges[] = 'Inventory God ⚡';
-
-            // Top Badge
-            $topBadge = !empty($badges) ? end($badges) : null;
 
             // Time Online
             $seconds = $user->total_seconds_online ?? 0;
@@ -182,21 +165,60 @@ class GamificationController extends Controller
             $minutes = floor(($seconds % 3600) / 60);
             $timeString = ($hours > 0 ? "{$hours}h " : "") . "{$minutes}m";
 
+            // --- BADGES (SYNCED) ---
+            $unlocked = ['Newbie'];
+            if ($level >= 5)
+                $unlocked[] = 'Rookie';
+            if ($level >= 10)
+                $unlocked[] = 'Veteran';
+            if ($level >= 20)
+                $unlocked[] = 'Elite';
+            if ($level >= 30)
+                $unlocked[] = 'Master';
+            if ($level >= 50)
+                $unlocked[] = 'Legend';
+
+            if ($stats['creates'] >= 10)
+                $unlocked[] = 'Builder';
+            if ($stats['creates'] >= 100)
+                $unlocked[] = 'Architect';
+            if ($stats['creates'] >= 500)
+                $unlocked[] = 'Creator';
+
+            if ($stats['updates'] >= 50)
+                $unlocked[] = 'Editor';
+            if ($stats['updates'] >= 200)
+                $unlocked[] = 'Maintainer';
+
+            if ($stats['deletes'] >= 10)
+                $unlocked[] = 'Cleaner';
+            if ($stats['deletes'] >= 50)
+                $unlocked[] = 'Destroyer';
+
+            if ($hours >= 1)
+                $unlocked[] = 'Time Traveler';
+            if ($hours >= 10)
+                $unlocked[] = 'Time Lord';
+            if ($hours >= 100)
+                $unlocked[] = 'Chronos';
+
             return (object) [
                 'id' => $user->id,
                 'name' => $user->name,
-                'avatar_path' => $user->avatar_path, // <--- Added this line
+                'avatar_path' => $user->avatar_path,
                 'avatar_initial' => substr($user->name, 0, 1),
+                'equipped_badges' => $user->equipped_badges ?? [], // Pass equipped list
                 'xp' => $totalXp,
                 'level' => (int) $level,
                 'rank_name' => $rankName,
+                'rank_icon' => $rankIcon,
+                'rank_color' => $rankColor, // <--- Added
                 'next_level_xp' => $nextLevelXpThreshold,
                 'progress_percent' => $progressPercent,
                 'total_creates' => $stats['creates'],
                 'total_updates' => $stats['updates'],
                 'total_deletes' => $stats['deletes'],
-                'badge' => $topBadge,
-                'all_badges' => $badges,
+                'all_badges' => $unlocked, // List of names
                 'time_online' => $timeString
             ];
         })->sortByDesc('xp')->values();

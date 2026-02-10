@@ -388,6 +388,18 @@ class ItemController extends Controller
         $updates = [];
         $logDetails = [];
 
+        // 0. Handle Image Update (Delete or Upload)
+        if ($request->filled('delete_image')) {
+            $updates['image_path'] = null;
+            $logDetails[] = 'image_path (removed)';
+        } else {
+            $newImagePath = $this->processImageUpload($request, null);
+            if ($newImagePath) {
+                $updates['image_path'] = $newImagePath;
+                $logDetails[] = 'image_path (updated)';
+            }
+        }
+
         // 1. Standard Fields (Direct SQL Update)
         $allowedFields = [
             'brand',

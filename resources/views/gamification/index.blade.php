@@ -1,5 +1,25 @@
 <x-app-layout>
     <div class="min-h-screen bg-gray-50/50">
+        @php
+            $badges = [
+                ['name' => 'Newbie', 'icon' => 'fa-user', 'color' => 'gray', 'desc' => 'Joined the system'],
+                ['name' => 'Rookie', 'icon' => 'fa-seedling', 'color' => 'green', 'desc' => 'Reach Level 5'],
+                ['name' => 'Veteran', 'icon' => 'fa-shield-halved', 'color' => 'blue', 'desc' => 'Reach Level 10'],
+                ['name' => 'Elite', 'icon' => 'fa-gem', 'color' => 'indigo', 'desc' => 'Reach Level 20'],
+                ['name' => 'Master', 'icon' => 'fa-crown', 'color' => 'yellow', 'desc' => 'Reach Level 30'],
+                ['name' => 'Legend', 'icon' => 'fa-dragon', 'color' => 'red', 'desc' => 'Reach Level 50'],
+                ['name' => 'Builder', 'icon' => 'fa-hammer', 'color' => 'teal', 'desc' => 'Create 10 Items'],
+                ['name' => 'Architect', 'icon' => 'fa-city', 'color' => 'emerald', 'desc' => 'Create 100 Items'],
+                ['name' => 'Creator', 'icon' => 'fa-paintbrush', 'color' => 'pink', 'desc' => 'Create 500 Items'],
+                ['name' => 'Editor', 'icon' => 'fa-pen-nib', 'color' => 'orange', 'desc' => 'Update 50 Items'],
+                ['name' => 'Maintainer', 'icon' => 'fa-screwdriver-wrench', 'color' => 'amber', 'desc' => 'Update 200 Items'],
+                ['name' => 'Cleaner', 'icon' => 'fa-broom', 'color' => 'slate', 'desc' => 'Delete 10 Items'],
+                ['name' => 'Destroyer', 'icon' => 'fa-bomb', 'color' => 'red', 'desc' => 'Delete 50 Items'],
+                ['name' => 'Time Traveler', 'icon' => 'fa-hourglass-start', 'color' => 'cyan', 'desc' => 'Online 1+ Hour'],
+                ['name' => 'Time Lord', 'icon' => 'fa-clock', 'color' => 'violet', 'desc' => 'Online 10+ Hours'],
+                ['name' => 'Chronos', 'icon' => 'fa-infinity', 'color' => 'fuchsia', 'desc' => 'Online 100+ Hours'],
+            ];
+        @endphp
 
         <!-- 1. Header & My Stats Section -->
         <div
@@ -31,8 +51,13 @@
                     <!-- Avatar Only -->
                     <div class="relative shrink-0">
                         <div
-                            class="w-24 h-24 rounded-full bg-gradient-to-br from-yellow-400 to-orange-500 flex items-center justify-center text-3xl font-bold shadow-lg ring-4 ring-white/20 text-white">
-                            {{ substr(auth()->user()->name, 0, 1) }}
+                            class="w-24 h-24 rounded-full bg-gradient-to-br from-yellow-400 to-orange-500 flex items-center justify-center text-3xl font-bold shadow-lg ring-4 ring-white/20 text-white overflow-hidden">
+                            @if(auth()->user()->avatar_path)
+                                <img src="{{ Storage::url(auth()->user()->avatar_path) }}"
+                                    class="w-full h-full object-cover">
+                            @else
+                                {{ substr(auth()->user()->name, 0, 1) }}
+                            @endif
                         </div>
                         <div
                             class="absolute -bottom-2 -right-2 bg-indigo-600 text-white text-xs font-bold px-2 py-1 rounded-full border border-white">
@@ -142,7 +167,11 @@
                                                             class="ml-2 text-[10px] bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-bold">YOU</span>
                                                     @endif
                                                 </a>
-                                                <div class="text-xs text-gray-400 font-medium">{{ $user->rank_name }}</div>
+                                                <div
+                                                    class="text-xs font-bold {{ $user->rank_color ?? 'text-gray-400' }} flex items-center gap-1.5 mt-0.5">
+                                                    <i class="fa-solid {{ $user->rank_icon ?? 'fa-user' }}"></i>
+                                                    {{ $user->rank_name }}
+                                                </div>
                                             </div>
                                         </div>
                                     </td>
@@ -153,14 +182,41 @@
                                         </span>
                                     </td>
                                     <td class="px-6 py-4 text-center">
-                                        @if($user->badge)
-                                            <span
-                                                class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-gradient-to-r from-purple-100 to-pink-100 text-purple-700 border border-purple-200 shadow-sm">
-                                                {{ $user->badge }}
-                                            </span>
-                                        @else
-                                            <span class="text-gray-300 text-xs">-</span>
-                                        @endif
+                                        <div class="flex flex-col gap-1.5 items-center">
+                                            @forelse($user->equipped_badges as $badgeName)
+                                                                                    @php
+                                                                                        $b = collect($badges)->firstWhere('name', $badgeName);
+                                                                                        $color = $b['color'] ?? 'gray';
+                                                                                        $icon = $b['icon'] ?? 'fa-medal';
+
+                                                                                        // Map Color Names to Tailwind Classes - Simplified/Shared
+                                                                                        $style = match ($color) {
+                                                                                            'green' => 'bg-green-100/80 text-green-700 border-green-200',
+                                                                                            'blue' => 'bg-blue-100/80 text-blue-700 border-blue-200',
+                                                                                            'indigo' => 'bg-indigo-100/80 text-indigo-700 border-indigo-200',
+                                                                                            'purple' => 'bg-purple-100/80 text-purple-700 border-purple-200',
+                                                                                            'yellow' => 'bg-yellow-100/80 text-yellow-700 border-yellow-200',
+                                                                                            'red' => 'bg-red-100/80 text-red-700 border-red-200',
+                                                                                            'teal' => 'bg-teal-100/80 text-teal-700 border-teal-200',
+                                                                                            'emerald' => 'bg-emerald-100/80 text-emerald-700 border-emerald-200',
+                                                                                            'pink' => 'bg-pink-100/80 text-pink-700 border-pink-200',
+                                                                                            'orange' => 'bg-orange-100/80 text-orange-700 border-orange-200',
+                                                                                            'amber' => 'bg-amber-100/80 text-amber-700 border-amber-200',
+                                                                                            'cyan' => 'bg-cyan-100/80 text-cyan-700 border-cyan-200',
+                                                                                            'violet' => 'bg-violet-100/80 text-violet-700 border-violet-200',
+                                                                                            'fuchsia' => 'bg-fuchsia-100/80 text-fuchsia-700 border-fuchsia-200',
+                                                                                            'slate' => 'bg-slate-100/80 text-slate-700 border-slate-200',
+                                                                                            default => 'bg-gray-100/80 text-gray-700 border-gray-200'
+                                                                                        };
+                                                                                    @endphp
+                                                 <span
+                                                                                        class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border shadow-sm whitespace-nowrap w-fit {{ $style }}">
+                                                                                        <i class="fa-solid {{ $icon }} mr-1.5 opacity-80"></i> {{ $badgeName }}
+                                                                                    </span>
+                                            @empty
+                                                <span class="text-gray-300 text-xs">-</span>
+                                            @endforelse
+                                        </div>
                                     </td>
                                     <td class="px-6 py-4 text-right font-medium text-green-600">
                                         +{{ number_format($user->total_creates) }}
@@ -207,42 +263,50 @@
                             <tbody class="divide-y divide-gray-100">
                                 <tr>
                                     <td class="px-4 py-2 font-medium">1 - 4</td>
-                                    <td class="px-4 py-2 text-gray-600">Novice</td>
+                                    <td class="px-4 py-2 text-gray-600"><i
+                                            class="fa-solid fa-user mr-2 text-gray-400"></i> Novice</td>
                                     <td class="px-4 py-2 text-right text-gray-400">100+</td>
                                 </tr>
                                 <tr>
                                     <td class="px-4 py-2 font-medium">5 - 9</td>
-                                    <td class="px-4 py-2 text-blue-600">Apprentice</td>
+                                    <td class="px-4 py-2 text-blue-600"><i class="fa-solid fa-scroll mr-2"></i>
+                                        Apprentice</td>
                                     <td class="px-4 py-2 text-right text-gray-400">2,500+</td>
                                 </tr>
                                 <tr>
                                     <td class="px-4 py-2 font-medium">10 - 14</td>
-                                    <td class="px-4 py-2 text-green-600">Adept</td>
+                                    <td class="px-4 py-2 text-green-600"><i class="fa-solid fa-book-open mr-2"></i>
+                                        Adept</td>
                                     <td class="px-4 py-2 text-right text-gray-400">10,000+</td>
                                 </tr>
                                 <tr>
                                     <td class="px-4 py-2 font-medium">15 - 19</td>
-                                    <td class="px-4 py-2 text-teal-600">Specialist</td>
+                                    <td class="px-4 py-2 text-teal-600"><i class="fa-solid fa-flask mr-2"></i>
+                                        Specialist</td>
                                     <td class="px-4 py-2 text-right text-gray-400">22,500+</td>
                                 </tr>
                                 <tr>
                                     <td class="px-4 py-2 font-medium">20 - 29</td>
-                                    <td class="px-4 py-2 text-indigo-600">Expert</td>
+                                    <td class="px-4 py-2 text-indigo-600"><i class="fa-solid fa-star mr-2"></i> Expert
+                                    </td>
                                     <td class="px-4 py-2 text-right text-gray-400">40,000+</td>
                                 </tr>
                                 <tr>
                                     <td class="px-4 py-2 font-medium">30 - 39</td>
-                                    <td class="px-4 py-2 text-purple-600 font-bold">Master</td>
+                                    <td class="px-4 py-2 text-purple-600 font-bold"><i
+                                            class="fa-solid fa-crown mr-2"></i> Master</td>
                                     <td class="px-4 py-2 text-right text-gray-400">90,000+</td>
                                 </tr>
                                 <tr>
                                     <td class="px-4 py-2 font-medium">50+</td>
-                                    <td class="px-4 py-2 text-yellow-600 font-bold">Divine</td>
+                                    <td class="px-4 py-2 text-yellow-600 font-bold"><i class="fa-solid fa-sun mr-2"></i>
+                                        Divine</td>
                                     <td class="px-4 py-2 text-right text-gray-400">250,000+</td>
                                 </tr>
                                 <tr>
                                     <td class="px-4 py-2 font-medium">100</td>
-                                    <td class="px-4 py-2 text-red-600 font-black">Admin of Universe</td>
+                                    <td class="px-4 py-2 text-red-600 font-black"><i class="fa-solid fa-globe mr-2"></i>
+                                        Admin of Universe</td>
                                     <td class="px-4 py-2 text-right text-gray-400">1,000,000</td>
                                 </tr>
                             </tbody>
@@ -250,60 +314,68 @@
                     </div>
                 </div>
 
-                <!-- 2. Badge Guide -->
+                <!-- 2. Badge Encyclopedia -->
                 <div class="bg-white rounded-2xl shadow-lg p-6 border border-gray-100">
-                    <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
-                        <i data-lucide="medal" class="w-5 h-5 text-orange-500"></i>
-                        Available Badges
+                    <h3 class="text-lg font-bold text-gray-800 mb-6 flex items-center gap-2">
+                        <i data-lucide="book-open" class="w-5 h-5 text-orange-500"></i>
+                        Badge Encyclopedia
                     </h3>
-                    <div class="space-y-4">
-                        <!-- Builder -->
-                        <div class="flex items-start gap-3">
-                            <div class="p-2 bg-blue-100 rounded-lg text-blue-600">
-                                <i data-lucide="hammer" class="w-5 h-5"></i>
-                            </div>
-                            <div>
-                                <h4 class="font-bold text-gray-800 text-sm">Builder / Architect</h4>
-                                <p class="text-xs text-gray-500">Awarded for creating new items. Tiers: 10, 100, 500
-                                    items.</p>
-                            </div>
-                        </div>
 
-                        <!-- Maintainer -->
-                        <div class="flex items-start gap-3">
-                            <div class="p-2 bg-green-100 rounded-lg text-green-600">
-                                <i data-lucide="edit" class="w-5 h-5"></i>
-                            </div>
-                            <div>
-                                <h4 class="font-bold text-gray-800 text-sm">Editor / Polisher</h4>
-                                <p class="text-xs text-gray-500">Awarded for updating existing items. Tiers: 50, 200,
-                                    1000 edits.</p>
-                            </div>
-                        </div>
+                    @php
+                        $badges = [
+                            ['name' => 'Newbie', 'icon' => 'fa-user', 'color' => 'gray', 'desc' => 'Joined the system'],
+                            ['name' => 'Rookie', 'icon' => 'fa-seedling', 'color' => 'green', 'desc' => 'Reach Level 5'],
+                            ['name' => 'Veteran', 'icon' => 'fa-shield-halved', 'color' => 'blue', 'desc' => 'Reach Level 10'],
+                            ['name' => 'Elite', 'icon' => 'fa-gem', 'color' => 'indigo', 'desc' => 'Reach Level 20'],
+                            ['name' => 'Master', 'icon' => 'fa-crown', 'color' => 'yellow', 'desc' => 'Reach Level 30'],
+                            ['name' => 'Legend', 'icon' => 'fa-dragon', 'color' => 'red', 'desc' => 'Reach Level 50'],
+                            ['name' => 'Builder', 'icon' => 'fa-hammer', 'color' => 'teal', 'desc' => 'Create 10 Items'],
+                            ['name' => 'Architect', 'icon' => 'fa-city', 'color' => 'emerald', 'desc' => 'Create 100 Items'],
+                            ['name' => 'Creator', 'icon' => 'fa-paintbrush', 'color' => 'pink', 'desc' => 'Create 500 Items'],
+                            ['name' => 'Editor', 'icon' => 'fa-pen-nib', 'color' => 'orange', 'desc' => 'Update 50 Items'],
+                            ['name' => 'Maintainer', 'icon' => 'fa-screwdriver-wrench', 'color' => 'amber', 'desc' => 'Update 200 Items'],
+                            ['name' => 'Cleaner', 'icon' => 'fa-broom', 'color' => 'slate', 'desc' => 'Delete 10 Items'],
+                            ['name' => 'Destroyer', 'icon' => 'fa-bomb', 'color' => 'red', 'desc' => 'Delete 50 Items'],
+                            ['name' => 'Time Traveler', 'icon' => 'fa-hourglass-start', 'color' => 'cyan', 'desc' => 'Online 1+ Hour'],
+                            ['name' => 'Time Lord', 'icon' => 'fa-clock', 'color' => 'violet', 'desc' => 'Online 10+ Hours'],
+                            ['name' => 'Chronos', 'icon' => 'fa-infinity', 'color' => 'fuchsia', 'desc' => 'Online 100+ Hours'],
+                        ];
+                    @endphp
 
-                        <!-- Cleaner -->
-                        <div class="flex items-start gap-3">
-                            <div class="p-2 bg-red-100 rounded-lg text-red-600">
-                                <i data-lucide="trash-2" class="w-5 h-5"></i>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4">
+                        @foreach($badges as $b)
+                            @php
+                                $color = $b['color'];
+                                $iconClass = match ($color) {
+                                    'green' => 'bg-green-100 text-green-600',
+                                    'blue' => 'bg-blue-100 text-blue-600',
+                                    'indigo' => 'bg-indigo-100 text-indigo-600',
+                                    'purple' => 'bg-purple-100 text-purple-600',
+                                    'yellow' => 'bg-yellow-100 text-yellow-600',
+                                    'red' => 'bg-red-100 text-red-600',
+                                    'teal' => 'bg-teal-100 text-teal-600',
+                                    'emerald' => 'bg-emerald-100 text-emerald-600',
+                                    'pink' => 'bg-pink-100 text-pink-600',
+                                    'orange' => 'bg-orange-100 text-orange-600',
+                                    'amber' => 'bg-amber-100 text-amber-600',
+                                    'cyan' => 'bg-cyan-100 text-cyan-600',
+                                    'violet' => 'bg-violet-100 text-violet-600',
+                                    'fuchsia' => 'bg-fuchsia-100 text-fuchsia-600',
+                                    default => 'bg-gray-100 text-gray-600'
+                                };
+                            @endphp
+                            <div
+                                class="flex items-center gap-3 p-3 rounded-xl border border-gray-100 bg-gray-50/50 hover:bg-white hover:shadow-md transition-all">
+                                <div
+                                    class="w-10 h-10 rounded-full flex items-center justify-center shrink-0 {{ $iconClass }}">
+                                    <i class="fa-solid {{ $b['icon'] }}"></i>
+                                </div>
+                                <div>
+                                    <h4 class="font-bold text-gray-800 text-sm leading-tight">{{ $b['name'] }}</h4>
+                                    <p class="text-[10px] text-gray-500 uppercase font-semibold mt-0.5">{{ $b['desc'] }}</p>
+                                </div>
                             </div>
-                            <div>
-                                <h4 class="font-bold text-gray-800 text-sm">Cleaner / Destroyer</h4>
-                                <p class="text-xs text-gray-500">Awarded for deleting obsolete items. Tiers: 10, 50
-                                    deletes.</p>
-                            </div>
-                        </div>
-
-                        <!-- Legend -->
-                        <div class="flex items-start gap-3">
-                            <div class="p-2 bg-yellow-100 rounded-lg text-yellow-600">
-                                <i data-lucide="zap" class="w-5 h-5"></i>
-                            </div>
-                            <div>
-                                <h4 class="font-bold text-gray-800 text-sm">Inventory God</h4>
-                                <p class="text-xs text-gray-500">The ultimate prestige for reaching massive XP
-                                    milestones (10k, 50k, 100k).</p>
-                            </div>
-                        </div>
+                        @endforeach
                     </div>
                 </div>
             </div>

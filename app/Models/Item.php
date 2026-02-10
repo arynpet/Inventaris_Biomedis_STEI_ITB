@@ -30,6 +30,7 @@ class Item extends Model
         'status',
         'condition',
         'image_path', // Updated
+        'item_package_id',
     ];
 
     // --- ACCESSOR ---
@@ -95,5 +96,10 @@ class Item extends Model
     public function borrowings()
     {
         return $this->hasMany(Borrowing::class)->orderBy('borrow_date', 'desc');
+    }
+
+    public function itemPackage()
+    {
+        return $this->belongsTo(ItemPackage::class);
     }
 }
