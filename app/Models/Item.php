@@ -14,6 +14,23 @@ class Item extends Model
     use SoftDeletes;
     use LogsActivity;
 
+    protected $appends = ['image_url'];
+
+    public function getImageUrlAttribute()
+    {
+        $value = $this->image_path;
+
+        if (empty($value)) {
+            return null;
+        }
+
+        if (\Illuminate\Support\Str::startsWith($value, ['http://', 'https://'])) {
+            return $value;
+        }
+
+        return asset('storage/' . $value);
+    }
+
     protected $fillable = [
         'asset_number',
         'serial_number',

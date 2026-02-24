@@ -15,7 +15,7 @@ use App\Http\Controllers\PrintController;
 use App\Http\Controllers\PrinterController;
 use App\Http\Controllers\SuperAdmin\ActivityLogController;
 use App\Http\Controllers\SuperAdmin\UserController;
-use App\Http\Controllers\NaraController;
+
 
 /*
 |--------------------------------------------------------------------------
@@ -55,15 +55,6 @@ Route::post('/m/upload', [App\Http\Controllers\RemoteUploadController::class, 'h
 */
 
 Route::middleware(['auth', 'verified'])->group(function () {
-
-    // ====================================================
-    // 0. AI ASSISTANT (N.A.R.A)
-    // ====================================================
-    Route::prefix('nara')->middleware('throttle:30,1')->name('nara.')->group(function () {
-        Route::post('/chat', [NaraController::class, 'ask'])->name('chat');
-        Route::post('/destroy', [NaraController::class, 'destroyAsset'])->name('destroy');
-        Route::post('/store-batch', [NaraController::class, 'storeBatch'])->name('store_batch');
-    });
 
     // ====================================================
     // 1. DASHBOARD

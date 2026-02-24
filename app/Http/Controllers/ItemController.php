@@ -35,12 +35,15 @@ class ItemController extends Controller
             });
         }
 
-        // Filter Status & Room
+        // Filter Status & Room & Condition
         if ($request->filled('status')) {
             $query->where('status', $request->status);
         }
         if ($request->filled('room_id')) {
             $query->where('room_id', $request->room_id);
+        }
+        if ($request->filled('condition')) {
+            $query->where('condition', $request->condition);
         }
 
         // Opsi Grouping by Asset Number

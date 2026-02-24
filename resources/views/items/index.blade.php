@@ -159,6 +159,16 @@
                             @endforeach
                         </select>
 
+                        <select name="condition"
+                            class="w-full sm:w-40 rounded-lg border-gray-300 text-sm focus:ring-blue-500 focus:border-blue-500 shadow-sm cursor-pointer">
+                            <option value="">Semua Kondisi</option>
+                            @foreach(['good' => 'Baik', 'damaged' => 'Rusak Ringan', 'broken' => 'Rusak Berat'] as $val => $label)
+                                <option value="{{ $val }}" {{ request('condition') == $val ? 'selected' : '' }}>
+                                    {{ $label }}
+                                </option>
+                            @endforeach
+                        </select>
+
                         {{-- Per Page Dropdown --}}
                         <select name="per_page" onchange="this.form.submit()"
                             class="w-full sm:w-28 rounded-lg border-gray-300 text-sm focus:ring-blue-500 focus:border-blue-500 shadow-sm cursor-pointer"
@@ -196,20 +206,59 @@
                 </form>
             </div>
 
-            {{-- FORM BULK ACTION WRAPPER (PENTING: Membungkus Tabel) --}}
+            {{-- VIEW TOGGLE BUTTONS --}}
+            <div class="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4">
+                <div class="text-sm text-gray-500">
+                    Menampilkan <span class="font-bold text-gray-800">{{ $items->count() }}</span> dari <span
+                        class="font-bold text-gray-800">{{ $items->total() }}</span> barang
+                </div>
+                <div class="flex bg-gray-100 p-1 rounded-lg">
+                    <button type="button" @click="setViewMode('table')"
+                        :class="{'bg-white shadow text-blue-600': viewMode === 'table', 'text-gray-500 hover:text-gray-700': viewMode !== 'table'}"
+                        class="p-2 rounded-md transition-all" title="Tampilan Tabel">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M4 6h16M4 10h16M4 14h16M4 18h16"></path>
+                        </svg>
+                    </button>
+                    <button type="button" @click="setViewMode('list')"
+                        :class="{'bg-white shadow text-blue-600': viewMode === 'list', 'text-gray-500 hover:text-gray-700': viewMode !== 'list'}"
+                        class="p-2 rounded-md transition-all" title="Tampilan List Card">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M4 6h16M4 12h16m-7 6h7"></path>
+                        </svg>
+                    </button>
+                    <button type="button" @click="setViewMode('grid')"
+                        :class="{'bg-white shadow text-blue-600': viewMode === 'grid', 'text-gray-500 hover:text-gray-700': viewMode !== 'grid'}"
+                        class="p-2 rounded-md transition-all" title="Tampilan Grid Besar">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z">
+                            </path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            {{-- FORM BULK ACTION WRAPPER (PENTING: Membungkus Semua View) --}}
             <form id="bulkActionForm" action="{{ route('items.bulk_action') }}" method="POST">
                 @csrf
                 <input type="hidden" name="action_type" id="bulkActionType">
 
-                <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                {{-- TABLE VIEW --}}
+                <div x-show="viewMode === 'table'" x-transition:enter="transition ease-out duration-300"
+                    x-transition:enter-start="opacity-0 translate-y-2"
+                    x-transition:enter-end="opacity-100 translate-y-0"
+                    class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                     <div class="overflow-x-auto">
                         <table class="min-w-full divide-y divide-gray-200">
-                            <thead class="bg-gray-50">
+                            <thead class="bg-gray-50 sticky top-0 z-10 shadow-sm">
                                 <tr>
                                     {{-- CHECKBOX HEADER (Select All) --}}
                                     <th scope="col" class="px-3 py-3 text-center w-8">
                                         <input type="checkbox" @click="toggleAll" x-ref="selectAllCheckbox"
-                                            class="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50 cursor-pointer w-4 h-4">
+                                            class="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50 cursor-pointer w-4 h-4 transition hover:scale-110">
                                     </th>
                                     <th scope="col"
                                         class="px-3 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
@@ -227,7 +276,7 @@
                                         class="px-3 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider hidden lg:table-cell">
                                         No Asset</th>
                                     <th scope="col"
-                                        class="px-3 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap hidden xl:table-cell">
+                                        class="px-3 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider hidden xl:table-cell">
                                         S/N</th>
                                     <th scope="col"
                                         class="px-3 py-3 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">
@@ -245,16 +294,13 @@
                                         class="px-3 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider hidden md:table-cell">
                                         Kondisi</th>
                                     <th scope="col"
-                                        class="px-3 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider hidden xl:table-cell">
-                                        Kategori</th>
-                                    <th scope="col"
                                         class="px-3 py-3 text-right text-xs font-bold text-gray-500 uppercase tracking-wider">
                                         Aksi</th>
                                 </tr>
                             </thead>
-                            <tbody class="bg-white divide-y divide-gray-200">
+                            <tbody class="bg-white divide-y divide-gray-100">
                                 @forelse ($items as $item)
-                                    <tr class="hover:bg-blue-50/50 transition-colors duration-150"
+                                    <tr class="hover:bg-blue-50/40 transition-colors duration-200 group relative"
                                         :class="{'bg-blue-50': selectedItems.includes({{ $item->id }})}">
 
                                         {{-- CHECKBOX ROW --}}
@@ -262,75 +308,73 @@
                                             <input type="checkbox" name="selected_ids[]" value="{{ $item->id }}"
                                                 @click="toggleItem({{ $item->id }}, {{ $loop->index }}, $event)"
                                                 :checked="selectedItems.includes({{ $item->id }})"
-                                                class="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50 cursor-pointer w-4 h-4">
+                                                class="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50 cursor-pointer w-4 h-4 transition hover:scale-110">
                                         </td>
 
                                         {{-- ID --}}
-                                        <td class="px-3 py-3 whitespace-nowrap text-xs text-gray-500">
+                                        <td class="px-3 py-3 whitespace-nowrap text-xs text-gray-400 font-mono">
                                             #{{ $item->id }}
                                         </td>
 
                                         {{-- Image Thumbnail --}}
                                         <td class="px-3 py-3 text-center">
                                             <div
-                                                class="h-10 w-10 mx-auto rounded-lg overflow-hidden border border-gray-200 bg-gray-50 relative group shadow-sm">
+                                                class="h-10 w-10 mx-auto rounded-lg overflow-hidden border border-gray-100 bg-gray-50 relative shadow-sm group-hover:shadow-md transition-all">
                                                 <img src="{{ $item->optimized_image }}" alt="{{ $item->name }}"
-                                                    class="object-cover w-full h-full transition-transform duration-300 group-hover:scale-110"
+                                                    class="object-cover w-full h-full transform transition-transform duration-500 group-hover:scale-110"
                                                     loading="lazy"
                                                     onerror="this.src='https://placehold.co/100x100?text=Err'">
                                             </div>
-
                                         </td>
 
                                         {{-- Name --}}
                                         <td class="px-3 py-3">
-                                            <div class="text-sm font-semibold text-gray-900 leading-tight">
+                                            <div
+                                                class="text-sm font-bold text-gray-800 leading-tight group-hover:text-blue-700 transition-colors">
                                                 {{ $item->name }}
                                             </div>
                                             {{-- Mobile Only Metadata --}}
-                                            <div class="lg:hidden mt-1 text-xs text-gray-500">
+                                            <div class="lg:hidden mt-0.5 text-[10px] text-gray-400 font-mono">
                                                 {{ $item->asset_number }}
                                             </div>
                                         </td>
 
-                                        <td class="px-3 py-3 whitespace-nowrap text-xs text-gray-600 hidden md:table-cell">
+                                        <td class="px-3 py-3 whitespace-nowrap text-xs text-gray-500 hidden md:table-cell">
                                             {{ $item->brand ?? '-' }}
                                         </td>
 
                                         {{-- Asset Number --}}
                                         <td
-                                            class="px-3 py-3 whitespace-nowrap text-xs text-gray-600 font-mono hidden lg:table-cell">
+                                            class="px-3 py-3 whitespace-nowrap text-xs text-gray-500 font-mono hidden lg:table-cell group-hover:text-gray-700">
                                             {{ $item->asset_number ?? '-' }}
                                         </td>
 
                                         {{-- Serial Number --}}
                                         <td
-                                            class="px-3 py-3 whitespace-nowrap text-xs font-mono text-gray-800 hidden xl:table-cell">
+                                            class="px-3 py-3 whitespace-nowrap text-xs font-mono text-gray-500 hidden xl:table-cell group-hover:text-gray-700">
                                             {{ $item->serial_number ?? '-' }}
                                         </td>
 
                                         {{-- QR Code --}}
                                         <td class="px-3 py-3 whitespace-nowrap text-center">
                                             @if ($item->qr_code)
-                                                <div class="flex justify-center items-center cursor-zoom-in relative w-8 h-8"
+                                                <div class="flex justify-center items-center cursor-zoom-in relative w-8 h-8 md:hover:scale-150 transition-transform z-10 origin-center"
                                                     @mouseenter="activeQr = '{{ asset('storage/' . $item->qr_code) }}'"
                                                     @mouseleave="activeQr = null">
                                                     <img src="{{ asset('storage/' . $item->qr_code) }}" alt="QR"
-                                                        class="h-8 w-8 rounded border border-gray-200 bg-white p-0.5 object-cover shadow-sm transition-transform">
+                                                        class="h-8 w-8 rounded border border-gray-200 bg-white p-0.5 object-cover shadow-sm">
                                                 </div>
                                             @else
-                                                <span class="text-[10px] text-gray-400 italic">No QR</span>
+                                                <span class="text-[10px] text-gray-300 italic">No QR</span>
                                             @endif
                                         </td>
 
                                         {{-- Room --}}
                                         <td class="px-3 py-3 whitespace-nowrap text-xs text-gray-600 hidden sm:table-cell">
                                             <div class="flex items-center gap-1.5">
-                                                <svg class="w-3.5 h-3.5 text-gray-400" fill="none" viewBox="0 0 24 24"
-                                                    stroke="currentColor">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                        d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                                                </svg>
+                                                <div
+                                                    class="w-1.5 h-1.5 rounded-full bg-gray-300 group-hover:bg-blue-400 transition-colors">
+                                                </div>
                                                 <span class="truncate max-w-[120px]"
                                                     title="{{ $item->room->name ?? 'Unassigned' }}">
                                                     {{ $item->room->name ?? '-' }}
@@ -341,14 +385,15 @@
                                         {{-- Quantity --}}
                                         <td class="px-3 py-3 whitespace-nowrap">
                                             <span
-                                                class="px-2 py-0.5 rounded text-[11px] font-bold bg-gray-100 text-gray-800 border border-gray-200">
+                                                class="px-2 py-0.5 rounded-md text-[11px] font-bold bg-gray-100 text-gray-700 border border-gray-200 group-hover:bg-blue-100 group-hover:text-blue-700 group-hover:border-blue-200 transition-colors">
                                                 {{ $item->quantity }}
                                             </span>
                                         </td>
 
                                         {{-- Status --}}
                                         <td class="px-3 py-3 whitespace-nowrap">
-                                            <x-status-badge :status="$item->status" class="scale-90 origin-left" />
+                                            <x-status-badge :status="$item->status"
+                                                class="scale-90 origin-left shadow-sm" />
                                         </td>
 
                                         {{-- Condition --}}
@@ -356,7 +401,7 @@
                                             @php
                                                 $condClass = match ($item->condition) {
                                                     'good' => 'bg-emerald-50 text-emerald-700 border-emerald-100',
-                                                    'damaged' => 'bg-orange-50 text-orange-700 border-orange-100',
+                                                    'damaged' => 'bg-amber-50 text-amber-700 border-amber-100',
                                                     'broken' => 'bg-red-50 text-red-700 border-red-100',
                                                     default => 'bg-gray-50 text-gray-600 border-gray-100',
                                                 };
@@ -373,31 +418,14 @@
                                             </span>
                                         </td>
 
-                                        {{-- Categories --}}
-                                        <td class="px-3 py-3 hidden xl:table-cell">
-                                            <div class="flex flex-wrap gap-1 max-w-[120px]">
-                                                @forelse ($item->categories->take(2) as $cat)
-                                                    <span
-                                                        class="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-medium bg-blue-50 text-blue-700 border border-blue-100 truncate max-w-[80px]">
-                                                        {{ $cat->name }}
-                                                    </span>
-                                                @empty
-                                                    <span class="text-[10px] text-gray-300">-</span>
-                                                @endforelse
-                                                @if($item->categories->count() > 2)
-                                                    <span
-                                                        class="text-[9px] text-gray-400">+{{ $item->categories->count() - 2 }}</span>
-                                                @endif
-                                            </div>
-                                        </td>
-
                                         {{-- Actions --}}
                                         <td class="px-3 py-3 whitespace-nowrap text-right text-sm font-medium">
-                                            <div class="flex items-center justify-end gap-1">
+                                            <div
+                                                class="flex items-center justify-end gap-1 opacity-60 group-hover:opacity-100 transition-opacity">
                                                 <a href="{{ route('items.show', $item->id) }}"
-                                                    class="text-sky-600 hover:text-sky-900 bg-sky-50 hover:bg-sky-100 p-1.5 rounded transition-colors"
+                                                    class="text-gray-400 hover:text-sky-600 hover:bg-sky-50 p-1.5 rounded-lg transition-all transform hover:scale-110"
                                                     title="Detail">
-                                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor"
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor"
                                                         viewBox="0 0 24 24">
                                                         <path stroke-linecap="round" stroke-linejoin="round"
                                                             stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -408,9 +436,9 @@
                                                 </a>
 
                                                 <a href="{{ route('items.edit', $item->id) }}"
-                                                    class="text-amber-600 hover:text-amber-900 bg-amber-50 hover:bg-amber-100 p-1.5 rounded transition-colors"
+                                                    class="text-gray-400 hover:text-amber-600 hover:bg-amber-50 p-1.5 rounded-lg transition-all transform hover:scale-110"
                                                     title="Edit">
-                                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor"
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor"
                                                         viewBox="0 0 24 24">
                                                         <path stroke-linecap="round" stroke-linejoin="round"
                                                             stroke-width="2"
@@ -421,9 +449,9 @@
 
                                                 @if($item->status !== 'dikeluarkan')
                                                     <a href="{{ route('items.out.create', $item->id) }}"
-                                                        class="text-orange-600 hover:text-orange-900 bg-orange-50 hover:bg-orange-100 p-1.5 rounded transition-colors"
+                                                        class="text-gray-400 hover:text-orange-600 hover:bg-orange-50 p-1.5 rounded-lg transition-all transform hover:scale-110"
                                                         title="Keluarkan Barang">
-                                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor"
+                                                        <svg class="w-4 h-4" fill="none" stroke="currentColor"
                                                             viewBox="0 0 24 24">
                                                             <path stroke-linecap="round" stroke-linejoin="round"
                                                                 stroke-width="2"
@@ -435,9 +463,9 @@
 
                                                 <button type="button"
                                                     @click="confirmDelete({{ $item->id }}, '{{ $item->name }}')"
-                                                    class="text-red-600 hover:text-red-900 bg-red-50 hover:bg-red-100 p-1.5 rounded transition-colors"
+                                                    class="text-gray-400 hover:text-red-600 hover:bg-red-50 p-1.5 rounded-lg transition-all transform hover:scale-110"
                                                     title="Hapus">
-                                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor"
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor"
                                                         viewBox="0 0 24 24">
                                                         <path stroke-linecap="round" stroke-linejoin="round"
                                                             stroke-width="2"
@@ -466,7 +494,280 @@
                             </tbody>
                         </table>
                     </div>
+                </div>
 
+                {{-- LIST VIEW (Horizontal Cards - Dynamic & Dense) --}}
+                <div x-show="viewMode === 'list'" class="space-y-3"
+                    x-transition:enter="transition ease-out duration-300"
+                    x-transition:enter-start="opacity-0 translate-y-2"
+                    x-transition:enter-end="opacity-100 translate-y-0">
+                    @forelse ($items as $item)
+                        {{-- Row-Card Design --}}
+                        <div class="group relative bg-white rounded-lg border border-gray-200 p-2 sm:p-3 shadow-sm hover:shadow-md transition-all flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 overflow-visible"
+                            :class="{'ring-2 ring-blue-500 bg-blue-50/30': selectedItems.includes({{ $item->id }})}">
+
+                            {{-- 1. Checkbox & Image Section --}}
+                            <div class="flex items-center gap-3 w-full sm:w-auto">
+                                <div class="relative z-10 flex-shrink-0">
+                                    <input type="checkbox" value="{{ $item->id }}"
+                                        @click="toggleItem({{ $item->id }}, {{ $loop->index }}, $event)"
+                                        :checked="selectedItems.includes({{ $item->id }})"
+                                        class="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring w-4 h-4 cursor-pointer">
+                                </div>
+
+                                {{-- Image Thumbnail (Small) --}}
+                                <div
+                                    class="h-12 w-12 sm:h-14 sm:w-14 rounded-md overflow-hidden bg-gray-100 border border-gray-200 flex-shrink-0 relative group-inner">
+                                    <img src="{{ $item->optimized_image }}" class="w-full h-full object-cover"
+                                        loading="lazy" onerror="this.style.display='none'">
+                                    {{-- Placeholder Icon --}}
+                                    <div class="absolute inset-0 flex items-center justify-center bg-gray-50 -z-10">
+                                        <svg class="w-6 h-6 text-gray-300" fill="none" stroke="currentColor"
+                                            viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z">
+                                            </path>
+                                        </svg>
+                                    </div>
+                                </div>
+
+                                {{-- Mobile Name Display (Hidden on Desktop) --}}
+                                <div class="sm:hidden flex-1">
+                                    <h4 class="text-sm font-bold text-gray-900 line-clamp-1">{{ $item->name }}</h4>
+                                    <div class="text-xs text-gray-500">{{ $item->asset_number }}</div>
+                                </div>
+                            </div>
+
+                            {{-- 2. Desktop Columns Grid (Matches Table-ish Layout) --}}
+                            <div class="flex-1 w-full grid grid-cols-2 sm:grid-cols-12 gap-2 sm:gap-4 items-center">
+
+                                {{-- Col A: Product Info (Name & Brand) --}}
+                                <div class="col-span-2 sm:col-span-4 flex flex-col">
+                                    <span class="text-xs text-gray-400 font-bold uppercase sm:hidden">Barang</span>
+                                    <h4 class="text-sm font-bold text-gray-900 line-clamp-1 group-hover:text-blue-600 transition-colors hidden sm:block"
+                                        title="{{ $item->name }}">
+                                        {{ $item->name }}
+                                    </h4>
+                                    {{-- Brand on Desktop --}}
+                                    <div class="hidden sm:flex items-center gap-2 text-xs text-gray-500 mt-0.5">
+                                        <span
+                                            class="bg-gray-100 px-1.5 rounded text-[10px] border border-gray-200 truncate max-w-[100px]">{{ $item->brand ?? '-' }}</span>
+                                    </div>
+                                    {{-- Mobile Brand --}}
+                                    <span class="text-sm text-gray-600 sm:hidden">{{ $item->brand ?? '-' }}</span>
+                                </div>
+
+                                {{-- Col B: Identifiers (Asset & SN) --}}
+                                <div class="col-span-1 sm:col-span-3 flex flex-col">
+                                    <span class="text-xs text-gray-400 font-bold uppercase sm:hidden">No Aset / SN</span>
+                                    <div class="flex flex-col gap-0.5">
+                                        <span
+                                            class="text-xs font-mono font-medium text-gray-700 bg-gray-50 px-1.5 py-0.5 rounded border border-gray-100 w-fit truncate max-w-full"
+                                            title="No Asset">
+                                            {{ $item->asset_number }}
+                                        </span>
+                                        <span class="text-[10px] font-mono text-gray-400 truncate" title="S/N">
+                                            SN: {{ $item->serial_number ?? '-' }}
+                                        </span>
+                                    </div>
+                                </div>
+
+                                {{-- Col C: Location --}}
+                                <div class="col-span-1 sm:col-span-2 flex flex-col justify-center">
+                                    <span class="text-xs text-gray-400 font-bold uppercase sm:hidden">Lokasi</span>
+                                    <div class="flex items-center gap-1.5">
+                                        <div class="w-1.5 h-1.5 rounded-full bg-blue-400 hidden sm:block"></div>
+                                        <span class="text-xs text-gray-700 font-medium truncate"
+                                            title="{{ $item->room->name ?? '-' }}">
+                                            {{ $item->room->name ?? '-' }}
+                                        </span>
+                                    </div>
+                                </div>
+
+                                {{-- Col D: Status & Cond --}}
+                                <div class="col-span-1 sm:col-span-2 flex flex-col sm:items-start gap-1 justify-center">
+                                    <span class="text-xs text-gray-400 font-bold uppercase sm:hidden">Status</span>
+                                    <x-status-badge :status="$item->status"
+                                        class="!text-[10px] !px-2 !py-0.5 scale-95 origin-left" />
+                                    <span
+                                        class="text-[10px] font-medium {{ $item->condition == 'good' ? 'text-emerald-600' : ($item->condition == 'broken' ? 'text-red-600' : 'text-amber-600') }}">
+                                        {{ ucfirst($item->condition) }}
+                                    </span>
+                                </div>
+
+                                {{-- Col E: Qty --}}
+                                <div class="col-span-1 sm:col-span-1 flex flex-col sm:items-center justify-center">
+                                    <span class="text-xs text-gray-400 font-bold uppercase sm:hidden">Qty</span>
+                                    <span
+                                        class="text-sm font-bold text-gray-800 bg-gray-100 px-2 py-0.5 rounded-md min-w-[2rem] text-center border border-gray-200">
+                                        {{ $item->quantity }}
+                                    </span>
+                                </div>
+
+                            </div>
+
+                            {{-- 3. Actions (Right End) --}}
+                            <div
+                                class="w-full sm:w-auto flex sm:flex-col gap-2 border-t sm:border-t-0 border-gray-100 pt-2 sm:pt-0 sm:pl-3 sm:border-l border-gray-100 justify-center">
+                                <div class="flex items-center justify-end gap-1">
+                                    <a href="{{ route('items.show', $item->id) }}"
+                                        class="text-gray-400 hover:text-blue-600 p-1.5 rounded-md hover:bg-blue-50 transition-colors"
+                                        title="Detail">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                        </svg>
+                                    </a>
+                                    <a href="{{ route('items.edit', $item->id) }}"
+                                        class="text-gray-400 hover:text-amber-600 p-1.5 rounded-md hover:bg-amber-50 transition-colors"
+                                        title="Edit">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z">
+                                            </path>
+                                        </svg>
+                                    </a>
+                                    <button type="button" @click="confirmDelete({{ $item->id }}, '{{ $item->name }}')"
+                                        class="text-gray-400 hover:text-red-600 p-1.5 rounded-md hover:bg-red-50 transition-colors"
+                                        title="Hapus">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16">
+                                            </path>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    @empty
+                        <div class="text-center py-12 bg-gray-50 rounded-xl border-2 border-dashed border-gray-300">
+                            <div class="opacity-50">
+                                <svg class="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4">
+                                    </path>
+                                </svg>
+                            </div>
+                            <p class="text-gray-500 font-medium">Tidak ada item ditemukan</p>
+                        </div>
+                    @endforelse
+                </div>
+
+                {{-- GRID VIEW (Large Vertical Cards - Dynamic & Satisfying) --}}
+                <div x-show="viewMode === 'grid'" x-transition:enter="transition ease-out duration-300"
+                    x-transition:enter-start="opacity-0 translate-y-2"
+                    x-transition:enter-end="opacity-100 translate-y-0"
+                    class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+                    @forelse ($items as $item)
+                        <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden group hover:shadow-xl hover:-translate-y-1 transition-all duration-300 relative flex flex-col h-full"
+                            :class="{'ring-2 ring-blue-500 ring-offset-2': selectedItems.includes({{ $item->id }})}">
+
+                            {{-- Selection Checkbox --}}
+                            <div class="absolute top-3 left-3 z-20">
+                                <input type="checkbox" value="{{ $item->id }}"
+                                    @click="toggleItem({{ $item->id }}, {{ $loop->index }}, $event)"
+                                    :checked="selectedItems.includes({{ $item->id }})"
+                                    class="rounded border-gray-300 text-blue-600 shadow-lg focus:border-blue-300 focus:ring w-5 h-5 cursor-pointer bg-white/90 backdrop-blur hover:scale-110 transition-transform">
+                            </div>
+
+                            {{-- Status Badge (Floating) --}}
+                            <div class="absolute top-3 right-3 z-20 opacity-90 group-hover:opacity-100 transition-opacity">
+                                <x-status-badge :status="$item->status"
+                                    class="!text-[10px] !px-2 !py-1 shadow-md backdrop-blur-sm" />
+                            </div>
+
+                            {{-- Image Area --}}
+                            <div
+                                class="aspect-square bg-gray-100 relative overflow-hidden flex items-center justify-center group-hover:bg-gray-200 transition-colors">
+                                {{-- Placeholder Icon (Background) --}}
+                                <svg class="absolute w-16 h-16 text-gray-300 transform group-hover:scale-110 transition-transform duration-500"
+                                    fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                                        d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z">
+                                    </path>
+                                </svg>
+
+                                <img src="{{ $item->optimized_image }}"
+                                    class="relative w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 z-10"
+                                    loading="lazy" onerror="this.style.display='none'">
+                                <div
+                                    class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-20">
+                                </div>
+
+                                {{-- Quick Actions Overlay --}}
+                                <div
+                                    class="absolute bottom-4 left-0 right-0 flex justify-center gap-3 translate-y-full group-hover:translate-y-0 transition-transform duration-300 z-30 px-4">
+                                    <a href="{{ route('items.show', $item->id) }}"
+                                        class="bg-white text-gray-700 p-2 rounded-full shadow-lg hover:bg-blue-600 hover:text-white transition-colors"
+                                        title="View Details">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                        </svg>
+                                    </a>
+                                    <a href="{{ route('items.edit', $item->id) }}"
+                                        class="bg-white text-gray-700 p-2 rounded-full shadow-lg hover:bg-amber-500 hover:text-white transition-colors"
+                                        title="Edit Item">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z">
+                                            </path>
+                                        </svg>
+                                    </a>
+                                </div>
+                            </div>
+
+                            {{-- Card Body --}}
+                            <div class="p-4 flex flex-col flex-1 bg-white relative">
+                                <div class="mb-2">
+                                    <h3 class="font-bold text-gray-800 text-sm mb-1 line-clamp-2 leading-tight group-hover:text-blue-600 transition-colors"
+                                        title="{{ $item->name }}">
+                                        {{ $item->name }}
+                                    </h3>
+                                    <p
+                                        class="text-[10px] text-gray-400 font-mono truncate bg-gray-50 px-1.5 py-0.5 rounded inline-block">
+                                        {{ $item->asset_number }}
+                                    </p>
+                                </div>
+
+                                <div class="mt-auto flex justify-between items-end border-t border-gray-50 pt-3">
+                                    <div class="flex flex-col">
+                                        <span class="text-[10px] text-gray-400 font-bold uppercase">Ruangan</span>
+                                        <span class="text-xs font-semibold text-gray-600 truncate max-w-[80px]"
+                                            title="{{ $item->room->name ?? '-' }}">{{ $item->room->name ?? '-' }}</span>
+                                    </div>
+                                    <div class="text-right">
+                                        <span class="text-xs font-bold text-gray-800 bg-gray-100 px-2 py-1 rounded-lg">
+                                            {{ $item->quantity }} <span
+                                                class="text-[9px] font-normal text-gray-500">Unit</span>
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    @empty
+                        <div
+                            class="col-span-full text-center py-12 bg-gray-50 rounded-xl border-2 border-dashed border-gray-300">
+                            <div class="opacity-50">
+                                <svg class="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4">
+                                    </path>
+                                </svg>
+                            </div>
+                            <p class="text-gray-500 font-medium">Tidak ada item ditemukan</p>
+                        </div>
+                    @endforelse
+                </div>
+
+                {{-- PAGINATION WRAPPER (Shared) --}}
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mt-4">
                     {{-- Pagination & Layout Control --}}
                     <div
                         class="bg-gray-50 px-6 py-4 border-t border-gray-200 flex flex-col md:flex-row justify-between items-center gap-4">
@@ -1113,6 +1414,11 @@
 
         function itemPage(itemMap = {}) {
             return {
+                viewMode: localStorage.getItem('items_view_mode') || 'table',
+                setViewMode(mode) {
+                    this.viewMode = mode;
+                    localStorage.setItem('items_view_mode', mode);
+                },
                 showModal: false,
                 showEditModal: false,
                 editField: 'acquisition_year',
